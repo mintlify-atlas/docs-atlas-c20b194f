@@ -1,0 +1,302 @@
+---
+title: StageData
+description: Stage configuration, props, and character positioning
+---
+
+The `StageData` module defines the structure for stage backgrounds, props, and character placement.
+
+## StageData Structure
+
+### Core Properties
+
+<ParamField path="version" type="String" required>
+  Semantic version of the stage data format
+</ParamField>
+
+<ParamField path="name" type="String" default="Unknown">
+  Display name of the stage
+</ParamField>
+
+<ParamField path="cameraZoom" type="Float" default="1.0" optional>
+  Default camera zoom level for this stage
+</ParamField>
+
+<ParamField path="directory" type="String" default="shared" optional>
+  Asset directory for stage assets
+</ParamField>
+
+<ParamField path="props" type="Array<StageDataProp>" default="[]">
+  Array of visual props/sprites for the stage
+</ParamField>
+
+<ParamField path="characters" type="StageDataCharacters" required>
+  Positioning and rendering config for `bf`, `dad`, and `gf`
+</ParamField>
+
+## StageDataProp
+
+Defines a visual prop or sprite in the stage.
+
+### Basic Properties
+
+<ParamField path="name" type="String" optional>
+  Unique identifier for script access. If omitted, prop cannot be referenced by scripts
+</ParamField>
+
+<ParamField path="assetPath" type="String" required>
+  Path to the sprite asset. Can also be a hex color (e.g., `"#ff0000"`) to create a colored rectangle
+</ParamField>
+
+<ParamField path="position" type="Array<Float>" required>
+  Position as `[x, y]` coordinates in pixels
+</ParamField>
+
+<ParamField path="zIndex" type="Int" default="0">
+  Stack order relative to other props and characters. Higher values render on top
+</ParamField>
+
+### Visual Properties
+
+<ParamField path="scale" type="Float | Array<Float>" default="1.0">
+  Scale as a single float or `[width, height]` array. Use higher values on small pixel art to save memory
+</ParamField>
+
+<ParamField path="alpha" type="Float" default="1.0">
+  Opacity from 0.0 (transparent) to 1.0 (opaque)
+</ParamField>
+
+<ParamField path="angle" type="Float" default="0.0">
+  Rotation angle in degrees
+</ParamField>
+
+<ParamField path="isPixel" type="Bool" default="false">
+  Set to `true` to disable anti-aliasing for pixel art
+</ParamField>
+
+<ParamField path="flipX" type="Bool" default="false">
+  Whether to flip the sprite horizontally
+</ParamField>
+
+<ParamField path="flipY" type="Bool" default="false">
+  Whether to flip the sprite vertically
+</ParamField>
+
+<ParamField path="color" type="String" default="#FFFFFF">
+  Color overlay as hex string. `#FFFFFF` (white) applies no tint
+</ParamField>
+
+<ParamField path="blend" type="String" default="">
+  Blend mode (e.g., `"add"`, `"multiply"`, `"screen"`). Empty string uses normal blending
+</ParamField>
+
+### Scrolling & Parallax
+
+<ParamField path="scroll" type="Array<Float>" default="[1, 1]">
+  Parallax scroll factor as `[x, y]`:
+  - `[1, 1]` = moves 1:1 with camera (no parallax)
+  - `[0.5, 0.5]` = moves half as much (background effect)
+  - `[0, 0]` = static/fixed position
+</ParamField>
+
+### Animation
+
+<ParamField path="danceEvery" type="Float" default="0.0" optional>
+  Play idle/dance animation every X beats. Set to `0` to disable. Requires animations to be defined. Supports precision up to 0.25
+</ParamField>
+
+<ParamField path="animations" type="Array<AnimationData>" default="[]" optional>
+  Array of animation definitions for this prop. See [AnimationData](/api/data/animation-data)
+</ParamField>
+
+<ParamField path="startingAnimation" type="String" optional>
+  Name of the animation to play on stage load
+</ParamField>
+
+<ParamField path="animType" type="String" default="sparrow" optional>
+  Animation system: `"sparrow"`, `"packer"`, or `"animateatlas"`
+</ParamField>
+
+### Texture Atlas Settings
+
+<ParamField path="atlasSettings" type="TextureAtlasData" optional>
+  Advanced settings for Animate Atlas props
+</ParamField>
+
+#### TextureAtlasData
+
+<ParamField path="atlasSettings.swfMode" type="Bool" optional>
+  Enable SWF-like behavior for MovieClip symbols to play automatically
+</ParamField>
+
+<ParamField path="atlasSettings.cacheOnLoad" type="Bool" optional>
+  Cache filters and masks at load time instead of during runtime
+</ParamField>
+
+<ParamField path="atlasSettings.filterQuality" type="Int" optional>
+  Filter quality level:
+  - `0` = HIGH
+  - `1` = MEDIUM
+  - `2` = LOW
+  - `3` = RUDY
+</ParamField>
+
+<ParamField path="atlasSettings.applyStageMatrix" type="Bool" optional>
+  Apply the stage matrix from Animate. Only enable if prop was pre-positioned in Animate
+</ParamField>
+
+<ParamField path="atlasSettings.useRenderTexture" type="Bool" optional>
+  Render as single texture instead of separate limbs. Enable when using alpha changes, shaders, or blend modes
+</ParamField>
+
+## StageDataCharacter
+
+Defines positioning and rendering for stage characters (`bf`, `dad`, `gf`).
+
+<ParamField path="position" type="Array<Float>" default="[0, 0]">
+  Character spawn position as `[x, y]` in pixels
+</ParamField>
+
+<ParamField path="zIndex" type="Int" default="0">
+  Stack order relative to props and other characters
+</ParamField>
+
+<ParamField path="scale" type="Float" default="1.0">
+  Scale multiplier for the character on this stage
+</ParamField>
+
+<ParamField path="cameraOffsets" type="Array<Float>" required>
+  Camera focus offset as `[x, y]` when this character is focused:
+  - Boyfriend: `[-100, -100]` (default)
+  - Dad/Opponent: `[100, -100]` (default)
+  - Girlfriend: `[0, 0]` (default)
+</ParamField>
+
+<ParamField path="scroll" type="Array<Float>" default="[1, 1]">
+  Parallax scroll factor as `[x, y]`. See prop scroll documentation for behavior
+</ParamField>
+
+<ParamField path="alpha" type="Float" default="1.0">
+  Character opacity
+</ParamField>
+
+<ParamField path="angle" type="Float" default="0.0">
+  Character rotation in degrees
+</ParamField>
+
+## Example: Basic Stage
+
+```json
+{
+  "version": "1.0.0",
+  "name": "Main Stage",
+  "cameraZoom": 1.0,
+  "props": [
+    {
+      "name": "stageback",
+      "assetPath": "stages/stageback",
+      "position": [-600, -300],
+      "zIndex": 0,
+      "scale": 1.0,
+      "scroll": [0.9, 0.9]
+    },
+    {
+      "name": "stagefront",
+      "assetPath": "stages/stagefront",
+      "position": [-650, 600],
+      "zIndex": 100,
+      "scale": 1.1
+    },
+    {
+      "name": "stagecurtains",
+      "assetPath": "stages/stagecurtains",
+      "position": [-500, -300],
+      "zIndex": 200,
+      "scale": 1.0
+    }
+  ],
+  "characters": {
+    "bf": {
+      "position": [770, 100],
+      "zIndex": 50,
+      "cameraOffsets": [-100, -100]
+    },
+    "dad": {
+      "position": [100, 100],
+      "zIndex": 50,
+      "cameraOffsets": [100, -100]
+    },
+    "gf": {
+      "position": [400, -100],
+      "zIndex": 10,
+      "cameraOffsets": [0, 0]
+    }
+  }
+}
+```
+
+## Example: Animated Prop
+
+```json
+{
+  "name": "speaker",
+  "assetPath": "stages/speakers",
+  "position": [100, 200],
+  "zIndex": 5,
+  "animType": "sparrow",
+  "danceEvery": 1.0,
+  "startingAnimation": "idle",
+  "animations": [
+    {
+      "name": "idle",
+      "prefix": "speaker bump",
+      "frameRate": 24,
+      "looped": false
+    }
+  ]
+}
+```
+
+## Example: Color Rectangle Prop
+
+```json
+{
+  "name": "redOverlay",
+  "assetPath": "#ff0000",
+  "position": [0, 0],
+  "scale": [1280, 720],
+  "alpha": 0.5,
+  "zIndex": 1000
+}
+```
+
+## Example: Parallax Background
+
+```json
+{
+  "name": "sky",
+  "assetPath": "stages/sky",
+  "position": [-400, -200],
+  "zIndex": -100,
+  "scroll": [0.3, 0.3],
+  "scale": 1.5
+}
+```
+
+## Character Z-Index Reference
+
+Common z-index layering:
+- `-100 to -1`: Far background props
+- `0 to 9`: Background props (behind GF)
+- `10`: Girlfriend (default)
+- `11 to 49`: Mid-ground props
+- `50`: Boyfriend and Dad (default)
+- `51 to 99`: Near-ground props
+- `100+`: Foreground/overlay props
+
+## Tips
+
+- Use `scroll` values less than `[1, 1]` for background parallax effects
+- Set `isPixel: true` on all pixel art props to avoid blurriness
+- Use negative z-index values for backgrounds that should render behind everything
+- For performance, use larger z-index gaps (e.g., 0, 100, 200) instead of sequential values
+- Color props with `assetPath` as hex colors use `scale` to determine rectangle size

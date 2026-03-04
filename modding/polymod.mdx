@@ -1,0 +1,702 @@
+---
+title: Polymod Deep Dive
+description: Advanced guide to Polymod's asset replacement, merging, and modding system
+icon: book
+---
+
+## What is Polymod?
+
+Polymod is an **atomic modding framework** for Haxe games. It provides a complete system for:
+
+- Loading mods from filesystem or ZIP archives
+- Replacing game assets transparently
+- Merging data files intelligently
+- Sandboxing scripts securely
+- Managing mod dependencies and versioning
+
+<Card title="Polymod on GitHub" icon="github" href="https://github.com/larsiusprime/polymod">
+  Polymod is open source and maintained by Lars Doucet
+</Card>
+
+## How FNF Uses Polymod
+
+Friday Night Funkin' integrates Polymod through the `PolymodHandler` class:
+
+<CodeGroup>
+```haxe PolymodHandler.hx (Initialization)
+public static function loadModsById(ids:Array<String>):Void
+{
+  var loadedModList:Array<ModMetadata> = polymod.Polymod.init({
+    // Root directory for all mods
+    modRoot: MOD_FOLDER,
+    // The directories for one or more mods to load
+    dirs: ids,
+    // Framework being used to load assets
+    framework: OPENFL,
+    // The current version of our API
+    apiVersionRule: API_VERSION_RULE,
+    // Call this function any time an error occurs
+    errorCallback: PolymodErrorHandler.onPolymodError,
+    // Custom filesystem for ZIP support
+    customFilesystem: modFileSystem,
+    // Framework-specific parameters
+    frameworkParams: buildFrameworkParams(),
+    // List of filenames to ignore in mods
+    ignoredFiles: buildIgnoreList(),
+    // Parsing rules for various data formats
+    parseRules: buildParseRules(),
+    // Parse hxc files and register scripted classes
+    useScriptedClasses: true,
+    loadScriptsAsync: #if html5 true #else false #end,
+  });
+}
+```
+</CodeGroup>
+
+## Mod Folder Structure
+
+Polymod scans the mods directory for valid mods:
+
+```
+mods/
+  ├── mod1/
+  │   ├── _polymod_meta.json    # Required metadata
+  │   ├── _polymod_icon.png     # Optional icon
+  │   ├── images/               # Asset replacements
+  │   ├── data/                 # Data files
+  │   └── _append/              # Files to merge
+  └── mod2/
+      └── ...
+```
+
+### Mod Root Location
+
+The mod folder location varies by build configuration:
+
+<CodeGroup>
+```haxe PolymodHandler.hx (Mod Folder)
+static final MOD_FOLDER:String =
+  #if (REDIRECT_ASSETS_FOLDER && macos)
+  '../../../../../../../example_mods'
+  #elseif REDIRECT_ASSETS_FOLDER
+  '../../../../example_mods'
+  #else
+  'mods'
+  #end;
+```
+</CodeGroup>
+
+<Tabs>
+  <Tab title="Release Builds">
+    Mods are in the `mods/` folder next to the executable.
+  </Tab>
+  <Tab title="Development">
+    With `REDIRECT_ASSETS_FOLDER`, mods load from `example_mods/` in the source tree.
+  </Tab>
+</Tabs>
+
+## Asset Replacement
+
+### How It Works
+
+When the game requests an asset, Polymod intercepts the request:
+
+1. Check if any loaded mod has a replacement for that path
+2. If yes, return the mod's version
+3. If no, return the base game's version
+
+### Example
+
+<Steps>
+  <Step title="Game requests asset">
+    ```haxe
+    var logo = Assets.getBitmapData('images/newgrounds_logo.png');
+    ```
+  </Step>
+  
+  <Step title="Polymod checks mods">
+    Looks for `images/newgrounds_logo.png` in loaded mods, in order:
+    ```
+    mods/testing123/images/newgrounds_logo.png  ← Found!
+    ```
+  </Step>
+  
+  <Step title="Returns mod asset">
+    Returns the custom logo from `testing123` instead of the base game's.
+  </Step>
+</Steps>
+
+### Asset Types
+
+Polymod supports all OpenFL asset types:
+
+- `IMAGE` - PNG, JPG, GIF
+- `AUDIO_MUSIC` - OGG, MP3 (long tracks)
+- `AUDIO_SOUND` - OGG, MP3 (short effects)
+- `TEXT` - TXT, JSON, XML, CSV
+- `BINARY` - Any other file type
+
+<CodeGroup>
+```haxe Debug Logging
+#if FEATURE_DEBUG_FUNCTIONS
+var fileList:Array<String> = Polymod.listModFiles(PolymodAssetType.IMAGE);
+trace('Installed mods have replaced ${fileList.length} images.');
+for (item in fileList)
+{
+  trace(' * $item');
+}
+#end
+```
+</CodeGroup>
+
+## Asset Merging
+
+### Merge vs Replace
+
+Instead of replacing entire files, you can **merge** your changes:
+
+<Tabs>
+  <Tab title="Replace">
+    **Normal asset path:**
+    ```
+    mymod/
+      └── data/
+          └── introText.txt
+    ```
+    
+    Result: **Completely replaces** the base game's `introText.txt`
+  </Tab>
+  
+  <Tab title="Merge">
+    **Using _append folder:**
+    ```
+    mymod/
+      └── _append/
+          └── data/
+              └── introText.txt
+    ```
+    
+    Result: **Appends** your lines to the base game's `introText.txt`
+  </Tab>
+</Tabs>
+
+### Parse Rules
+
+Polymod needs to know how to parse files for merging:
+
+<CodeGroup>
+```haxe PolymodHandler.hx (Parse Rules)
+static function buildParseRules():polymod.format.ParseRules
+{
+  var output:polymod.format.ParseRules = polymod.format.ParseRules.getDefault();
+  
+  // Ensure TXT files have merge support (line-by-line)
+  output.addType('txt', TextFileFormat.LINES);
+  
+  // Ensure script files have merge support (plaintext)
+  output.addType('hscript', TextFileFormat.PLAINTEXT);
+  output.addType('hxs', TextFileFormat.PLAINTEXT);
+  output.addType('hxc', TextFileFormat.PLAINTEXT);
+  output.addType('hx', TextFileFormat.PLAINTEXT);
+  
+  return output;
+}
+```
+</CodeGroup>
+
+### Supported Merge Formats
+
+<CardGroup cols={2}>
+  <Card title="LINES" icon="list">
+    Text files treated as arrays of lines. Append mode adds lines to the end.
+  </Card>
+  <Card title="PLAINTEXT" icon="file-lines">
+    Raw text concatenation. Useful for scripts.
+  </Card>
+  <Card title="JSON" icon="brackets-curly">
+    Deep object merging. Properties from mods override base game properties.
+  </Card>
+  <Card title="CSV" icon="table">
+    Row-based appending. New rows added to the end.
+  </Card>
+  <Card title="XML" icon="code">
+    Node-based merging. Matching nodes get merged or appended.
+  </Card>
+</CardGroup>
+
+### Merge Example: Intro Text
+
+The `introMod` example demonstrates text merging:
+
+<Tabs>
+  <Tab title="Base Game">
+    **data/introText.txt:**
+    ```text
+    shoutouts to tom fulp--lmao
+    Ludum dare--extraordinaire
+    cyberzone--coming soon
+    love to thriftman--swag
+    ```
+  </Tab>
+  
+  <Tab title="Mod File">
+    **introMod/_append/data/introText.txt:**
+    ```text
+    awesomes tream--really awesome
+    ```
+  </Tab>
+  
+  <Tab title="Result">
+    **Merged in-game:**
+    ```text
+    shoutouts to tom fulp--lmao
+    Ludum dare--extraordinaire
+    cyberzone--coming soon
+    love to thriftman--swag
+    awesomes tream--really awesome  ← Added by mod
+    ```
+  </Tab>
+</Tabs>
+
+## Version Management
+
+### API Version
+
+Mods declare compatibility via `api_version`:
+
+```json _polymod_meta.json
+{
+  "api_version": "0.8.0",
+  "mod_version": "1.0.0"
+}
+```
+
+The game checks this against its version rule:
+
+<CodeGroup>
+```haxe PolymodHandler.hx
+/**
+ * The API version for the current version of the game.
+ */
+public static var API_VERSION(get, never):String;
+
+static function get_API_VERSION():String
+{
+  return Constants.VERSION;
+}
+
+/**
+ * The Semantic Versioning rule.
+ * Indicates which mods are compatible with this version of the game.
+ */
+public static final API_VERSION_RULE:String = ">=0.8.0 <0.9.0";
+```
+</CodeGroup>
+
+### Version Rule Syntax
+
+Polymod uses semantic versioning rules:
+
+- `>=0.8.0` - At least version 0.8.0
+- `<0.9.0` - Less than version 0.9.0
+- `>=0.8.0 <0.9.0` - Between 0.8.0 and 0.9.0
+- `1.2.3` - Exactly version 1.2.3
+
+<Warning>
+  Mods with incompatible `api_version` will **not load** and will show an error.
+</Warning>
+
+## Script Integration
+
+### Scripted Classes
+
+Polymod can load HScript classes and register them:
+
+```haxe
+useScriptedClasses: true,
+loadScriptsAsync: #if html5 true #else false #end,
+```
+
+This allows `.hxc` files to define classes that extend base classes.
+
+### Import Management
+
+Polymod handles imports automatically:
+
+<CodeGroup>
+```haxe PolymodHandler.hx (Default Imports)
+static final DEFAULT_IMPORTS:Array<Class<Dynamic>> = [
+  funkin.Assets,
+  funkin.Paths,
+  funkin.Preferences,
+  funkin.util.Constants,
+  flixel.FlxG
+];
+
+for (cls in DEFAULT_IMPORTS)
+{
+  Polymod.addDefaultImport(cls);
+}
+```
+</CodeGroup>
+
+### Import Aliases
+
+Some classes are aliased for compatibility or security:
+
+```haxe
+// Backward compatibility for moved classes
+Polymod.addImportAlias('funkin.modding.base.ScriptedFunkinSprite', 
+                       funkin.graphics.ScriptedFunkinSprite);
+
+// Security sandboxing
+Polymod.addImportAlias('funkin.util.FileUtil', 
+                       funkin.util.FileUtilSandboxed);
+Polymod.addImportAlias('Reflect', 
+                       funkin.util.ReflectUtil);
+```
+
+### Blacklisting
+
+Dangerous classes are blacklisted:
+
+```haxe
+// System access
+Polymod.blacklistImport('Sys');
+Polymod.blacklistImport('cpp.Lib');
+Polymod.blacklistImport('lime.system.System');
+
+// Script parsing (could bypass sandbox)
+Polymod.blacklistImport('hscript.*');
+Polymod.blacklistImport('polymod.*');
+
+// Score manipulation
+Polymod.blacklistImport('funkin.api.newgrounds.*');
+```
+
+<Note>
+  Scripts attempting to use blacklisted classes will fail with an error.
+</Note>
+
+## File System Support
+
+### ZIP File System
+
+Polymod can load mods from ZIP archives:
+
+<CodeGroup>
+```haxe PolymodHandler.hx (ZIP Support)
+static var modFileSystem:Null<ZipFileSystem> = null;
+
+static function buildFileSystem():polymod.fs.ZipFileSystem
+{
+  polymod.Polymod.onError = PolymodErrorHandler.onPolymodError;
+  return new ZipFileSystem({
+    modRoot: MOD_FOLDER,
+    autoScan: true
+  });
+}
+```
+</CodeGroup>
+
+This allows distributing mods as:
+- **Folders** - Extracted mod folders
+- **ZIP files** - Single `.zip` files in the mods folder
+
+### Auto Scanning
+
+With `autoScan: true`, Polymod automatically detects:
+- New mods added to the folder
+- ZIP files alongside folder mods
+- Changes to mod metadata
+
+## Framework Parameters
+
+FNF configures OpenFL-specific parameters:
+
+<CodeGroup>
+```haxe PolymodHandler.hx (Framework Params)
+static inline function buildFrameworkParams():polymod.Polymod.FrameworkParams
+{
+  return {
+    assetLibraryPaths: [
+      'default' => 'preload',
+      'shared' => 'shared', 
+      'songs' => 'songs',
+      'videos' => 'videos',
+      'tutorial' => 'tutorial',
+      'week1' => 'week1',
+      'week2' => 'week2',
+      'week3' => 'week3',
+      'week4' => 'week4',
+      'week5' => 'week5',
+      'week6' => 'week6',
+      'week7' => 'week7',
+      'weekend1' => 'weekend1',
+      'sserafim' => 'sserafim'
+    ],
+    coreAssetRedirect: CORE_FOLDER,
+  }
+}
+```
+</CodeGroup>
+
+This maps OpenFL asset libraries to filesystem paths.
+
+## Ignored Files
+
+Certain files are ignored when loading mods:
+
+<CodeGroup>
+```haxe PolymodHandler.hx (Ignore List)
+static function buildIgnoreList():Array<String>
+{
+  var result = Polymod.getDefaultIgnoreList();
+  
+  result.push('.vscode');
+  result.push('.idea');
+  result.push('.git');
+  result.push('.gitignore');
+  result.push('.gitattributes');
+  result.push('README.md');
+  
+  return result;
+}
+```
+</CodeGroup>
+
+Default ignored files include:
+- `_polymod_meta.json` (metadata, not an asset)
+- `_polymod_icon.png` (icon, not an asset)
+- `_polymod_pack.txt` (pack definition)
+- `.DS_Store` (macOS metadata)
+
+## Hot Reloading
+
+During development, reload mods without restarting:
+
+<CodeGroup>
+```haxe PolymodHandler.hx (Force Reload)
+/**
+ * Clear and reload from disk all data assets.
+ * Useful for "hot reloading" for fast iteration!
+ */
+public static function forceReloadAssets():Void
+{
+  // Forcibly clear scripts so that scripts can be edited
+  ModuleHandler.clearModuleCache();
+  Polymod.clearScripts();
+  
+  // Forcibly reload Polymod so it finds any new files
+  funkin.modding.PolymodHandler.loadAllMods();
+  
+  // Reload all registries
+  SongEventRegistry.loadEventCache();
+  SongRegistry.instance.loadEntries();
+  LevelRegistry.instance.loadEntries();
+  NoteStyleRegistry.instance.loadEntries();
+  // ... etc
+}
+```
+</CodeGroup>
+
+<Warning>
+  Hot reloading is a **development feature**. It requires debug builds and may cause instability.
+</Warning>
+
+## Mod Management
+
+### Scanning Mods
+
+```haxe
+public static function getAllMods():Array<ModMetadata>
+{
+  if (modFileSystem == null) modFileSystem = buildFileSystem();
+  
+  var modMetadata:Array<ModMetadata> = Polymod.scan({
+    modRoot: MOD_FOLDER,
+    apiVersionRule: API_VERSION_RULE,
+    fileSystem: modFileSystem,
+    errorCallback: PolymodErrorHandler.onPolymodError
+  });
+  return modMetadata;
+}
+```
+
+### Loading Specific Mods
+
+<Tabs>
+  <Tab title="All Mods">
+    ```haxe
+    PolymodHandler.loadAllMods();
+    ```
+    Loads every detected mod.
+  </Tab>
+  
+  <Tab title="Enabled Mods">
+    ```haxe
+    PolymodHandler.loadEnabledMods();
+    ```
+    Loads only mods enabled in save data.
+  </Tab>
+  
+  <Tab title="Specific IDs">
+    ```haxe
+    PolymodHandler.loadModsById(['mod1', 'mod2']);
+    ```
+    Loads specific mods by ID.
+  </Tab>
+  
+  <Tab title="No Mods">
+    ```haxe
+    PolymodHandler.loadNoMods();
+    ```
+    Initializes Polymod but loads no mods.
+  </Tab>
+</Tabs>
+
+### Load Order
+
+Mods are loaded in the order specified in the `dirs` array:
+
+```haxe
+loadModsById(['baseMod', 'skinMod', 'tweakMod']);
+```
+
+- `baseMod` loads first
+- `skinMod` loads second, can override `baseMod`
+- `tweakMod` loads last, can override both previous mods
+
+<Tip>
+  Later mods take priority. If multiple mods replace the same asset, the last one wins.
+</Tip>
+
+## Error Handling
+
+Polymod reports errors via callback:
+
+```haxe
+errorCallback: PolymodErrorHandler.onPolymodError,
+```
+
+Common errors:
+- **Missing metadata** - No `_polymod_meta.json`
+- **Invalid version** - `api_version` incompatible
+- **Parse error** - Malformed JSON/XML/script
+- **Missing dependency** - Required mod not loaded
+
+## Advanced Techniques
+
+### Custom Merge Logic
+
+You can specify merge behavior per file:
+
+```haxe
+output.addFile("data/specialFile.txt", TextFileFormat.PLAINTEXT);
+```
+
+### Conditional Asset Loading
+
+Load different assets based on conditions:
+
+```haxe MyModule.hxc
+public function onCreate(event:ScriptEvent)
+{
+  var difficulty = PlayState.instance.currentDifficulty;
+  
+  if (difficulty == 'hard')
+  {
+    // Load harder version of assets
+    var sprite = Assets.getBitmapData('images/hard/enemy.png');
+  }
+}
+```
+
+### Multi-Mod Compatibility
+
+Design mods to work together:
+
+```haxe
+// Check if another mod is loaded
+if (PolymodHandler.loadedModIds.contains('othermod'))
+{
+  // Adjust behavior for compatibility
+}
+```
+
+### Dynamic Asset Replacement
+
+Modify assets at runtime:
+
+```haxe
+public function onSongStart(event:ScriptEvent)
+{
+  // Change character sprite based on song
+  if (event.id == 'tutorial')
+  {
+    boyfriend.loadGraphic(Paths.image('characters/bf_tutorial'));
+  }
+}
+```
+
+## Performance Considerations
+
+<AccordionGroup>
+  <Accordion title="Asset Caching">
+    Polymod caches asset lookups. First access is slower, subsequent accesses are fast.
+  </Accordion>
+  
+  <Accordion title="Script Compilation">
+    HScript files are compiled once on load. Avoid reloading unless necessary.
+  </Accordion>
+  
+  <Accordion title="Merge Operations">
+    Text merging is fast. JSON/XML merging can be slower for large files.
+  </Accordion>
+  
+  <Accordion title="ZIP vs Folders">
+    ZIP files have slight overhead. Folders are faster for development.
+  </Accordion>
+</AccordionGroup>
+
+## Debugging Tips
+
+### Enable Debug Logging
+
+Compile with `FEATURE_DEBUG_FUNCTIONS` to see detailed mod info:
+
+```haxe
+#if FEATURE_DEBUG_FUNCTIONS
+var fileList:Array<String> = Polymod.listModFiles(PolymodAssetType.IMAGE);
+trace('Installed mods have replaced ${fileList.length} images.');
+#end
+```
+
+### Check Loaded Mods
+
+```haxe
+trace('Loaded mods: ' + PolymodHandler.loadedModIds);
+```
+
+### Verify Asset Sources
+
+Check which mod provided an asset:
+
+```haxe
+var source = Polymod.getAssetSource('images/test.png');
+trace('Asset from: ' + source);  // "basegame" or "modname"
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Scripting Guide" icon="code" href="scripting">
+    Master HScript for advanced mod functionality
+  </Card>
+  <Card title="Creating Mods" icon="hammer" href="creating-mods">
+    Build your own mods from scratch
+  </Card>
+  <Card title="Modding Overview" icon="puzzle-piece" href="overview">
+    Return to the modding overview
+  </Card>
+</CardGroup>

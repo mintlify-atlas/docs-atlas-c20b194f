@@ -1,97 +1,244 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Friday Night Funkin' Documentation"
+description: "Build, mod, and contribute to the ultimate open-source rhythm game"
+mode: "custom"
 ---
 
-## Setting up
+<div className="relative py-20 overflow-hidden dark:bg-[#0f1117] bg-white">
+  <div className="absolute inset-0 dark:bg-gradient-to-br dark:from-[#0e0c0b] dark:via-[#0f1117] dark:to-[#1a1d27] bg-gradient-to-br from-gray-50 via-white to-gray-100" />
+  <div className="relative max-w-7xl mx-auto px-6 lg:px-8">
+    <div className="lg:grid lg:grid-cols-12 lg:gap-12 items-center">
+      <div className="lg:col-span-7">
+        <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold dark:text-white text-gray-900 leading-tight mb-6">
+          Friday Night Funkin' Documentation
+        </h1>
+        <p className="text-xl md:text-2xl dark:text-gray-300 text-gray-700 max-w-2xl mb-8">
+          Everything you need to compile the game, create mods, and contribute to the rhythm game sensation built with HaxeFlixel
+        </p>
+        <div className="flex flex-wrap gap-4">
+          <a 
+            href="/quickstart" 
+            className="inline-flex items-center px-8 py-4 rounded-lg font-semibold text-base transition-all duration-200 bg-[#e6d9a3] text-[#0e0c0b] hover:bg-[#d4c891] shadow-lg hover:shadow-xl no-underline"
+          >
+            Get Started
+            <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </a>
+          <a 
+            href="/modding/overview" 
+            className="inline-flex items-center px-8 py-4 rounded-lg font-semibold text-base transition-all duration-200 dark:bg-white/10 bg-gray-100 dark:text-white text-gray-900 dark:border-white/20 border-gray-300 border dark:hover:bg-white/20 hover:bg-gray-200 no-underline"
+          >
+            Create Mods
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-Get your documentation site up and running in minutes.
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <h2 className="text-3xl font-bold dark:text-white text-gray-900 mb-4">Quick start</h2>
+  <p className="text-base dark:text-gray-400 text-gray-600 mb-8">Get Friday Night Funkin' running on your machine in minutes</p>
+  
+  <Steps>
+    <Step title="Install dependencies">
+      Download and install Haxe from [Haxe.org](https://haxe.org) and Git from [git-scm.com](https://www.git-scm.com). Make sure you have the required build tools for your platform.
+    </Step>
+    
+    <Step title="Clone the repository">
+      Clone the repository and initialize submodules to download game assets:
+      
+      ```bash
+      git clone https://github.com/FunkinCrew/funkin.git
+      cd funkin
+      git submodule update --init --recursive
+      ```
+    </Step>
+    
+    <Step title="Install Haxe libraries">
+      Install hmm (Haxe Module Manager) and all required libraries:
+      
+      ```bash
+      haxelib --global install hmm
+      haxelib --global run hmm setup
+      hmm install
+      haxelib run lime setup
+      ```
+    </Step>
+    
+    <Step title="Build and run">
+      Compile and launch the game for your platform:
+      
+      ```bash
+      lime test windows
+      # or: lime test mac, lime test linux, lime test html5
+      ```
+      
+      <Note>
+        On first build, you may need to run `lime rebuild <platform>` and `lime rebuild <platform> -debug` to compile native dependencies.
+      </Note>
+    </Step>
+  </Steps>
+</div>
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
-  </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
-  </Card>
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <h2 className="text-3xl font-bold dark:text-white text-gray-900 mb-4">Explore by topic</h2>
+  <p className="text-base dark:text-gray-400 text-gray-600 mb-8">Jump into the documentation that matches your goals</p>
+  
+  <CardGroup cols={2}>
     <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
-  </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
-  </Card>
-</Columns>
+      title="Development"
+      icon="code"
+      href="/development/compiling"
+    >
+      Compile the game from source, set up your development environment, and contribute code
+    </Card>
+    <Card
+      title="Modding"
+      icon="puzzle-piece"
+      href="/modding/overview"
+    >
+      Create custom songs, characters, stages, and gameplay with Polymod and HScript
+    </Card>
+    <Card
+      title="Game systems"
+      icon="gamepad"
+      href="/systems/gameplay"
+    >
+      Understand the core gameplay mechanics, character system, and stage architecture
+    </Card>
+    <Card
+      title="Tools"
+      icon="wrench"
+      href="/tools/chart-editor"
+    >
+      Master the Chart Editor, Stage Editor, and Animation Editor built into the game
+    </Card>
+  </CardGroup>
+</div>
 
-## Create beautiful pages
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <h2 className="text-3xl font-bold dark:text-white text-gray-900 mb-4">Key features</h2>
+  <p className="text-base dark:text-gray-400 text-gray-600 mb-8">What makes Friday Night Funkin' special</p>
+  
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="dark:bg-[#1a1d27] bg-gray-50 rounded-xl p-6 dark:border-[#27272a] border-gray-200 border">
+      <div className="flex items-start gap-4">
+        <div className="flex-shrink-0">
+          <div className="w-10 h-10 rounded-lg bg-[#e6d9a3]/10 flex items-center justify-center">
+            <svg className="w-6 h-6 text-[#e6d9a3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+            </svg>
+          </div>
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold dark:text-white text-gray-900 mb-2">Rhythm-based gameplay</h3>
+          <p className="text-sm dark:text-gray-400 text-gray-600">Hit arrows to the beat with precise timing, BPM changes, and complex charting patterns</p>
+        </div>
+      </div>
+    </div>
+    
+    <div className="dark:bg-[#1a1d27] bg-gray-50 rounded-xl p-6 dark:border-[#27272a] border-gray-200 border">
+      <div className="flex items-start gap-4">
+        <div className="flex-shrink-0">
+          <div className="w-10 h-10 rounded-lg bg-[#e6d9a3]/10 flex items-center justify-center">
+            <svg className="w-6 h-6 text-[#e6d9a3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
+            </svg>
+          </div>
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold dark:text-white text-gray-900 mb-2">Extensive modding support</h3>
+          <p className="text-sm dark:text-gray-400 text-gray-600">Polymod framework with HScript scripting for custom songs, characters, stages, and mechanics</p>
+        </div>
+      </div>
+    </div>
+    
+    <div className="dark:bg-[#1a1d27] bg-gray-50 rounded-xl p-6 dark:border-[#27272a] border-gray-200 border">
+      <div className="flex items-start gap-4">
+        <div className="flex-shrink-0">
+          <div className="w-10 h-10 rounded-lg bg-[#e6d9a3]/10 flex items-center justify-center">
+            <svg className="w-6 h-6 text-[#e6d9a3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+          </div>
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold dark:text-white text-gray-900 mb-2">Multi-platform</h3>
+          <p className="text-sm dark:text-gray-400 text-gray-600">Runs on Windows, Mac, Linux, HTML5, Android, and iOS with optimized builds for each</p>
+        </div>
+      </div>
+    </div>
+    
+    <div className="dark:bg-[#1a1d27] bg-gray-50 rounded-xl p-6 dark:border-[#27272a] border-gray-200 border">
+      <div className="flex items-start gap-4">
+        <div className="flex-shrink-0">
+          <div className="w-10 h-10 rounded-lg bg-[#e6d9a3]/10 flex items-center justify-center">
+            <svg className="w-6 h-6 text-[#e6d9a3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+            </svg>
+          </div>
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold dark:text-white text-gray-900 mb-2">Built-in editors</h3>
+          <p className="text-sm dark:text-gray-400 text-gray-600">Chart Editor, Stage Editor, and Animation Editor for creating and editing game content</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-Everything you need to create world-class documentation.
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <h2 className="text-3xl font-bold dark:text-white text-gray-900 mb-4">API reference</h2>
+  <p className="text-base dark:text-gray-400 text-gray-600 mb-8">Explore the core classes and systems that power Friday Night Funkin'</p>
+  
+  <CardGroup cols={3}>
+    <Card
+      title="Core systems"
+      icon="gear"
+      href="/api/conductor"
+    >
+      Conductor, PlayState, Assets, Preferences
+    </Card>
+    <Card
+      title="Audio"
+      icon="volume-high"
+      href="/api/audio/funkin-sound"
+    >
+      FunkinSound, VoicesGroup, audio visualization
+    </Card>
+    <Card
+      title="Gameplay"
+      icon="music"
+      href="/api/play/character"
+    >
+      Characters, stages, notes, events
+    </Card>
+  </CardGroup>
+</div>
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
-
-## Need inspiration?
-
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+<div className="mt-20 mb-16 max-w-5xl mx-auto px-6">
+  <div className="dark:bg-[#1a1d27] bg-gray-50 rounded-2xl p-8 md:p-12 dark:border-[#27272a] border-gray-200 border">
+    <div className="text-center max-w-2xl mx-auto">
+      <h2 className="text-3xl font-bold dark:text-white text-gray-900 mb-4">Ready to start building?</h2>
+      <p className="text-lg dark:text-gray-300 text-gray-700 mb-8">
+        Compile the game, create your first mod, or dive into the codebase to contribute
+      </p>
+      <div className="flex flex-wrap justify-center gap-4">
+        <a 
+          href="/quickstart" 
+          className="inline-flex items-center px-6 py-3 rounded-lg font-semibold text-base transition-colors bg-[#e6d9a3] text-[#0e0c0b] hover:bg-[#d4c891] no-underline"
+        >
+          Quickstart guide
+        </a>
+        <a 
+          href="/development/contributing" 
+          className="inline-flex items-center px-6 py-3 rounded-lg font-semibold text-base transition-colors dark:bg-white/10 bg-white dark:text-white text-gray-900 dark:border-white/20 border-gray-300 border dark:hover:bg-white/20 hover:bg-gray-100 no-underline"
+        >
+          Contributing guide
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

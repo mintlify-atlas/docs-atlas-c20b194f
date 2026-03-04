@@ -1,0 +1,452 @@
+---
+title: Conductor
+description: Core class that handles musical timing throughout the game
+icon: metronome
+---
+
+The `Conductor` class is a core singleton that manages musical timing for both gameplay and menus. It handles BPM changes, time signatures, beat/step detection, and provides time conversion utilities.
+
+## Overview
+
+The Conductor maintains the current song position and automatically dispatches signals when musical events occur (measures, beats, steps). It supports complex timing scenarios including:
+
+- Multiple BPM changes within a song
+- Arbitrary time signatures (4/4, 3/4, 7/8, etc.)
+- Audio/visual offsets and latency compensation
+- Precise time-to-beat/step conversions
+
+## Accessing the Conductor
+
+```haxe
+// Get the singleton instance
+var conductor = Conductor.instance;
+
+// Access current timing information
+trace(conductor.bpm);              // Current BPM
+trace(conductor.currentBeat);      // Current beat (integer)
+trace(conductor.currentBeatTime);  // Current beat (float with decimals)
+trace(conductor.songPosition);     // Current position in milliseconds
+```
+
+## Properties
+
+### Timing Properties
+
+<ResponseField name="bpm" type="Float" readOnly>
+  Current beats per minute at the current song position. Automatically adjusts when time changes occur.
+</ResponseField>
+
+<ResponseField name="songPosition" type="Float" readOnly>
+  Current position in the song in milliseconds. Updated every frame via `update()`.
+</ResponseField>
+
+<ResponseField name="currentBeat" type="Int" readOnly>
+  Current position in the song as an integer beat number.
+</ResponseField>
+
+<ResponseField name="currentBeatTime" type="Float" readOnly>
+  Current position in the song in beats, including fractional beats.
+</ResponseField>
+
+<ResponseField name="currentStep" type="Int" readOnly>
+  Current position in the song as an integer step number. There are 4 steps per beat.
+</ResponseField>
+
+<ResponseField name="currentStepTime" type="Float" readOnly>
+  Current position in the song in steps, including fractional steps.
+</ResponseField>
+
+<ResponseField name="currentMeasure" type="Int" readOnly>
+  Current position in the song as an integer measure number.
+</ResponseField>
+
+<ResponseField name="currentMeasureTime" type="Float" readOnly>
+  Current position in the song in measures, including fractional measures.
+</ResponseField>
+
+### Duration Properties
+
+<ResponseField name="beatLengthMs" type="Float" readOnly>
+  Duration of a beat in milliseconds, calculated from the current BPM and time signature.
+</ResponseField>
+
+<ResponseField name="stepLengthMs" type="Float" readOnly>
+  Duration of a step in milliseconds. Always 1/4 of `beatLengthMs`.
+</ResponseField>
+
+<ResponseField name="measureLengthMs" type="Float" readOnly>
+  Duration of a measure in milliseconds, calculated from beat length and time signature.
+</ResponseField>
+
+### Time Signature Properties
+
+<ResponseField name="timeSignatureNumerator" type="Int" readOnly>
+  The numerator of the current time signature (the `3` in `3/4`).
+</ResponseField>
+
+<ResponseField name="timeSignatureDenominator" type="Int" readOnly>
+  The denominator of the current time signature (the `4` in `3/4`).
+</ResponseField>
+
+<ResponseField name="beatsPerMeasure" type="Float" readOnly>
+  Number of beats in a measure. Equal to `timeSignatureNumerator`.
+</ResponseField>
+
+<ResponseField name="stepsPerMeasure" type="Int" readOnly>
+  Number of steps in a measure. Equal to `timeSignatureNumerator * 4`.
+</ResponseField>
+
+### Offset Properties
+
+<ResponseField name="instrumentalOffset" type="Float">
+  Chart-specific offset in milliseconds to compensate for instrumental delays.
+</ResponseField>
+
+<ResponseField name="formatOffset" type="Float">
+  Audio format offset (e.g., MP3 encoding delay).
+</ResponseField>
+
+<ResponseField name="globalOffset" type="Int" readOnly>
+  User-configured offset to compensate for input lag, loaded from save data.
+</ResponseField>
+
+<ResponseField name="audioVisualOffset" type="Int" readOnly>
+  User-configured offset to compensate for audio/visual lag, loaded from save data.
+</ResponseField>
+
+<ResponseField name="combinedOffset" type="Float" readOnly>
+  Sum of `instrumentalOffset + formatOffset + globalOffset`.
+</ResponseField>
+
+## Methods
+
+### update()
+
+Updates the conductor with the current song position and recalculates all timing properties.
+
+```haxe
+public function update(?songPos:Float, applyOffsets:Bool = true, forceDispatch:Bool = false):Void
+```
+
+<ParamField path="songPos" type="Float" optional>
+  The current position in the song in milliseconds. If omitted, uses `FlxG.sound.music.time`.
+</ParamField>
+
+<ParamField path="applyOffsets" type="Bool" default="true">
+  Whether to apply `combinedOffset` to the song position.
+</ParamField>
+
+<ParamField path="forceDispatch" type="Bool" default="false">
+  Force signal dispatch even if the current step/beat/measure hasn't changed.
+</ParamField>
+
+**Example:**
+
+```haxe
+override function update(elapsed:Float):Void
+{
+  super.update(elapsed);
+  
+  // Update conductor every frame in gameplay
+  Conductor.instance.update();
+}
+```
+
+### mapTimeChanges()
+
+Applies song time changes (BPM/time signature changes) to the conductor.
+
+```haxe
+public function mapTimeChanges(songTimeChanges:Array<SongTimeChange>):Void
+```
+
+<ParamField path="songTimeChanges" type="Array<SongTimeChange>" required>
+  Array of time change data from song metadata.
+</ParamField>
+
+**Example:**
+
+```haxe
+// Load time changes from song data
+var song = SongRegistry.instance.fetchEntry("roses");
+var chart = song.getDifficulty("hard");
+Conductor.instance.mapTimeChanges(chart.getTimeChanges());
+```
+
+### forceBPM()
+
+Forces the conductor to use a specific BPM, ignoring time changes.
+
+```haxe
+public function forceBPM(?bpm:Float):Void
+```
+
+<ParamField path="bpm" type="Float" optional>
+  The BPM to force. Pass `null` to reset to time change-based BPM.
+</ParamField>
+
+<Warning>
+Avoid using this for setting BPM of menu music. Use metadata files instead. This is primarily for tools like the chart editor.
+</Warning>
+
+**Example:**
+
+```haxe
+// Force to 150 BPM
+Conductor.instance.forceBPM(150);
+
+// Reset to normal time change behavior
+Conductor.instance.forceBPM(null);
+```
+
+## Time Conversion Methods
+
+The Conductor provides several methods for converting between different time units.
+
+### getTimeInSteps()
+
+Converts milliseconds to steps.
+
+```haxe
+public function getTimeInSteps(ms:Float):Float
+```
+
+<ParamField path="ms" type="Float" required>
+  Time in milliseconds.
+</ParamField>
+
+**Returns:** Time in steps (float).
+
+### getStepTimeInMs()
+
+Converts steps to milliseconds.
+
+```haxe
+public function getStepTimeInMs(stepTime:Float):Float
+```
+
+<ParamField path="stepTime" type="Float" required>
+  Time in steps.
+</ParamField>
+
+**Returns:** Time in milliseconds.
+
+### getBeatTimeInMs()
+
+Converts beats to milliseconds.
+
+```haxe
+public function getBeatTimeInMs(beatTime:Float):Float
+```
+
+<ParamField path="beatTime" type="Float" required>
+  Time in beats.
+</ParamField>
+
+**Returns:** Time in milliseconds.
+
+### getTimeInMeasures()
+
+Converts milliseconds to measures.
+
+```haxe
+public function getTimeInMeasures(ms:Float):Float
+```
+
+<ParamField path="ms" type="Float" required>
+  Time in milliseconds.
+</ParamField>
+
+**Returns:** Time in measures (float).
+
+### getMeasureTimeInMs()
+
+Converts measures to milliseconds.
+
+```haxe
+public function getMeasureTimeInMs(measureTime:Float):Float
+```
+
+<ParamField path="measureTime" type="Float" required>
+  Time in measures.
+</ParamField>
+
+**Returns:** Time in milliseconds.
+
+**Example:**
+
+```haxe
+// Jump to beat 16
+var targetMs = Conductor.instance.getBeatTimeInMs(16);
+FlxG.sound.music.time = targetMs;
+
+// Get current position in steps
+var currentStep = Conductor.instance.getTimeInSteps(FlxG.sound.music.time);
+```
+
+### getTimeWithDelta()
+
+Returns a more accurate music time for higher framerates by including interpolated delta time.
+
+```haxe
+public function getTimeWithDelta():Float
+```
+
+**Returns:** Song position with delta applied for smoother timing.
+
+## Signals
+
+The Conductor dispatches signals when timing events occur. Use these to sync animations and gameplay to the music.
+
+<ResponseField name="stepHit" type="FlxSignal">
+  Fired when the conductor advances to a new step (16th note in 4/4 time).
+</ResponseField>
+
+<ResponseField name="beatHit" type="FlxSignal">
+  Fired when the conductor advances to a new beat (quarter note in 4/4 time).
+</ResponseField>
+
+<ResponseField name="measureHit" type="FlxSignal">
+  Fired when the conductor advances to a new measure.
+</ResponseField>
+
+**Example:**
+
+```haxe
+override function create():Void
+{
+  super.create();
+  
+  // Listen for beat hits
+  Conductor.beatHit.add(onBeatHit);
+}
+
+function onBeatHit():Void
+{
+  // Bump characters on every beat
+  boyfriend.dance();
+  dad.dance();
+  
+  // Camera zoom every 4 beats
+  if (Conductor.instance.currentBeat % 4 == 0)
+  {
+    FlxG.camera.zoom += 0.015;
+  }
+}
+
+override function destroy():Void
+{
+  Conductor.beatHit.remove(onBeatHit);
+  super.destroy();
+}
+```
+
+## Static Methods
+
+### reset()
+
+Resets the conductor by creating a new instance.
+
+```haxe
+public static function reset():Void
+```
+
+**Example:**
+
+```haxe
+// Reset conductor state when changing songs
+Conductor.reset();
+```
+
+### watchQuick()
+
+Adds conductor properties to the Flixel debugger watch window.
+
+```haxe
+public static function watchQuick(?target:Conductor):Void
+```
+
+<ParamField path="target" type="Conductor" optional>
+  The conductor instance to watch. Defaults to `Conductor.instance`.
+</ParamField>
+
+**Example:**
+
+```haxe
+#if debug
+Conductor.watchQuick();
+#end
+```
+
+## Understanding Steps, Beats, and Measures
+
+The Conductor uses musical notation concepts:
+
+- **Step**: A subdivision of a beat. In 4/4 time with 4 steps per beat, a step equals a 16th note.
+- **Beat**: The basic unit of time in music. In 4/4 time, a beat equals a quarter note.
+- **Measure**: A grouping of beats. In 4/4 time, a measure contains 4 beats.
+
+### Time Signature Effects
+
+- **4/4 time**: 4 beats per measure, 16 steps per measure
+  - 120 BPM = 2 beats/second, 8 steps/second
+- **3/4 time**: 3 beats per measure, 12 steps per measure  
+  - 120 BPM = 2 beats/second, 8 steps/second
+- **7/8 time**: 7 beats per measure (eighth notes!), 28 steps per measure
+  - 120 BPM = 4 beats/second, 16 steps/second
+
+## Example: Syncing to Music
+
+```haxe
+class MyMusicState extends MusicBeatState
+{
+  var particles:FlxEmitter;
+  
+  override function create():Void
+  {
+    super.create();
+    
+    // Load song and set up conductor
+    FlxG.sound.playMusic("assets/music/freakyMenu.ogg");
+    Conductor.instance.forceBPM(102);
+    
+    // Create particle emitter
+    particles = new FlxEmitter();
+    add(particles);
+    
+    // Listen for beat hits
+    Conductor.beatHit.add(onBeatHit);
+  }
+  
+  override function update(elapsed:Float):Void
+  {
+    super.update(elapsed);
+    
+    // Update conductor every frame
+    Conductor.instance.update();
+  }
+  
+  function onBeatHit():Void
+  {
+    // Emit particles on every beat
+    particles.start();
+    
+    // Do something special every 4 beats (every measure in 4/4 time)
+    if (Conductor.instance.currentBeat % 4 == 0)
+    {
+      trace("Measure " + Conductor.instance.currentMeasure);
+    }
+  }
+  
+  override function destroy():Void
+  {
+    Conductor.beatHit.remove(onBeatHit);
+    super.destroy();
+  }
+}
+```
+
+## See Also
+
+- [PlayState](/api/playstate) - Main gameplay state that uses Conductor extensively
+- [Song](/api/song) - Song data structure that provides time changes to the Conductor

@@ -1,0 +1,285 @@
+---
+title: CharacterData
+description: Character data structure and rendering configuration
+---
+
+The `CharacterData` module defines the structure for character appearance, animations, and behavior.
+
+## CharacterData Structure
+
+### Core Properties
+
+<ParamField path="version" type="String" required>
+  Semantic version of the character data format (current: `1.0.1`)
+</ParamField>
+
+<ParamField path="name" type="String" required>
+  Readable display name of the character
+</ParamField>
+
+<ParamField path="renderType" type="CharacterRenderType" default="sparrow">
+  Rendering system to use:
+  - `"sparrow"` - Single spritesheet with XML
+  - `"packer"` - Single spritesheet with TXT data
+  - `"multisparrow"` - Multiple spritesheets with XML
+  - `"animateatlas"` - Texture atlas with JSON (Adobe Animate)
+  - `"multianimateatlas"` - Multiple texture atlases
+  - `"custom"` - Custom rendering via scripts
+</ParamField>
+
+<ParamField path="assetPath" type="String" required>
+  Path to retrieve sprite assets (without extension)
+</ParamField>
+
+### Visual Properties
+
+<ParamField path="scale" type="Float" default="1.0">
+  Scale multiplier for the character sprite. Use smaller sprites with higher scale values (e.g., 6x) to save memory on pixel art
+</ParamField>
+
+<ParamField path="offsets" type="Array<Float>" default="[0, 0]">
+  Global position offset as `[x, y]` in pixels
+</ParamField>
+
+<ParamField path="cameraOffsets" type="Array<Float>" default="[0, 0]">
+  Camera focus offset as `[x, y]` when focusing on this character
+</ParamField>
+
+<ParamField path="isPixel" type="Bool" default="false">
+  Set to `true` to disable anti-aliasing for pixel art characters
+</ParamField>
+
+<ParamField path="flipX" type="Bool" default="false">
+  Whether to flip the entire sprite horizontally
+</ParamField>
+
+### Behavior Properties
+
+<ParamField path="danceEvery" type="Float" default="1.0">
+  Frequency of idle animation in beats. Supports precision up to 0.25. Higher values make the character dance less often
+</ParamField>
+
+<ParamField path="singTime" type="Float" default="8.0">
+  Minimum duration (in steps) a note animation plays. Too low causes idle between notes; too high causes overhang
+</ParamField>
+
+<ParamField path="startingAnimation" type="String" default="idle">
+  Name of the animation to play on spawn
+</ParamField>
+
+### Animations
+
+<ParamField path="animations" type="Array<AnimationData>" required>
+  Array of animation definitions. See [AnimationData](/api/data/animation-data) for structure
+</ParamField>
+
+### Health Icon
+
+<ParamField path="healthIcon" type="HealthIconData" optional>
+  Configuration for the character's health icon
+</ParamField>
+
+#### HealthIconData
+
+<ParamField path="healthIcon.id" type="String" optional>
+  Icon asset ID (defaults to character ID)
+</ParamField>
+
+<ParamField path="healthIcon.scale" type="Float" default="1.0">
+  Scale multiplier for the icon
+</ParamField>
+
+<ParamField path="healthIcon.flipX" type="Bool" default="false">
+  Whether to flip the icon horizontally
+</ParamField>
+
+<ParamField path="healthIcon.isPixel" type="Bool" default="false">
+  Multiply scale by 6 and disable antialiasing
+</ParamField>
+
+<ParamField path="healthIcon.offsets" type="Array<Float>" default="[0, 25]">
+  Icon offset as `[x, y]` in pixels
+</ParamField>
+
+### Death Configuration
+
+<ParamField path="death" type="DeathData" optional>
+  Configuration for death animation and camera behavior
+</ParamField>
+
+#### DeathData
+
+<ParamField path="death.cameraOffsets" type="Array<Float>" default="[0, 0]">
+  Camera offset as `[x, y]` during death animation. Defaults to character's graphic midpoint
+</ParamField>
+
+<ParamField path="death.cameraZoom" type="Float" default="1.0">
+  Camera zoom multiplier during death (relative to stage's default zoom)
+</ParamField>
+
+<ParamField path="death.preTransitionDelay" type="Float" default="0.0">
+  Delay in seconds between reaching 0 health and playing death animation
+</ParamField>
+
+### Animate Atlas Properties
+
+These properties only apply when `renderType` is `"animateatlas"` or `"multianimateatlas"`.
+
+<ParamField path="applyStageMatrix" type="Bool" default="false">
+  Whether to apply the stage matrix from Adobe Animate. Only enable if the character was pre-positioned in Animate
+</ParamField>
+
+<ParamField path="atlasSettings" type="TextureAtlasData" optional>
+  Advanced texture atlas configuration
+</ParamField>
+
+#### TextureAtlasData
+
+<ParamField path="atlasSettings.swfMode" type="Bool" optional>
+  Enable SWF-like behavior for MovieClip symbols
+</ParamField>
+
+<ParamField path="atlasSettings.cacheOnLoad" type="Bool" optional>
+  Cache filters and masks at load time instead of runtime
+</ParamField>
+
+<ParamField path="atlasSettings.filterQuality" type="Int" optional>
+  Filter quality: `0` (HIGH), `1` (MEDIUM), `2` (LOW), `3` (RUDY)
+</ParamField>
+
+<ParamField path="atlasSettings.applyStageMatrix" type="Bool" optional>
+  Override for `applyStageMatrix` at the atlas level
+</ParamField>
+
+<ParamField path="atlasSettings.useRenderTexture" type="Bool" optional>
+  Render as single texture instead of multiple limbs. Enable for alpha changes or shaders
+</ParamField>
+
+## Example: Basic Character
+
+```json
+{
+  "version": "1.0.1",
+  "name": "Boyfriend",
+  "renderType": "sparrow",
+  "assetPath": "characters/BOYFRIEND",
+  "scale": 1.0,
+  "isPixel": false,
+  "offsets": [0, 0],
+  "cameraOffsets": [-100, -100],
+  "startingAnimation": "idle",
+  "singTime": 8.0,
+  "danceEvery": 1.0,
+  "flipX": false,
+  "healthIcon": {
+    "id": "bf",
+    "scale": 1.0,
+    "flipX": false,
+    "offsets": [0, 25]
+  },
+  "animations": [
+    {
+      "name": "idle",
+      "prefix": "BF idle dance",
+      "frameRate": 24,
+      "looped": false,
+      "offsets": [0, 0]
+    },
+    {
+      "name": "singLEFT",
+      "prefix": "BF NOTE LEFT",
+      "frameRate": 24,
+      "looped": false,
+      "offsets": [5, -6]
+    },
+    {
+      "name": "singDOWN",
+      "prefix": "BF NOTE DOWN",
+      "frameRate": 24,
+      "looped": false,
+      "offsets": [-20, -51]
+    },
+    {
+      "name": "singUP",
+      "prefix": "BF NOTE UP",
+      "frameRate": 24,
+      "looped": false,
+      "offsets": [-46, 27]
+    },
+    {
+      "name": "singRIGHT",
+      "prefix": "BF NOTE RIGHT",
+      "frameRate": 24,
+      "looped": false,
+      "offsets": [-48, -7]
+    }
+  ]
+}
+```
+
+## Example: Pixel Character
+
+```json
+{
+  "version": "1.0.1",
+  "name": "Spirit",
+  "renderType": "sparrow",
+  "assetPath": "characters/spirit",
+  "scale": 6.0,
+  "isPixel": true,
+  "offsets": [0, 0],
+  "cameraOffsets": [100, -100],
+  "startingAnimation": "idle",
+  "singTime": 8.0,
+  "danceEvery": 1.0,
+  "flipX": false,
+  "healthIcon": {
+    "id": "spirit",
+    "scale": 1.0,
+    "isPixel": true
+  },
+  "animations": [
+    {
+      "name": "idle",
+      "prefix": "idle spirit",
+      "frameRate": 12,
+      "looped": false
+    },
+    {
+      "name": "singLEFT",
+      "prefix": "left spirit",
+      "frameRate": 12,
+      "looped": false
+    },
+    {
+      "name": "singRIGHT",
+      "prefix": "right spirit",
+      "frameRate": 12,
+      "looped": false
+    },
+    {
+      "name": "singUP",
+      "prefix": "up spirit",
+      "frameRate": 12,
+      "looped": false
+    },
+    {
+      "name": "singDOWN",
+      "prefix": "down spirit",
+      "frameRate": 12,
+      "looped": false
+    }
+  ]
+}
+```
+
+## Render Type Reference
+
+| Type | Description | Asset Requirements |
+|------|-------------|--------------------|
+| `sparrow` | Standard Flash-style | PNG + XML atlas |
+| `packer` | TexturePacker format | PNG + TXT atlas |
+| `multisparrow` | Multiple spritesheets | Multiple PNG/XML pairs |
+| `animateatlas` | Adobe Animate export | Animation.json + spritemap |
+| `multianimateatlas` | Multiple Animate atlases | Multiple Animation.json files |
+| `custom` | Script-based rendering | Defined in HScript/Polymod |

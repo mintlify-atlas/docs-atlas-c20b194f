@@ -1,0 +1,256 @@
+---
+title: PolymodHandler
+description: Core modding handler that manages mod loading, initialization, and asset management
+---
+
+The `PolymodHandler` class is the central hub for Friday Night Funkin's modding system, built on the [Polymod framework](https://polymod.io). It handles mod discovery, loading, script initialization, and asset management.
+
+## Overview
+
+PolymodHandler manages the complete mod lifecycle:
+
+- Scans and validates mods against API version requirements
+- Loads mod assets and scripts in priority order
+- Configures sandboxing and security restrictions
+- Hot-reloads mods during development
+- Registers scripted classes and modules
+
+## API Version
+
+```haxe
+public static var API_VERSION(get, never):String;
+public static final API_VERSION_RULE:String = ">=0.8.0 <0.9.0";
+```
+
+The API version system ensures mod compatibility:
+
+- **API_VERSION**: Returns the current game version (e.g., "0.8.0")
+- **API_VERSION_RULE**: Semantic versioning rule that defines compatible mod versions
+- Mods must specify their `api_version` in `_polymod_meta.json`
+
+## Loading Mods
+
+### Load All Mods
+
+```haxe
+PolymodHandler.loadAllMods();
+```
+
+Loads all discovered mods from the mods folder, useful for development.
+
+### Load Enabled Mods
+
+```haxe
+PolymodHandler.loadEnabledMods();
+```
+
+Loads only the mods enabled in the player's save data. This is the default behavior when starting the game.
+
+### Load Specific Mods
+
+```haxe
+PolymodHandler.loadModsById(["my-mod", "another-mod"]);
+```
+
+Loads an ordered list of mods by their IDs. Order matters - later mods can override earlier ones.
+
+### Load No Mods
+
+```haxe
+PolymodHandler.loadNoMods();
+```
+
+Initializes Polymod without loading any mods. Still configures the framework.
+
+## Mod Discovery
+
+### Get All Mods
+
+```haxe
+var allMods:Array<ModMetadata> = PolymodHandler.getAllMods();
+
+for (mod in allMods) {
+  trace('Found mod: ${mod.title} v${mod.modVersion}');
+  trace('  ID: ${mod.id}');
+  trace('  Description: ${mod.description}');
+}
+```
+
+Returns metadata for all mods in the mods folder, including disabled ones.
+
+### Get Enabled Mods
+
+```haxe
+var enabledMods:Array<ModMetadata> = PolymodHandler.getEnabledMods();
+```
+
+Returns metadata only for mods that are currently enabled in save data.
+
+### Get Loaded Mod IDs
+
+```haxe
+var loadedIds:Array<String> = PolymodHandler.loadedModIds;
+```
+
+List of mod IDs that were successfully loaded in the current session.
+
+## Hot Reloading
+
+```haxe
+PolymodHandler.forceReloadAssets();
+```
+
+Force-reloads all mod assets and scripts from disk. Useful for rapid iteration during development:
+
+- Clears all module and script caches
+- Reloads all mods (uses `loadAllMods` by default)
+- Reloads all game registries (songs, characters, stages, etc.)
+- Calls `onCreate` on all modules
+
+<Warning>
+Hot reloading freezes the game briefly while assets are reloaded. It's designed for development, not production.
+</Warning>
+
+## Mod Lifecycle
+
+When mods are loaded, PolymodHandler follows this sequence:
+
+1. **Scan**: Discovers all mods in the mods folder
+2. **Validate**: Checks API version compatibility
+3. **Initialize**: Configures Polymod with security rules
+4. **Load Assets**: Loads and merges mod assets (images, audio, data)
+5. **Parse Scripts**: Parses `.hxc` scripted class files
+6. **Register Classes**: Registers scripted classes with the engine
+7. **Load Modules**: Instantiates module scripts
+8. **Call onCreate**: Dispatches CREATE event to all modules
+
+## Security & Sandboxing
+
+PolymodHandler implements strict security rules to prevent malicious mods:
+
+### Blacklisted Classes
+
+These classes cannot be imported in mod scripts:
+
+- `Sys` - System command execution
+- `sys.*` - File system access
+- `cpp.Lib` - Native library loading
+- `haxe.Unserializer` - Arbitrary class instantiation
+- `polymod.*` - Framework manipulation
+- API classes that could enable cheating
+
+### Sandboxed Alternatives
+
+Safe alternatives are provided:
+
+```haxe
+// Restricted file access
+Polymod.addImportAlias('funkin.util.FileUtil', funkin.util.FileUtilSandboxed);
+
+// Read-only leaderboard access
+Polymod.addImportAlias('funkin.api.newgrounds.Leaderboards', 
+  funkin.api.newgrounds.Leaderboards.LeaderboardsSandboxed);
+
+// Safe reflection utilities
+Polymod.addImportAlias('Reflect', funkin.util.ReflectUtil);
+Polymod.addImportAlias('Type', funkin.util.ReflectUtil);
+```
+
+### Default Imports
+
+Commonly used classes are automatically available:
+
+```haxe
+import funkin.Assets;
+import funkin.Paths;
+import funkin.Preferences;
+import funkin.util.Constants;
+import flixel.FlxG;
+```
+
+## Mod Folder Structure
+
+```
+mods/
+└── my-mod/
+    ├── _polymod_meta.json    # Mod metadata (required)
+    ├── _polymod_icon.png     # Mod icon (optional)
+    ├── data/                  # Data files (JSON, text)
+    ├── images/                # Image assets
+    ├── sounds/                # Sound effects
+    ├── music/                 # Music tracks
+    ├── songs/                 # Chart data
+    └── scripts/               # Script files (.hxc)
+```
+
+## Mod Metadata
+
+Every mod requires a `_polymod_meta.json` file:
+
+```json
+{
+  "title": "My Cool Mod",
+  "description": "Adds new content to the game",
+  "contributors": [
+    {"name": "YourName"}
+  ],
+  "api_version": "0.8.0",
+  "mod_version": "1.0.0",
+  "license": "Apache-2.0"
+}
+```
+
+## Parse Rules
+
+PolymodHandler configures how different file types are merged:
+
+```haxe
+// Text files support line-based merging
+output.addType('txt', TextFileFormat.LINES);
+
+// Script files support plaintext merging
+output.addType('hscript', TextFileFormat.PLAINTEXT);
+output.addType('hxc', TextFileFormat.PLAINTEXT);
+```
+
+This allows mods to append to or modify existing game data.
+
+## Error Handling
+
+Errors during mod loading are handled by `PolymodErrorHandler`:
+
+- **Script Parse Errors**: Syntax errors in scripts show a popup
+- **Script Runtime Exceptions**: Runtime errors show a popup
+- **Import Errors**: Missing or blacklisted imports are reported
+- **Version Mismatches**: Incompatible mods are skipped
+
+## Example: Checking Loaded Mods
+
+```haxe
+import funkin.modding.PolymodHandler;
+
+class MyScript {
+  public static function main() {
+    // Check what mods are loaded
+    trace('Loaded mods:');
+    for (modId in PolymodHandler.loadedModIds) {
+      trace('  - $modId');
+    }
+    
+    // Get detailed info about all available mods
+    var allMods = PolymodHandler.getAllMods();
+    trace('\nTotal mods found: ${allMods.length}');
+    
+    for (mod in allMods) {
+      var status = PolymodHandler.loadedModIds.contains(mod.id) ? "LOADED" : "DISABLED";
+      trace('[$status] ${mod.title} (${mod.id}) - v${mod.modVersion}');
+    }
+  }
+}
+```
+
+## Related
+
+- [Module System](/api/modding/module) - Create persistent mods that respond to game events
+- [IScriptedClass](/api/modding/scripted-class) - Interfaces for scripted classes
+- [Polymod Documentation](https://polymod.io) - Full Polymod framework docs

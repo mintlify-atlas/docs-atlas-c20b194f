@@ -1,0 +1,209 @@
+---
+title: Introduction to Friday Night Funkin'
+description: Learn about Friday Night Funkin', the open-source rhythm game built with HaxeFlixel, and discover what these documentation pages can help you accomplish.
+---
+
+## What is Friday Night Funkin'?
+
+Friday Night Funkin' is an **open-source rhythm game** originally created for Ludum Dare 47. Built using HaxeFlixel and developed with love for Newgrounds and its community, the game challenges players to hit notes in sync with the music while battling opponents in rap battles.
+
+<CardGroup cols={2}>
+  <Card title="Open Source" icon="code">
+    Licensed under Apache 2.0, allowing you to explore, modify, and learn from the source code
+  </Card>
+  <Card title="Cross-Platform" icon="desktop">
+    Supports Windows, macOS, Linux, HTML5, Android, and iOS platforms
+  </Card>
+  <Card title="Moddable" icon="puzzle-piece">
+    Features built-in modding support via Polymod for custom songs, characters, and stages
+  </Card>
+  <Card title="Active Development" icon="rocket">
+    Continuously updated by The Funkin' Crew with new features and content
+  </Card>
+</CardGroup>
+
+## Key Features
+
+### HaxeFlixel-Powered Engine
+Friday Night Funkin' runs on **HaxeFlixel**, a powerful 2D game framework that compiles to multiple platforms:
+- C++ for native desktop builds (Windows, Mac, Linux)
+- JavaScript for HTML5/web builds
+- Mobile support for Android and iOS
+
+```haxe project.hxp
+static final VERSION:String = "0.8.3";
+static final TITLE:String = "Friday Night Funkin'";
+static final MAIN_CLASS:String = "Main";
+```
+
+### Multiple Game Modes
+
+<Tabs>
+  <Tab title="Story Mode">
+    Progress through a narrative campaign with sequential songs and unlockable content. Story Mode presents songs in a structured order with cutscenes between battles.
+  </Tab>
+  <Tab title="Freeplay">
+    Play any unlocked song with customizable difficulty levels and character selection. Perfect for practicing specific songs or chasing high scores.
+  </Tab>
+</Tabs>
+
+### Advanced Features
+
+The game includes numerous sophisticated features:
+
+<AccordionGroup>
+  <Accordion title="Chart Editor" icon="music">
+    Built-in chart editor for creating custom note patterns (enabled on desktop builds with `-DFEATURE_CHART_EDITOR`)
+  </Accordion>
+  <Accordion title="Stage Editor" icon="film">
+    Design custom stages with character positioning and visual elements
+  </Accordion>
+  <Accordion title="Discord Rich Presence" icon="discord">
+    Display your current song and status on Discord (desktop only)
+  </Accordion>
+  <Accordion title="Video Playback" icon="video">
+    Support for video cutscenes using hxvlc on desktop platforms
+  </Accordion>
+  <Accordion title="Newgrounds Integration" icon="globe">
+    Medal unlocking, leaderboards, and score tracking via Newgrounds API
+  </Accordion>
+</AccordionGroup>
+
+## Who Are These Docs For?
+
+### Developers
+If you want to:
+- **Build the game from source** for your platform
+- **Understand the codebase** architecture and systems
+- **Contribute** to the official repository
+- **Create modifications** or custom builds
+
+These docs provide compilation guides, code references, and architectural overviews.
+
+### Modders
+If you want to:
+- **Create custom content** (songs, characters, stages)
+- **Use the Polymod system** for asset replacement
+- **Script custom behavior** using HScript
+- **Package and distribute mods**
+
+While these docs cover the engine, check the [official modding documentation](https://funkincrew.github.io/funkin-modding-docs/) for detailed modding guides.
+
+### Contributors
+If you want to:
+- **Submit pull requests** to improve the game
+- **Report bugs** with proper context
+- **Add new features** or fix issues
+- **Follow coding standards**
+
+Refer to the [Contributing Guide](https://github.com/FunkinCrew/funkin/blob/main/docs/CONTRIBUTING.md) in the repository.
+
+## Project Structure
+
+The Friday Night Funkin' source code is organized as follows:
+
+```bash
+funkin/
+├── source/          # Haxe source code
+│   ├── funkin/     # Main game code
+│   ├── Main.hx     # Entry point
+│   └── ...
+├── assets/          # Game assets (via submodule)
+├── project.hxp      # Build configuration
+├── hmm.json         # Haxelib dependencies
+└── docs/            # Documentation files
+```
+
+<Note>
+The `assets` folder is loaded via Git submodules and contains proprietary content protected by copyright. See the [assets LICENSE](https://github.com/FunkinCrew/funkin.assets/blob/main/LICENSE.md) for details.
+</Note>
+
+## Technical Specifications
+
+<CardGroup cols={3}>
+  <Card title="Current Version">
+    **v0.8.3**  
+    Build 77
+  </Card>
+  <Card title="Engine">
+    **HaxeFlixel**  
+    Built on OpenFL/Lime
+  </Card>
+  <Card title="Language">
+    **Haxe**  
+    Compiles to C++/JS
+  </Card>
+</CardGroup>
+
+### Build Targets
+
+| Platform | Compiler | Status |
+|----------|----------|--------|
+| Windows | C++ (HXCPP) | ✅ Fully Supported |
+| macOS | C++ (HXCPP) | ✅ Fully Supported |
+| Linux | C++ (HXCPP) | ✅ Fully Supported |
+| HTML5 | JavaScript | ✅ Fully Supported |
+| Android | C++ (HXCPP) | ✅ Fully Supported |
+| iOS | C++ (HXCPP) | ✅ Fully Supported |
+
+## Development Philosophy
+
+Friday Night Funkin' is built with several core principles:
+
+<Steps>
+  <Step title="Performance First">
+    The game targets 60 FPS on all platforms with optimized rendering and audio systems
+  </Step>
+  <Step title="Modular Architecture">
+    Feature flags allow enabling/disabling functionality at compile time for different builds
+  </Step>
+  <Step title="Cross-Platform Compatibility">
+    Shared codebase compiles to desktop, web, and mobile with platform-specific optimizations
+  </Step>
+  <Step title="Open Development">
+    Source code is public and contributions are welcome through GitHub
+  </Step>
+</Steps>
+
+### Feature Flags
+
+The game uses extensive feature flags for conditional compilation:
+
+```bash
+# Enable debug features
+lime test windows -debug -DFEATURE_DEBUG_FUNCTIONS
+
+# Enable chart editor
+lime test windows -DFEATURE_CHART_EDITOR
+
+# Disable video playback
+lime test windows -DNO_FEATURE_VIDEO_PLAYBACK
+```
+
+<Info>
+A complete list of feature flags is defined in `project.hxp:191-532`. These control everything from Discord integration to mobile advertisements.
+</Info>
+
+## Credits
+
+Friday Night Funkin' is created by:
+
+- **Programming**: ninjamuffin99 (Lead), EliteMasterEric, MtH, GeoKureli, and the mobile team
+- **Art & Animation**: PhantomArcade3K, Evilsk8r, Moawling
+- **Music**: Kawaisprite, BassetFilms
+- **Company**: The Funkin' Crew Inc.
+
+<Warning>
+"Friday Night Funkin'" and the "Friday Night Funkin'" logo are trademarks of The Funkin' Crew Inc. The source code is licensed under Apache 2.0, but assets have separate licensing terms.
+</Warning>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="play" href="/quickstart">
+    Get the game running on your machine in minutes
+  </Card>
+  <Card title="Playing Guide" icon="gamepad" href="/playing">
+    Learn the controls and gameplay mechanics
+  </Card>
+</CardGroup>

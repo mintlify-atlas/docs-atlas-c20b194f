@@ -1,0 +1,418 @@
+---
+title: Audio Visualization
+description: Real-time audio visualization system with waveforms, spectrograms, and FFT analysis
+---
+
+## Overview
+
+The audio visualization system in Friday Night Funkin' provides real-time visual feedback for audio playback. It includes spectral analysis, waveform rendering, and character-specific visualizations like A-Bot's reactive display.
+
+Location: `funkin.audio.visualize`
+
+## Components
+
+### VisShit
+
+Core utility class for audio buffer access and FFT analysis.
+
+#### Properties
+
+<ParamField path="snd" type="FlxSound">
+  The sound to visualize.
+</ParamField>
+
+<ParamField path="setBuffer" type="Bool">
+  Whether the audio buffer has been successfully accessed.
+</ParamField>
+
+<ParamField path="audioData" type="Int16Array">
+  Raw audio sample data as 16-bit integers.
+</ParamField>
+
+<ParamField path="sampleRate" type="Int" default="44100">
+  Sample rate of the audio in Hz.
+</ParamField>
+
+<ParamField path="numSamples" type="Int">
+  Total number of audio samples.
+</ParamField>
+
+#### Constructor
+
+```haxe
+new(snd:FlxSound)
+```
+
+<ParamField path="snd" type="FlxSound" required>
+  The FlxSound instance to analyze.
+</ParamField>
+
+#### Methods
+
+##### checkAndSetBuffer
+
+```haxe
+checkAndSetBuffer():Void
+```
+
+Attempts to access the audio buffer from the playing sound. Must be called while the sound is playing.
+
+##### getCurAud
+
+```haxe
+static function getCurAud(aud:Int16Array, index:Int):CurAudioInfo
+```
+
+Extracts audio information at a specific sample index.
+
+<ParamField path="aud" type="Int16Array" required>
+  The audio data array.
+</ParamField>
+
+<ParamField path="index" type="Int" required>
+  Sample index to read.
+</ParamField>
+
+<ResponseField name="return" type="CurAudioInfo">
+  Object containing `left`, `right`, and `balanced` audio channel values (-1.0 to 1.0).
+</ResponseField>
+
+##### funnyFFT
+
+```haxe
+funnyFFT(samples:Array<Float>, ?skipped:Int = 1):Array<Array<Float>>
+```
+
+Performs Fast Fourier Transform analysis on audio samples.
+
+<ParamField path="samples" type="Array<Float>" required>
+  Array of audio samples to analyze.
+</ParamField>
+
+<ParamField path="skipped" type="Int" default="1">
+  Sample skip rate for optimization.
+</ParamField>
+
+<ResponseField name="return" type="Array<Array<Float>>">
+  2D array of frequency power values over time.
+</ResponseField>
+
+---
+
+### PolygonSpectogram
+
+Real-time waveform visualization using polygon mesh rendering.
+
+#### Properties
+
+<ParamField path="vis" type="VisShit">
+  The VisShit instance providing audio data.
+</ParamField>
+
+<ParamField path="visType" type="VISTYPE" default="UPDATED">
+  Visualization mode: `STATIC`, `UPDATED`, or `FREQUENCIES`.
+</ParamField>
+
+<ParamField path="daHeight" type="Float" default="FlxG.height">
+  Height of the visualization in pixels.
+</ParamField>
+
+<ParamField path="realtimeVisLenght" type="Float" default="0.2">
+  Length of audio to visualize in seconds for real-time mode.
+</ParamField>
+
+<ParamField path="realtimeStartOffset" type="Float" default="0">
+  Time offset for real-time visualization start position.
+</ParamField>
+
+<ParamField path="detail" type="Float" default="1">
+  Visualization detail multiplier. Higher values = more vertices.
+</ParamField>
+
+<ParamField path="thickness" type="Float" default="2">
+  Line thickness for waveform rendering.
+</ParamField>
+
+<ParamField path="waveAmplitude" type="Int" default="100">
+  Horizontal amplitude of the waveform.
+</ParamField>
+
+#### Constructor
+
+```haxe
+new(?daSound:FlxSound, ?col:FlxColor = FlxColor.WHITE, ?height:Float = 720, ?detail:Float = 1)
+```
+
+<ParamField path="daSound" type="FlxSound" optional>
+  The sound to visualize.
+</ParamField>
+
+<ParamField path="col" type="FlxColor" default="FlxColor.WHITE">
+  Color of the waveform.
+</ParamField>
+
+<ParamField path="height" type="Float" default="720">
+  Height of the visualization.
+</ParamField>
+
+<ParamField path="detail" type="Float" default="1">
+  Detail level multiplier.
+</ParamField>
+
+#### Methods
+
+##### setSound
+
+```haxe
+setSound(daSound:FlxSound):Void
+```
+
+Sets or changes the sound to visualize.
+
+<ParamField path="daSound" type="FlxSound" required>
+  The new sound to visualize.
+</ParamField>
+
+##### generateSection
+
+```haxe
+generateSection(start:Float = 0, seconds:Float = 1):Void
+```
+
+Generates a static waveform visualization for a specific section of audio.
+
+<ParamField path="start" type="Float" default="0">
+  Start time in milliseconds.
+</ParamField>
+
+<ParamField path="seconds" type="Float" default="1">
+  Duration to visualize in seconds.
+</ParamField>
+
+##### checkAndSetBuffer
+
+```haxe
+checkAndSetBuffer():Void
+```
+
+Initializes the audio buffer for visualization. Automatically called during update.
+
+---
+
+### ABotVis
+
+A-Bot character's reactive audio visualizer with animated bars.
+
+#### Properties
+
+<ParamField path="snd" type="Null<FlxSound>">
+  The sound being visualized.
+</ParamField>
+
+<ParamField path="analyzer" type="Null<SpectralAnalyzer>">
+  The spectral analyzer instance for frequency analysis.
+</ParamField>
+
+#### Constructor
+
+```haxe
+new(snd:FlxSound, pixel:Bool)
+```
+
+<ParamField path="snd" type="FlxSound" required>
+  The sound to visualize.
+</ParamField>
+
+<ParamField path="pixel" type="Bool" required>
+  Whether to use pixel art graphics (`true`) or HD graphics (`false`).
+</ParamField>
+
+#### Methods
+
+##### initAnalyzer
+
+```haxe
+initAnalyzer():Void
+```
+
+Initializes the spectral analyzer with A-Bot specific tuning. Must be called after the sound starts playing.
+
+**Analyzer Configuration:**
+- 7 frequency bars
+- Frequency range: 10 Hz to 22,000 Hz
+- dB range: -65 to -25
+- Optimized FFT settings per platform
+
+##### dumpSound
+
+```haxe
+dumpSound():Void
+```
+
+Clears the sound and analyzer references to free memory.
+
+#### Constants
+
+<ParamField path="BAR_COUNT" type="Int" value="7">
+  Number of frequency visualization bars.
+</ParamField>
+
+---
+
+## Type Definitions
+
+### CurAudioInfo
+
+```haxe
+typedef CurAudioInfo = {
+  var left:Float;
+  var right:Float;
+  var balanced:Float;
+}
+```
+
+Audio channel information at a specific sample:
+
+<ParamField path="left" type="Float">
+  Left channel value (-1.0 to 1.0).
+</ParamField>
+
+<ParamField path="right" type="Float">
+  Right channel value (-1.0 to 1.0).
+</ParamField>
+
+<ParamField path="balanced" type="Float">
+  Average of both channels (-1.0 to 1.0).
+</ParamField>
+
+### VISTYPE
+
+```haxe
+enum VISTYPE {
+  STATIC;
+  UPDATED;
+  FREQUENCIES;
+}
+```
+
+Visualization rendering modes:
+
+- `STATIC` - One-time generation
+- `UPDATED` - Real-time following playback
+- `FREQUENCIES` - Frequency-based visualization
+
+## Example Usage
+
+### Basic Waveform Visualization
+
+```haxe
+// Create a waveform visualizer
+var spectogram = new PolygonSpectogram(FlxG.sound.music, FlxColor.CYAN, 720, 1.5);
+spectogram.waveAmplitude = 150;
+spectogram.thickness = 3;
+spectogram.visType = UPDATED;
+add(spectogram);
+
+// Will automatically update as music plays
+```
+
+### Static Section Visualization
+
+```haxe
+// Generate waveform for a specific section
+var spectogram = new PolygonSpectogram();
+spectogram.setSound(mySound);
+spectogram.visType = STATIC;
+spectogram.generateSection(5000, 2); // 2 seconds starting at 5s
+add(spectogram);
+```
+
+### A-Bot Reactive Visualizer
+
+```haxe
+// Create A-Bot visualizer
+var abotVis = new ABotVis(FlxG.sound.music, false); // HD graphics
+add(abotVis);
+
+// Initialize after music starts
+FlxG.sound.music.play();
+abotVis.initAnalyzer();
+
+// Bars will automatically react to music frequencies
+```
+
+### Custom FFT Analysis
+
+```haxe
+// Create analyzer
+var visShit = new VisShit(FlxG.sound.music);
+
+// Wait for buffer
+if (FlxG.sound.music.playing) {
+  visShit.checkAndSetBuffer();
+  
+  if (visShit.setBuffer) {
+    // Get sample at current time
+    var sampleIndex = Math.floor(visShit.snd.time / 1000 * visShit.sampleRate);
+    var audioInfo = VisShit.getCurAud(visShit.audioData, sampleIndex);
+    
+    trace('Left: ${audioInfo.left}, Right: ${audioInfo.right}');
+  }
+}
+```
+
+### Real-time Waveform with Custom Settings
+
+```haxe
+// High detail, custom colored waveform
+var waveform = new PolygonSpectogram(music, FlxColor.LIME, 600, 2.0);
+waveform.realtimeVisLenght = 0.5; // Show 500ms of audio
+waveform.realtimeStartOffset = 0.1; // Start 100ms ahead
+waveform.waveAmplitude = 200;
+waveform.thickness = 4;
+waveform.visType = UPDATED;
+add(waveform);
+```
+
+### Multi-track Visualization
+
+```haxe
+// Visualize instrumental and vocals separately
+var instVis = new PolygonSpectogram(instrumental, FlxColor.BLUE, 360, 1.0);
+instVis.visType = UPDATED;
+add(instVis);
+
+var vocalVis = new PolygonSpectogram(vocals, FlxColor.RED, 360, 1.0);
+vocalVis.y = 360;
+vocalVis.visType = UPDATED;
+add(vocalVis);
+```
+
+## Performance Considerations
+
+- **Buffer Access**: `checkAndSetBuffer()` only works while sound is playing
+- **Detail Level**: Higher `detail` values create more vertices, impacting performance
+- **FFT Size**: Native platforms use smaller FFT (256) vs HTML5 for optimization
+- **Real-time Updates**: `UPDATED` mode regenerates visualization every frame
+- **Memory**: Call `dumpSound()` on ABotVis when done to free resources
+
+## Platform Notes
+
+- **HTML5**: Uses optimized browser FFT APIs
+- **Native**: Uses custom FFT implementation with reduced FFT size (256)
+- **Audio Buffer**: Only accessible while sound is actively playing
+- **Sample Rate**: Defaults to 44100 Hz, detected from audio file
+
+## Advanced: Spectral Analysis
+
+The ABotVis component uses `SpectralAnalyzer` from `funkin.vis.dsp` with these settings:
+
+```haxe
+analyzer.minDb = -65;    // Minimum decibel threshold
+analyzer.maxDb = -25;    // Maximum decibel threshold
+analyzer.maxFreq = 22000; // Upper frequency limit (Hz)
+analyzer.minFreq = 10;    // Lower frequency limit (Hz)
+analyzer.fftN = 256;      // FFT size (native only)
+```
+
+These values are tuned for music visualization and can be adjusted for different visual effects or audio types.

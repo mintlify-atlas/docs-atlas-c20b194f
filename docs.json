@@ -1,122 +1,130 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "Friday Night Funkin'",
+  "theme": "almond",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#e6d9a3",
+    "light": "#645c4b",
+    "dark": "#0e0c0b"
   },
-  "favicon": "/favicon.svg",
+  "favicon": "https://media.brand.dev/20954f39-5a57-4b8a-b2cf-e3407d20c44d.png",
+  "logo": {
+    "light": "https://media.brand.dev/a7cd4671-7301-46cd-a649-627842aecef8.jpg",
+    "dark": "https://media.brand.dev/a7cd4671-7301-46cd-a649-627842aecef8.jpg"
+  },
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/FunkinCrew/Funkin"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/FunkinCrew/Funkin"
+    }
+  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Documentation",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Getting Started",
             "pages": [
-              "index",
+              "introduction",
               "quickstart",
-              "development"
+              "playing"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Development",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
+              "development/compiling",
+              "development/compiling-mac",
+              "development/compiling-mobile",
+              "development/contributing",
+              "development/troubleshooting",
+              "development/style-guide"
             ]
           },
           {
-            "group": "Writing content",
+            "group": "Modding",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
+              "modding/overview",
+              "modding/installing-mods",
+              "modding/creating-mods",
+              "modding/scripting",
+              "modding/polymod"
             ]
           },
           {
-            "group": "AI tools",
+            "group": "Game Systems",
             "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "systems/gameplay",
+              "systems/characters",
+              "systems/stages",
+              "systems/songs",
+              "systems/charting"
+            ]
+          },
+          {
+            "group": "Tools",
+            "pages": [
+              "tools/chart-editor",
+              "tools/stage-editor",
+              "tools/animation-editor",
+              "tools/debug-hotkeys"
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "API Reference",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Core",
             "pages": [
-              "api-reference/introduction"
+              "api/conductor",
+              "api/playstate",
+              "api/assets",
+              "api/preferences"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Audio",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "api/audio/funkin-sound",
+              "api/audio/voices-group",
+              "api/audio/visualize"
+            ]
+          },
+          {
+            "group": "Play",
+            "pages": [
+              "api/play/character",
+              "api/play/stage",
+              "api/play/notes",
+              "api/play/events"
+            ]
+          },
+          {
+            "group": "Data",
+            "pages": [
+              "api/data/song-data",
+              "api/data/character-data",
+              "api/data/stage-data"
+            ]
+          },
+          {
+            "group": "Modding",
+            "pages": [
+              "api/modding/polymod-handler",
+              "api/modding/scripted-class",
+              "api/modding/module"
             ]
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
-    }
-  },
-  "contextual": {
-    "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
-  },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
+    ]
   }
 }

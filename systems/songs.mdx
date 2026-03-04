@@ -1,0 +1,583 @@
+---
+title: Song System
+description: Song structure, metadata, audio files, BPM, and time changes
+---
+
+The song system manages song metadata, chart data, audio playback, and the integration between music and gameplay.
+
+## Song Architecture
+
+### Song Class
+
+The `Song` class manages song data and metadata:
+
+```haxe
+class Song implements IRegistryEntry<SongMetadata>
+{
+  public var id:String;                           // Song ID
+  public var songName:String;                     // Display name
+  public var songArtist:String;                   // Artist name
+  public var charter:String;                      // Charter name
+  public var variation:String;                    // Current variation
+  
+  final _metadata:Map<String, SongMetadata>;      // Per-variation metadata
+  final difficulties:Map<String, Map<String, SongDifficulty>>; // Chart data
+}
+```
+
+**Key Properties:**
+
+<ParamField path="id" type="String">
+  Unique song identifier (e.g., "tutorial", "bopeebo")
+</ParamField>
+
+<ParamField path="songName" type="String">
+  Display name shown to players
+</ParamField>
+
+<ParamField path="songArtist" type="String">
+  Artist credit
+</ParamField>
+
+<ParamField path="charter" type="String">
+  Person who created the chart
+</ParamField>
+
+<ParamField path="variation" type="String">
+  Current variation (e.g., "default", "erect")
+</ParamField>
+
+## Song Metadata Format
+
+Song metadata is stored in `assets/data/songs/[id]/[id]-metadata.json`:
+
+```json
+{
+  "version": "2.2.4",
+  "songName": "Bopeebo",
+  "artist": "Kawai Sprite",
+  "charter": "FunkinCrew",
+  "divisions": 96,
+  "looped": false,
+  "offsets": {
+    "instrumental": 0,
+    "altInstrumentals": {},
+    "vocals": {}
+  },
+  "timeFormat": "ms",
+  "timeChanges": [
+    {
+      "t": 0,
+      "bpm": 100,
+      "n": 4,
+      "d": 4,
+      "bt": [4, 4, 4, 4]
+    }
+  ],
+  "playData": {
+    "songVariations": [],
+    "difficulties": ["easy", "normal", "hard"],
+    "characters": {
+      "player": "bf",
+      "girlfriend": "gf",
+      "opponent": "dad",
+      "instrumental": "",
+      "altInstrumentals": []
+    },
+    "stage": "mainStage",
+    "noteStyle": "funkin",
+    "ratings": {
+      "easy": 1,
+      "normal": 3,
+      "hard": 5
+    },
+    "album": "volume1",
+    "previewStart": 0,
+    "previewEnd": 15000
+  },
+  "generatedBy": "FunkinCrew"
+}
+```
+
+### Metadata Fields
+
+<ParamField path="version" type="String" required>
+  Metadata format version (currently "2.2.4")
+</ParamField>
+
+<ParamField path="songName" type="String" required>
+  Display name of the song
+</ParamField>
+
+<ParamField path="artist" type="String" required>
+  Song artist name
+</ParamField>
+
+<ParamField path="charter" type="String" optional>
+  Person who charted the song
+</ParamField>
+
+<ParamField path="divisions" type="Int" default="96">
+  Number of divisions per beat (used for chart precision)
+</ParamField>
+
+<ParamField path="looped" type="Bool" default="false">
+  Whether the song should loop
+</ParamField>
+
+<ParamField path="timeFormat" type="String" default="ms">
+  Time format: `"ms"` (milliseconds), `"ticks"`, or `"float"`
+</ParamField>
+
+<ParamField path="generatedBy" type="String">
+  Tool or person that generated this metadata
+</ParamField>
+
+## Time Changes
+
+Songs can have multiple BPM and time signature changes:
+
+```json
+{
+  "timeChanges": [
+    {
+      "t": 0,
+      "bpm": 100,
+      "n": 4,
+      "d": 4,
+      "bt": [4, 4, 4, 4]
+    },
+    {
+      "t": 32000,
+      "bpm": 150,
+      "n": 4,
+      "d": 4
+    }
+  ]
+}
+```
+
+### SongTimeChange Fields
+
+<ParamField path="t" type="Float" required>
+  Timestamp when the change occurs (in the format specified by `timeFormat`)
+</ParamField>
+
+<ParamField path="bpm" type="Float" required>
+  New BPM value (quarter notes per minute)
+</ParamField>
+
+<ParamField path="n" type="Int" default="4">
+  Time signature numerator (the '4' in 4/4)
+</ParamField>
+
+<ParamField path="d" type="Int" default="4">
+  Time signature denominator (the '4' in 4/4)
+</ParamField>
+
+<ParamField path="b" type="Float" optional>
+  Beat time at this change (calculated automatically if not provided)
+</ParamField>
+
+<ParamField path="bt" type="Array<Int>" default="[4, 4, 4, 4]">
+  Beat tuplets - defines step subdivisions for each beat
+</ParamField>
+
+**Example: BPM change mid-song**
+
+```json
+{
+  "timeChanges": [
+    {
+      "t": 0,
+      "bpm": 120,
+      "n": 4,
+      "d": 4
+    },
+    {
+      "t": 48000,
+      "bpm": 180,
+      "n": 4,
+      "d": 4
+    }
+  ]
+}
+```
+
+This song starts at 120 BPM, then changes to 180 BPM at 48 seconds.
+
+## Audio Offsets
+
+Offsets compensate for timing discrepancies:
+
+```json
+{
+  "offsets": {
+    "instrumental": -5.0,
+    "altInstrumentals": {
+      "remix": -10.0
+    },
+    "vocals": {
+      "bf": 0,
+      "dad": 2.5
+    }
+  }
+}
+```
+
+### Offset Fields
+
+<ParamField path="instrumental" type="Float" default="0">
+  Offset for the main instrumental track (in milliseconds). Negative values start the track earlier.
+</ParamField>
+
+<ParamField path="altInstrumentals" type="Map<String, Float>" default="{}">
+  Offsets for alternate instrumental tracks
+</ParamField>
+
+<ParamField path="vocals" type="Map<String, Float>" default="{}">
+  Per-character vocal offsets (applied on top of instrumental offset)
+</ParamField>
+
+**How offsets work:**
+
+- **Negative offset**: Audio starts earlier (compensates for delayed chart)
+- **Positive offset**: Audio starts later (compensates for early chart)
+- Vocal offsets are added to instrumental offset
+
+**Example:**
+```json
+{
+  "instrumental": -50,
+  "vocals": {
+    "bf": 10,
+    "dad": 0
+  }
+}
+```
+
+- Instrumental starts 50ms early
+- BF vocals start 40ms early (-50 + 10)
+- Dad vocals start 50ms early (-50 + 0)
+
+## Play Data
+
+The `playData` section contains gameplay-related metadata:
+
+```json
+{
+  "playData": {
+    "songVariations": [],
+    "difficulties": ["easy", "normal", "hard"],
+    "characters": {
+      "player": "bf",
+      "girlfriend": "gf",
+      "opponent": "dad"
+    },
+    "stage": "mainStage",
+    "noteStyle": "funkin",
+    "ratings": {
+      "easy": 1,
+      "normal": 3,
+      "hard": 5
+    },
+    "album": "volume1",
+    "previewStart": 0,
+    "previewEnd": 15000
+  }
+}
+```
+
+### Play Data Fields
+
+<ParamField path="songVariations" type="Array<String>" default="[]">
+  List of variations (e.g., `["erect"]`). Each variation has its own metadata file.
+</ParamField>
+
+<ParamField path="difficulties" type="Array<String>" required>
+  Available difficulty levels for this song
+</ParamField>
+
+<ParamField path="characters" type="SongCharacterData" required>
+  Character IDs for player, opponent, and girlfriend
+</ParamField>
+
+<ParamField path="stage" type="String" required>
+  Stage ID to use for this song
+</ParamField>
+
+<ParamField path="noteStyle" type="String" default="funkin">
+  Note skin/style ID
+</ParamField>
+
+<ParamField path="ratings" type="Map<String, Int>" optional>
+  Difficulty ratings shown in freeplay (1-10 scale)
+</ParamField>
+
+<ParamField path="album" type="String" optional>
+  Album ID for freeplay display
+</ParamField>
+
+<ParamField path="previewStart" type="Int" default="0">
+  Start time for audio preview in freeplay (milliseconds)
+</ParamField>
+
+<ParamField path="previewEnd" type="Int" default="15000">
+  End time for audio preview in freeplay (milliseconds)
+</ParamField>
+
+### Character Data
+
+```json
+{
+  "characters": {
+    "player": "bf",
+    "girlfriend": "gf",
+    "opponent": "dad",
+    "instrumental": "",
+    "altInstrumentals": ["remix", "acoustic"],
+    "opponentVocals": ["dad"],
+    "playerVocals": ["bf"]
+  }
+}
+```
+
+<ParamField path="player" type="String" default="bf">
+  Player character ID
+</ParamField>
+
+<ParamField path="opponent" type="String" default="dad">
+  Opponent character ID
+</ParamField>
+
+<ParamField path="girlfriend" type="String" default="gf">
+  Girlfriend character ID
+</ParamField>
+
+<ParamField path="instrumental" type="String" default="">
+  Default instrumental track ID (empty string = default)
+</ParamField>
+
+<ParamField path="altInstrumentals" type="Array<String>" default="[]">
+  List of alternate instrumental IDs
+</ParamField>
+
+<ParamField path="playerVocals" type="Array<String>" optional>
+  Character IDs whose vocals are in the player track
+</ParamField>
+
+<ParamField path="opponentVocals" type="Array<String>" optional>
+  Character IDs whose vocals are in the opponent track
+</ParamField>
+
+## Audio File Structure
+
+Audio files are located in `assets/songs/[id]/`:
+
+**Required files:**
+- `Inst.ogg` - Main instrumental track
+- `Voices-Player.ogg` - Player vocals (if song has vocals)
+- `Voices-Opponent.ogg` - Opponent vocals (if song has vocals)
+
+**Optional alternate instrumentals:**
+- `Inst-[altId].ogg` - Alternate instrumental (e.g., `Inst-remix.ogg`)
+
+**File naming conventions:**
+- Use `.ogg` format (Vorbis codec)
+- Capitalize properly: `Inst.ogg`, not `inst.ogg`
+- Alternate instrumentals: `Inst-[id].ogg`
+- Character-specific vocals: `Voices-[charId].ogg`
+
+### Vocal Tracks
+
+Vocals can be split by character or combined:
+
+**Split by role (recommended):**
+```
+Voices-Player.ogg
+Voices-Opponent.ogg
+```
+
+**Split by character:**
+```
+Voices-bf.ogg
+Voices-dad.ogg
+```
+
+**Combined vocals (legacy):**
+```
+Voices.ogg
+```
+
+The engine automatically determines which format is used.
+
+## Song Variations
+
+Variations allow alternate versions of a song:
+
+**Variation structure:**
+```
+assets/data/songs/bopeebo/
+  bopeebo-metadata.json       (default variation)
+  bopeebo-chart.json          (default charts)
+  bopeebo-erect-metadata.json (erect variation metadata)
+  bopeebo-erect-chart.json    (erect variation charts)
+```
+
+**Default metadata references variations:**
+```json
+{
+  "playData": {
+    "songVariations": ["erect"]
+  }
+}
+```
+
+Each variation has:
+- Separate metadata file
+- Separate chart file
+- Can have different BPM, characters, or stage
+- Can share or have unique audio files
+
+## Time Formats
+
+FNF supports three time formats:
+
+### Milliseconds (Default)
+
+```json
+{
+  "timeFormat": "ms",
+  "timeChanges": [
+    {"t": 0, "bpm": 100},
+    {"t": 32000, "bpm": 150}
+  ]
+}
+```
+
+Times are in milliseconds. Most intuitive for editing.
+
+### Ticks
+
+```json
+{
+  "timeFormat": "ticks",
+  "divisions": 96,
+  "timeChanges": [
+    {"t": 0, "bpm": 100},
+    {"t": 3840, "bpm": 150}
+  ]
+}
+```
+
+Ticks are divisions of a beat. Useful for MIDI imports.
+- 1 beat = `divisions` ticks (typically 96)
+- Grid-aligned, prevents floating point errors
+
+### Float
+
+```json
+{
+  "timeFormat": "float",
+  "timeChanges": [
+    {"t": 0, "bpm": 100},
+    {"t": 32.0, "bpm": 150}
+  ]
+}
+```
+
+Times are in seconds as floating point values.
+
+## Loading Songs
+
+Songs are loaded via `SongRegistry`:
+
+```haxe
+// Load song
+var song:Song = SongRegistry.instance.fetchEntry("bopeebo");
+
+// Access metadata
+trace(song.songName);   // "Bopeebo"
+trace(song.songArtist); // "Kawai Sprite"
+
+// Get specific difficulty
+var difficulty = song.getDifficulty("hard");
+trace(difficulty.getScrollSpeed()); // e.g., 1.5
+```
+
+## Conductor Integration
+
+Songs provide timing data to the Conductor:
+
+```haxe
+// Initialize conductor with song time changes
+Conductor.instance.mapTimeChanges(song.getTimeChanges());
+
+// During gameplay
+Conductor.instance.update(FlxG.sound.music.time);
+
+// Access current timing
+var currentBPM = Conductor.instance.bpm;
+var currentBeat = Conductor.instance.currentBeat;
+var currentStep = Conductor.instance.currentStep;
+```
+
+The Conductor:
+1. Loads time changes from song metadata
+2. Calculates beat/step times based on BPM
+3. Fires timing signals (stepHit, beatHit, measureHit)
+4. Provides timing utilities for gameplay
+
+## Example: Complete Song Setup
+
+**Directory structure:**
+```
+assets/
+  data/songs/myawesomesong/
+    myawesomesong-metadata.json
+    myawesomesong-chart.json
+  songs/myawesomesong/
+    Inst.ogg
+    Voices-Player.ogg
+    Voices-Opponent.ogg
+```
+
+**myawesomesong-metadata.json:**
+```json
+{
+  "version": "2.2.4",
+  "songName": "My Awesome Song",
+  "artist": "Cool Artist",
+  "charter": "Me",
+  "timeFormat": "ms",
+  "timeChanges": [
+    {
+      "t": 0,
+      "bpm": 140,
+      "n": 4,
+      "d": 4
+    }
+  ],
+  "offsets": {
+    "instrumental": 0,
+    "vocals": {}
+  },
+  "playData": {
+    "difficulties": ["easy", "normal", "hard"],
+    "characters": {
+      "player": "bf",
+      "girlfriend": "gf",
+      "opponent": "dad"
+    },
+    "stage": "mainStage",
+    "noteStyle": "funkin",
+    "ratings": {
+      "easy": 2,
+      "normal": 5,
+      "hard": 8
+    },
+    "previewStart": 5000,
+    "previewEnd": 20000
+  }
+}
+```

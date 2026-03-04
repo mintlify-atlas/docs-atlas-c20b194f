@@ -1,0 +1,315 @@
+---
+title: SongData
+description: Song metadata, chart, and music data structures
+---
+
+The `SongData` module defines the structure for song information, charts, and metadata in Friday Night Funkin'.
+
+## Core Classes
+
+### SongMetadata
+
+Contains information about a song for display in Freeplay and loading chart assets.
+
+<ParamField path="version" type="Version" required>
+  Semantic versioning string for the song data format
+</ParamField>
+
+<ParamField path="songName" type="String" default="Unknown">
+  Display name of the song
+</ParamField>
+
+<ParamField path="artist" type="String" default="Unknown">
+  Artist who created the song
+</ParamField>
+
+<ParamField path="charter" type="String" optional>
+  Person who charted the song
+</ParamField>
+
+<ParamField path="divisions" type="Int" default="96" optional>
+  Grid divisions for charting
+</ParamField>
+
+<ParamField path="looped" type="Bool" default="false" optional>
+  Whether the song should loop
+</ParamField>
+
+<ParamField path="offsets" type="SongOffsets" optional>
+  Instrumental and vocal offsets relative to the chart
+</ParamField>
+
+<ParamField path="playData" type="SongPlayData" required>
+  Data relating to the song's gameplay
+</ParamField>
+
+<ParamField path="generatedBy" type="String" required>
+  Tool or editor that generated the file
+</ParamField>
+
+<ParamField path="timeFormat" type="SongTimeFormat" default="ms">
+  Time format used in the chart: `"ticks"`, `"float"`, or `"ms"`
+</ParamField>
+
+<ParamField path="timeChanges" type="Array<SongTimeChange>" required>
+  Array of tempo and time signature changes
+</ParamField>
+
+### SongPlayData
+
+Defines gameplay-specific song data.
+
+<ParamField path="songVariations" type="Array<String>" default="[]" optional>
+  Available variations of the song (e.g., `"erect"`, `"pico"`)
+</ParamField>
+
+<ParamField path="difficulties" type="Array<String>" required>
+  Available difficulties for this song
+</ParamField>
+
+<ParamField path="characters" type="SongCharacterData" required>
+  Characters used in the song
+</ParamField>
+
+<ParamField path="stage" type="String" required>
+  Stage ID to use for this song
+</ParamField>
+
+<ParamField path="noteStyle" type="String" required>
+  Note skin to use
+</ParamField>
+
+<ParamField path="ratings" type="Map<String, Int>" default="{normal: 0}" optional>
+  Difficulty ratings as displayed in Freeplay (key is difficulty ID)
+</ParamField>
+
+<ParamField path="album" type="String" optional>
+  Album ID to display in Freeplay
+</ParamField>
+
+<ParamField path="stickerPack" type="String" optional>
+  Sticker pack for transitions
+</ParamField>
+
+<ParamField path="previewStart" type="Int" default="0" optional>
+  Audio preview start time in milliseconds
+</ParamField>
+
+<ParamField path="previewEnd" type="Int" default="15000" optional>
+  Audio preview end time in milliseconds
+</ParamField>
+
+### SongCharacterData
+
+Information about characters used in a song variation.
+
+<ParamField path="player" type="String" default="''" optional>
+  Player character ID (usually Boyfriend)
+</ParamField>
+
+<ParamField path="girlfriend" type="String" default="''" optional>
+  Girlfriend/spectator character ID
+</ParamField>
+
+<ParamField path="opponent" type="String" default="''" optional>
+  Opponent character ID
+</ParamField>
+
+<ParamField path="instrumental" type="String" default="''" optional>
+  Instrumental variant to use
+</ParamField>
+
+<ParamField path="altInstrumentals" type="Array<String>" default="[]" optional>
+  Alternative instrumental variants available
+</ParamField>
+
+<ParamField path="opponentVocals" type="Array<String>" optional>
+  Character IDs for opponent vocals
+</ParamField>
+
+<ParamField path="playerVocals" type="Array<String>" optional>
+  Character IDs for player vocals
+</ParamField>
+
+### SongChartData
+
+Contains chart data for notes and events.
+
+<ParamField path="version" type="Version" required>
+  Semantic versioning string for chart data format
+</ParamField>
+
+<ParamField path="scrollSpeed" type="Map<String, Float>" required>
+  Scroll speeds per difficulty
+</ParamField>
+
+<ParamField path="events" type="Array<SongEventData>" required>
+  Song events (camera focuses, animations, etc.)
+</ParamField>
+
+<ParamField path="notes" type="Map<String, Array<SongNoteData>>" required>
+  Note data per difficulty
+</ParamField>
+
+<ParamField path="generatedBy" type="String" required>
+  Tool that generated the chart
+</ParamField>
+
+### SongNoteData
+
+Represents a single note in the chart.
+
+<ParamField path="t" type="Float" required>
+  Timestamp in the song's time format
+</ParamField>
+
+<ParamField path="d" type="Int" required>
+  Note data index. `0-3` for directions (left, down, up, right). `floor(d / 4)` determines strumline (0 = player, 1 = opponent)
+</ParamField>
+
+<ParamField path="l" type="Float" default="0" optional>
+  Length for hold notes (0 for tap notes)
+</ParamField>
+
+<ParamField path="k" type="String" optional>
+  Note kind for custom behavior (e.g., `"mine"`, `"ghost"`)
+</ParamField>
+
+<ParamField path="p" type="Array<NoteParamData>" default="[]" optional>
+  Custom parameters for note kinds
+</ParamField>
+
+### SongEventData
+
+Represents a song event.
+
+<ParamField path="t" type="Float" required>
+  Timestamp in the song's time format
+</ParamField>
+
+<ParamField path="e" type="String" required>
+  Event kind (e.g., `"FocusCamera"`, `"PlayAnimation"`)
+</ParamField>
+
+<ParamField path="v" type="Dynamic" optional>
+  Event value/data (structure depends on event kind)
+</ParamField>
+
+### SongTimeChange
+
+Defines tempo and time signature changes.
+
+<ParamField path="t" type="Float" required>
+  Timestamp of the time change
+</ParamField>
+
+<ParamField path="bpm" type="Float" required>
+  Quarter notes per minute
+</ParamField>
+
+<ParamField path="n" type="Int" default="4" optional>
+  Time signature numerator
+</ParamField>
+
+<ParamField path="d" type="Int" default="4" optional>
+  Time signature denominator (should be power of 2)
+</ParamField>
+
+<ParamField path="b" type="Float" optional>
+  Beat time for linear calculation
+</ParamField>
+
+<ParamField path="bt" type="Array<Int>" default="[4, 4, 4, 4]" optional>
+  Beat tuplets defining step divisions per beat
+</ParamField>
+
+### SongOffsets
+
+Offsets to correct timing relative to the chart.
+
+<ParamField path="instrumental" type="Float" default="0" optional>
+  Instrumental offset in milliseconds. Negative values start earlier, positive values add silence
+</ParamField>
+
+<ParamField path="altInstrumentals" type="Map<String, Float>" default="{}" optional>
+  Offsets for alternate instrumentals
+</ParamField>
+
+<ParamField path="vocals" type="Map<String, Float>" default="{}" optional>
+  Vocal offsets per character, applied on top of instrumental offset
+</ParamField>
+
+<ParamField path="altVocals" type="Map<String, Map<String, Float>>" default="{}" optional>
+  Vocal offsets per character for alternate instrumentals
+</ParamField>
+
+## Example: Song Metadata
+
+```json
+{
+  "version": "2.0.0",
+  "songName": "Tutorial",
+  "artist": "Kawai Sprite",
+  "charter": "MasterEric",
+  "timeFormat": "ms",
+  "timeChanges": [
+    {
+      "t": 0,
+      "bpm": 100,
+      "n": 4,
+      "d": 4
+    }
+  ],
+  "playData": {
+    "songVariations": [],
+    "difficulties": ["normal"],
+    "characters": {
+      "player": "bf",
+      "girlfriend": "gf",
+      "opponent": "gf",
+      "instrumental": ""
+    },
+    "stage": "mainStage",
+    "noteStyle": "funkin",
+    "ratings": {
+      "normal": 1
+    }
+  },
+  "generatedBy": "Funkin' Crew Chart Editor"
+}
+```
+
+## Example: Chart Data
+
+```json
+{
+  "version": "2.0.0",
+  "scrollSpeed": {
+    "normal": 1.0
+  },
+  "events": [
+    {
+      "t": 1000,
+      "e": "FocusCamera",
+      "v": {
+        "char": 1
+      }
+    }
+  ],
+  "notes": {
+    "normal": [
+      {
+        "t": 2000,
+        "d": 0,
+        "l": 0
+      },
+      {
+        "t": 2500,
+        "d": 1,
+        "l": 200
+      }
+    ]
+  },
+  "generatedBy": "Funkin' Crew Chart Editor"
+}
+```

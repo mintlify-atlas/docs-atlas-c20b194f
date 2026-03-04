@@ -1,0 +1,361 @@
+---
+title: Stage Editor
+description: Guide to using the Stage Editor for creating and arranging stage props and camera zones
+icon: image
+---
+
+The Stage Editor (Stage Builder) is a visual tool for creating and arranging stage layouts in Friday Night Funkin'. It allows you to position sprites, set parallax scrolling, and configure stage elements.
+
+## Opening the Stage Editor
+
+<Steps>
+  <Step title="From Main Menu">
+    Press **`~`** (tilde) to open the debug menu, then select **Stage Editor**
+  </Step>
+  <Step title="From Play State">
+    While playing a song in debug mode, press the **STAGE hotkey** to open the old Stage Editor overlay
+  </Step>
+</Steps>
+
+<Info>
+  The Stage Editor is currently in development and features may change. The tool is marked with the `FEATURE_STAGE_EDITOR` compiler flag.
+</Info>
+
+## Interface Overview
+
+The Stage Editor provides a visual canvas for arranging stage elements:
+
+### Main Canvas
+
+- **Grid Overlay**: 10x10 pixel grid for precise positioning
+- **Stage View**: Preview of how the stage looks
+- **Mouse Controls**: Click and drag to position elements
+- **Camera Controls**: Pan and zoom to navigate the stage
+
+### HUD Elements
+
+- **Info Text**: Displays current selection and properties
+- **Load Image Button**: Import new stage sprites
+- **Save Scene Button**: Save current stage layout
+- **Layer Information**: Shows sprite stacking order
+
+## Controls
+
+### View Controls
+
+| Key | Action | Description |
+|-----|--------|-------------|
+| `H` | Toggle HUD | Show/hide the editor UI |
+| `Mouse Drag` | Pan Camera | Click and drag to move the camera |
+| `Ctrl+Mouse Wheel` | Zoom | Zoom in/out on the stage |
+| `Escape` | Toggle Mode | Switch between Movement and Attributes mode |
+
+### Movement Mode
+
+This is the default mode for positioning sprites:
+
+| Key | Action | Description |
+|-----|--------|-------------|
+| `V` | Select Tool | Activate selection cursor |
+| `Click` | Select Sprite | Select a sprite to edit |
+| `Drag` | Move Sprite | Reposition the selected sprite |
+| `↑↓←→` | Nudge | Move sprite by 1 pixel (keyboard) |
+| `[` | Layer Down | Move sprite back one layer |
+| `]` | Layer Up | Move sprite forward one layer |
+| `Delete` | Remove | Delete the selected sprite |
+| `Z` | Undo | Undo last action |
+
+<Info>
+  Hold `Ctrl` while in Movement Mode to temporarily switch to Select Tool
+</Info>
+
+### Attributes Mode
+
+Press `Escape` to switch to this mode for adjusting sprite properties:
+
+| Key | Action | Description |
+|-----|--------|-------------|
+| `←` | Decrease Parallax | Reduce scroll factor by 0.1 |
+| `→` | Increase Parallax | Increase scroll factor by 0.1 |
+| `Escape` | Back to Movement | Return to movement mode |
+
+<Warning>
+  The attributes mode text appears at 100% opacity, while movement mode shows at 50% opacity as a visual indicator.
+</Warning>
+
+## Adding Stage Elements
+
+<Steps>
+  <Step title="Prepare Image Files">
+    Save your stage sprite images in PNG format. Recommended to use transparent backgrounds for props.
+  </Step>
+  <Step title="Import Image">
+    **Desktop Only**: Drag and drop image files directly onto the editor window
+    
+    The file will be:
+    - Copied to `assets/images/stageBuild/` directory
+    - Automatically loaded as a stage sprite
+    - Positioned at the mouse cursor location
+  </Step>
+  <Step title="Position Sprite">
+    Use the mouse or arrow keys to position the sprite exactly where you want it
+  </Step>
+  <Step title="Adjust Layers">
+    Use `[` and `]` to move the sprite behind or in front of other elements
+  </Step>
+</Steps>
+
+## Working with Parallax Scrolling
+
+Parallax scrolling creates depth by moving background elements at different speeds:
+
+<Accordion title="Understanding Scroll Factor">
+  The **scroll factor** determines how much a sprite moves with the camera:
+  - **1.0**: Moves normally with camera (foreground)
+  - **0.5**: Moves at half speed (middle ground)
+  - **0.0**: Doesn't move at all (fixed background)
+  - **>1.0**: Moves faster than camera (rarely used)
+</Accordion>
+
+<Steps>
+  <Step title="Select Sprite">
+    Click on the sprite you want to adjust
+  </Step>
+  <Step title="Switch to Attributes Mode">
+    Press `Escape` to enter Attributes mode (text will appear at full opacity)
+  </Step>
+  <Step title="Adjust Parallax">
+    - Press `←` to decrease scroll factor (move slower/further back)
+    - Press `→` to increase scroll factor (move faster/closer)
+    - Each press changes by 0.1
+  </Step>
+  <Step title="View Properties">
+    The info text shows: `[filename] - parallax: (x, y)`
+  </Step>
+</Steps>
+
+## Layer Management
+
+Stages use a layer system for proper sprite ordering:
+
+### Layer Basics
+
+- **Layer 0**: Furthest back
+- **Higher Numbers**: Closer to front
+- **Automatic Assignment**: New sprites get next available layer
+
+### Reordering Layers
+
+<Steps>
+  <Step title="Select Target Sprite">
+    Click on the sprite you want to reorder
+  </Step>
+  <Step title="Move Layer">
+    - Press `[` to move one layer back (swap with previous sprite)
+    - Press `]` to move one layer forward (swap with next sprite)
+  </Step>
+  <Step title="Verify Order">
+    The layer number updates automatically, and sprites re-render in correct order
+  </Step>
+</Steps>
+
+<Info>
+  Layers automatically maintain the sorting order. Moving a sprite updates the `layer` property for both the moved sprite and the swapped sprite.
+</Info>
+
+## Mouse Tools
+
+The Stage Editor changes the cursor to indicate the current tool:
+
+### Tool Types
+
+1. **SELECT**: Default cursor for selecting sprites
+2. **GRAB**: Hand cursor when hovering over a selectable sprite
+3. **GRABBING**: Closed hand cursor while dragging a sprite
+
+### Selection System
+
+- Click on a sprite to select it (cursor changes to GRAB)
+- Selected sprite shows in the info display
+- Click and drag to move (cursor changes to GRABBING)
+- Release to place sprite in new position
+- Position change is tracked for undo functionality
+
+## Camera Controls
+
+### Pan Camera
+
+- **Middle Mouse + Drag**: Pan the view around the stage
+- **Alternative**: Use the `MouseUtil.mouseCamDrag()` function
+
+### Zoom Camera
+
+- **Ctrl + Mouse Wheel**: Zoom in/out
+- **Zoom Center**: Zoom centers on mouse position
+- **Grid Scales**: Grid overlay scales with zoom level
+
+## Saving Your Stage
+
+<Steps>
+  <Step title="Arrange All Elements">
+    Position all sprites and set their parallax values
+  </Step>
+  <Step title="Click Save Scene">
+    Click the "Save Scene" button in the HUD
+  </Step>
+  <Step title="Output Format">
+    The stage data is saved with:
+    - Sprite positions (x, y)
+    - Scroll factors (parallax)
+    - Layer order
+    - Image filenames
+  </Step>
+</Steps>
+
+<Warning>
+  Make sure to test your stage in-game after saving to verify positions and parallax effects work as intended.
+</Warning>
+
+## Undo System
+
+The Stage Editor includes an undo system for common operations:
+
+### Undoable Actions
+
+- Moving sprites (position changes)
+- Changing sprite selection
+- Adjusting layer order
+
+### Using Undo
+
+- Press `Z` to undo the last action
+- The action and position queues maintain history
+- Undo reverses the operation (e.g., move back, restore old selection)
+
+<Info>
+  The undo system uses action and position queues that track functions and their parameters for reversal.
+</Info>
+
+## Stage Data Structure
+
+Stages use the following sprite properties:
+
+```haxe
+{
+  imgName: String,          // Filename of the sprite
+  x: Float,                 // X position
+  y: Float,                 // Y position  
+  scrollFactor: {           // Parallax scroll amounts
+    x: Float,
+    y: Float
+  },
+  layer: Int                // Z-order layer index
+}
+```
+
+## Advanced Features
+
+### Drag and Drop (Desktop Only)
+
+On desktop builds, you can drag image files directly:
+
+<Steps>
+  <Step title="Prepare Images">
+    Have your stage prop images ready in PNG or JPEG format
+  </Step>
+  <Step title="Drag onto Window">
+    Drag the file from your file explorer onto the Stage Editor window
+  </Step>
+  <Step title="Auto-Import">
+    The editor will:
+    - Copy file to `stageBuild` folder
+    - Create a temporary copy for editing
+    - Spawn sprite at mouse cursor position
+    - Automatically focus on MOVEMENTS mode
+  </Step>
+</Steps>
+
+### Mouse Offset Tracking
+
+When dragging sprites:
+- The editor tracks where you grabbed the sprite
+- Maintains offset during drag (doesn't snap center to cursor)
+- Smooth dragging experience
+- Old position stored for undo functionality
+
+## Performance Considerations
+
+<Info>
+  The Stage Editor uses FlxTypedGroup for sprite management, which efficiently handles sprite rendering and updates.
+</Info>
+
+- Grid overlay uses FlxGridOverlay for performance
+- HUD elements render on separate camera
+- Sprites sort automatically by layer
+- Mouse events optimized with FlxMouseEvent.reorder()
+
+## File Organization
+
+Stage files are organized in the project:
+
+```
+assets/
+  images/
+    stageBuild/           # Temporary staging area
+      stageTempImg.png    # Active editing image
+      [filename].png      # Imported images
+  data/
+    stages/
+      [stage-id].json     # Stage configuration
+```
+
+## Integration with Other Tools
+
+- **Chart Editor**: Select which stage to use for a song
+- **Animation Editor**: Position characters on the stage
+- **Debug Mode**: Preview stages in-game with F5 hot reload
+
+## Tips and Best Practices
+
+<AccordionGroup>
+  <Accordion title="Naming Conventions">
+    Use descriptive filenames:
+    - `bg_sky.png` for background sky
+    - `prop_speakers.png` for stage props
+    - `fg_overlay.png` for foreground overlays
+  </Accordion>
+
+  <Accordion title="Layer Planning">
+    Plan your layer order before importing:
+    1. Far background (sky, distant objects)
+    2. Mid background (buildings, scenery)
+    3. Stage floor
+    4. Props and set pieces
+    5. Character positions (not in editor, but plan for)
+    6. Foreground effects and overlays
+  </Accordion>
+
+  <Accordion title="Parallax Guidelines">
+    Standard parallax values:
+    - Sky: 0.1 - 0.3
+    - Distant background: 0.5 - 0.7  
+    - Stage floor: 0.9 - 1.0
+    - Foreground props: 1.0
+    - Fixed UI elements: 0.0
+  </Accordion>
+
+  <Accordion title="Testing Workflow">
+    1. Create basic stage layout
+    2. Save and exit editor
+    3. Test in Chart Editor or Play State
+    4. Note any adjustments needed
+    5. Return to Stage Editor to refine
+    6. Iterate until perfect
+  </Accordion>
+</AccordionGroup>
+
+## Related Tools
+
+- [Chart Editor](/tools/chart-editor) - Assign stages to songs
+- [Animation Editor](/tools/animation-editor) - Position character animations
+- [Debug Hotkeys](/tools/debug-hotkeys) - Quick access shortcuts

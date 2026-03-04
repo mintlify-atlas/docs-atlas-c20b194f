@@ -1,0 +1,321 @@
+---
+title: Mobile Compilation Guide
+description: Complete guide to compiling Friday Night Funkin' for Android and iOS
+---
+
+This guide covers compilation for mobile devices (Android and iOS). Mobile compilation requires additional setup beyond desktop builds.
+
+<Warning>
+  Before starting, **make sure your game builds on desktop.** Check the [main compilation guide](/development/compiling) first.
+</Warning>
+
+## Android Compilation
+
+Android builds require the Android SDK, NDK, and Java Development Kit.
+
+<Tabs>
+  <Tab title="Windows">
+    <Steps>
+      <Step title="Create Android tools folder">
+        Create a new folder to store Android tools and remember its path:
+        
+        ```bash
+        mkdir C:\android-tools
+        ```
+      </Step>
+
+      <Step title="Set ANDROID_HOME environment variable">
+        Open a terminal **as Administrator** and run:
+        
+        ```bash
+        setx ANDROID_HOME "C:\android-tools" /M
+        ```
+        
+        Replace the path with your actual folder location.
+      </Step>
+
+      <Step title="Download Android Command-line Tools">
+        Download the [Android Studio Command-line Tools](https://developer.android.com/studio#command-line-tools-only) and extract the ZIP into your Android tools folder.
+      </Step>
+
+      <Step title="Install SDK components">
+        Install required SDK components (you may need to restart your terminal):
+        
+        ```bash
+        sdkmanager --install "build-tools;35.0.0" "ndk;29.0.13113456" "platforms;android-29" "platforms;android-35"
+        ```
+        
+        <Note>
+          The latest NDK is not compatible with Lime. You must use NDK 29.0.13113456.
+        </Note>
+      </Step>
+
+      <Step title="Install JDK 17">
+        Download and install [JDK 17 (MSI)](https://adoptium.net/temurin/releases/?version=17&os=windows).
+      </Step>
+
+      <Step title="Configure Lime for Android">
+        Run Lime's Android setup:
+        
+        ```bash
+        lime setup android
+        ```
+        
+        When prompted, provide these paths:
+        - **Android SDK:** `C:\android-tools`
+        - **Android NDK:** `C:\android-tools\ndk\29.0.13113456`
+        - **JDK:** `C:\Program Files\Java\jdk-17`
+      </Step>
+
+      <Step title="Build for Android">
+        Build and deploy to your Android device:
+        
+        ```bash
+        lime test android
+        ```
+      </Step>
+    </Steps>
+  </Tab>
+  
+  <Tab title="macOS">
+    <Steps>
+      <Step title="Create Android tools folder">
+        Create a new folder to store Android tools:
+        
+        ```bash
+        mkdir ~/android-tools
+        ```
+      </Step>
+
+      <Step title="Set environment variables">
+        Open Terminal and set up environment variables:
+        
+        ```bash
+        cd ~/android-tools
+        export ANDROID_HOME=~/android-tools
+        export PATH=$PATH:$ANDROID_HOME/cmdline-tools:$ANDROID_HOME/cmdline-tools/bin:$ANDROID_HOME/platform-tools
+        ```
+        
+        <Accordion title="Make these permanent">
+          Add these lines to your `~/.zshrc` or `~/.bash_profile`:
+          
+          ```bash
+          export ANDROID_HOME=~/android-tools
+          export PATH=$PATH:$ANDROID_HOME/cmdline-tools:$ANDROID_HOME/cmdline-tools/bin:$ANDROID_HOME/platform-tools
+          ```
+        </Accordion>
+      </Step>
+
+      <Step title="Download Android Command-line Tools">
+        Download the [Android Studio Command-line Tools for Mac](https://developer.android.com/studio#command-line-tools-only) and extract into your Android tools folder.
+      </Step>
+
+      <Step title="Install SDK components">
+        Install required SDK components:
+        
+        ```bash
+        sdkmanager --install "build-tools;35.0.0" "ndk;29.0.13113456" "platforms;android-29" "platforms;android-35"
+        ```
+      </Step>
+
+      <Step title="Install JDK 17">
+        Download and install [JDK 17 for macOS](https://adoptium.net/temurin/releases/?os=mac&version=17).
+      </Step>
+
+      <Step title="Configure Lime for Android">
+        Run Lime's Android setup:
+        
+        ```bash
+        lime setup android
+        ```
+        
+        When prompted, provide these paths:
+        - **Android SDK:** `/Users/yourname/android-tools`
+        - **Android NDK:** `/Users/yourname/android-tools/ndk/29.0.13113456`
+        - **JDK:** `/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home`
+        
+        <Note>If not asked for JDK path, that's okay — skip it.</Note>
+      </Step>
+
+      <Step title="Build for Android">
+        Build and deploy to your Android device:
+        
+        ```bash
+        lime test android
+        ```
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+### Android Build Configuration
+
+The Android build is configured in `project.hxp` with these settings:
+
+```haxe
+// Minimum SDK version
+ANDROID_MINIMUM_SDK_VERSION = 28
+
+// Target SDK version
+ANDROID_TARGET_SDK_VERSION = 35
+
+// Required NDK version
+NDK_VERSION = "29.0.13113456"
+```
+
+### Android-Specific Flags
+
+<AccordionGroup>
+  <Accordion title="Exclude ARMv7 Architecture">
+    If you want to reduce APK size by excluding ARMv7 (32-bit ARM):
+    
+    ```bash
+    lime test android -DEXCLUDE_ARMV7
+    ```
+    
+    This only includes ARM64, reducing file size but dropping support for older devices.
+  </Accordion>
+</AccordionGroup>
+
+## iOS Compilation
+
+<Warning>
+  You can **only** build for iOS on a computer running macOS.
+</Warning>
+
+iOS compilation requires Xcode and the iOS SDK.
+
+<Steps>
+  <Step title="Verify desktop build works">
+    Make sure your game builds on desktop first. See the [main compilation guide](/development/compiling).
+  </Step>
+
+  <Step title="Install Xcode">
+    Download and install Xcode from the Mac App Store.
+  </Step>
+
+  <Step title="Download iPhone SDK">
+    Open Xcode and download the iPhone SDK when prompted (usually the first thing that appears).
+  </Step>
+
+  <Step title="Build for iOS">
+    Build the game and open it in Xcode:
+    
+    ```bash
+    lime test ios -xcode
+    ```
+    
+    <Accordion title="Build for iOS Simulator">
+      To test in the simulator instead of a real device:
+      
+      ```bash
+      lime test ios -simulator
+      ```
+    </Accordion>
+  </Step>
+
+  <Step title="Sign the app (for real devices)">
+    To run on a real iOS device, you need an **Apple Developer account** ($99/year).
+    
+    In Xcode:
+    1. Press `Cmd + ,` to open Settings
+    2. Go to **Accounts**
+    3. Add your Apple ID
+    4. Select your Team ID in the project settings
+  </Step>
+</Steps>
+
+## iOS Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Plugin failed to load">
+    **Error:** `A required plugin failed to load. Please ensure system content is up-to-date — try running 'xcodebuild -runFirstLaunch'.`
+    
+    **Solution:** Make sure you have the iOS SDK installed (see Step 2 above).
+    
+    ```bash
+    xcodebuild -runFirstLaunch
+    ```
+  </Accordion>
+  
+  <Accordion title="No Accounts Error">
+    **Error:** `error: No Accounts: Add a new account in Accounts settings. (in target 'Funkin' from project 'Funkin')`
+    
+    **Solution:** 
+    1. Open Xcode
+    2. Press `Cmd + ,` to open Settings
+    3. Select **Accounts**
+    4. Add your Apple ID
+  </Accordion>
+  
+  <Accordion title="No Account for Team">
+    **Error:** `error: No Account for Team "Z7G7AVNGSH". Add a new account in Accounts settings or verify that your accounts have valid credentials.`
+    
+    **Solution:** Open `project.hxp` and change `IOS_TEAM_ID` to your personal team's ID.
+    
+    ```haxe
+    static var IOS_TEAM_ID:String = "YOUR_TEAM_ID";
+    ```
+    
+    Find your Team ID in Xcode under Settings > Accounts.
+  </Accordion>
+  
+  <Accordion title="Bundle Identifier Error">
+    **Error:** `error: Failed Registering Bundle Identifier: The app identifier "me.funkin.fnf" cannot be registered to your development team because it is not available.`
+    
+    **Solution:** The Funkin' Crew owns `me.funkin.fnf`. Open `project.hxp` and change `PACKAGE_NAME` to a unique value:
+    
+    ```haxe
+    static final PACKAGE_NAME:String = "com.yourname.fnf";
+    ```
+  </Accordion>
+  
+  <Accordion title="No profiles found">
+    **Error:** `error: No profiles for 'me.funkin.fnf' were found: Xcode couldn't find any iOS App Development provisioning profiles matching 'me.funkin.fnf'`
+    
+    **Solution:** Same as Bundle Identifier Error — change the `PACKAGE_NAME` in `project.hxp`.
+  </Accordion>
+</AccordionGroup>
+
+## Mobile-Specific Build Flags
+
+Mobile builds have several unique feature flags:
+
+<CodeGroup>
+```bash Touch Controls
+lime test android -DFEATURE_TOUCH_CONTROLS
+```
+
+```bash Haptic Feedback
+lime test android -DFEATURE_HAPTICS
+```
+
+```bash Compressed Textures (ASTC)
+lime test android -release -DFEATURE_COMPRESSED_TEXTURES
+```
+
+```bash Ghost Tapping
+lime test android -DFEATURE_GHOST_TAPPING
+```
+</CodeGroup>
+
+<Note>
+  Most mobile-specific features are enabled by default on mobile builds. Compressed textures are only enabled on release builds.
+</Note>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="General Compilation" icon="hammer" href="/development/compiling">
+    Return to the main compilation guide
+  </Card>
+  <Card title="Troubleshooting" icon="wrench" href="/development/troubleshooting">
+    Fix common compilation issues
+  </Card>
+  <Card title="Contributing" icon="code-pull-request" href="/development/contributing">
+    Learn how to contribute code
+  </Card>
+  <Card title="Build Flags" icon="flag" href="/development/compiling#build-flags">
+    View all available build flags
+  </Card>
+</CardGroup>

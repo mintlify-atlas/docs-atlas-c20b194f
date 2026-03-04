@@ -1,0 +1,695 @@
+---
+title: Scripting with HScript
+description: Write custom gameplay code using HScript in Friday Night Funkin' mods
+icon: code
+---
+
+## Introduction to HScript
+
+Friday Night Funkin' uses **HScript** for mod scripting - a scripting language that looks and works like Haxe. Scripts can extend classes, react to events, and modify gameplay in real-time.
+
+<Note>
+  HScript syntax is nearly identical to Haxe. If you know Haxe, you already know HScript!
+</Note>
+
+## Script Types
+
+There are three main types of scripts in FNF:
+
+<CardGroup cols={3}>
+  <Card title="Modules" icon="globe">
+    Global scripts that receive events from any game state
+  </Card>
+  <Card title="Scripted Classes" icon="cube">
+    Scripts that extend base Flixel classes
+  </Card>
+  <Card title="State Scripts" icon="layer-group">
+    Scripts attached to specific game states or objects
+  </Card>
+</CardGroup>
+
+## Creating a Module
+
+Modules are the most powerful script type - they receive events globally across all game states.
+
+### Basic Module Structure
+
+<Steps>
+  <Step title="Create script file">
+    In your mod folder, create a `.hxc` file:
+    
+    ```
+    mymod/
+      └── scripts/
+          └── MyModule.hxc
+    ```
+  </Step>
+  
+  <Step title="Import the Module class">
+    ```haxe MyModule.hxc
+    import funkin.modding.module.Module;
+    
+    class MyModule extends Module
+    {
+      public function new()
+      {
+        super('mymodule', 100);
+      }
+    }
+    ```
+  </Step>
+  
+  <Step title="Add event handlers">
+    Override methods to handle events:
+    
+    ```haxe
+    public function onNoteHit(event:HitNoteScriptEvent)
+    {
+      trace('Note hit! Judgement: ' + event.judgement);
+    }
+    ```
+  </Step>
+</Steps>
+
+### Module Constructor
+
+The Module constructor takes these parameters:
+
+```haxe Module.hx
+public function new(moduleId:String, priority:Int = 1000, ?params:ModuleParams):Void
+{
+  this.moduleId = moduleId;
+  this.priority = priority;
+  
+  if (params != null)
+  {
+    this.state = params.state ?? null;
+  }
+}
+```
+
+- `moduleId` - Unique identifier for your module
+- `priority` - Event priority (lower = earlier, default 1000)
+- `params` - Optional parameters (can restrict to specific state)
+
+<Tip>
+  Use priority to control when your module receives events relative to others. Priority 1 runs before Priority 1000.
+</Tip>
+
+### Module Properties
+
+```haxe
+// Control whether module receives events
+this.active = true;  // or false
+
+// Change event priority
+this.priority = 500;
+
+// Restrict to specific state
+this.state = flixel.FlxState;  // Only active in this state
+```
+
+## Available Events
+
+### Lifecycle Events
+
+<Tabs>
+  <Tab title="Core">
+    ```haxe
+    public function onCreate(event:ScriptEvent)
+    {
+      // Called when module is first created (before title screen)
+    }
+    
+    public function onDestroy(event:ScriptEvent)
+    {
+      // Called when module is destroyed (F5 reload)
+    }
+    
+    public function onUpdate(event:UpdateScriptEvent)
+    {
+      // Called every frame
+      // event.elapsed = time since last frame
+    }
+    ```
+  </Tab>
+  
+  <Tab title="State Changes">
+    ```haxe
+    public function onStateChangeBegin(event:StateChangeScriptEvent)
+    {
+      // About to switch to new state
+      // event.targetState = the new state
+    }
+    
+    public function onStateChangeEnd(event:StateChangeScriptEvent)
+    {
+      // Switched to new state
+    }
+    
+    public function onSubStateOpenBegin(event:SubStateScriptEvent)
+    {
+      // About to open a substate
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Focus">
+    ```haxe
+    public function onFocusGained(event:FocusScriptEvent)
+    {
+      // Game window gained focus
+    }
+    
+    public function onFocusLost(event:FocusScriptEvent)
+    {
+      // Game window lost focus
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Gameplay Events
+
+<Tabs>
+  <Tab title="Song">
+    ```haxe
+    public function onSongLoaded(event:SongLoadScriptEvent)
+    {
+      // Song chart parsed, before notes placed
+      // Modify event.notes or event.events to change chart
+    }
+    
+    public function onSongStart(event:ScriptEvent)
+    {
+      // Song started (conductor time = 0)
+    }
+    
+    public function onSongEnd(event:ScriptEvent)
+    {
+      // Song ended, about to unload
+    }
+    
+    public function onSongRetry(event:SongRetryEvent)
+    {
+      // Player restarted song
+      // event.difficulty = new difficulty
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Notes">
+    ```haxe
+    public function onNoteIncoming(event:NoteScriptEvent)
+    {
+      // Note entered view and approaches strumline
+      // event.note = the note sprite
+    }
+    
+    public function onNoteHit(event:HitNoteScriptEvent)
+    {
+      // Note was hit (player or CPU)
+      // event.note = the note
+      // event.judgement = "sick", "good", "bad", "shit"
+      // event.score = points awarded
+      // event.healthChange = health gained/lost
+      // event.doesNotesplash = whether splash shows
+    }
+    
+    public function onNoteMiss(event:NoteScriptEvent)
+    {
+      // Note was missed
+      // event.healthChange = health lost
+    }
+    
+    public function onNoteGhostMiss(event:GhostMissNoteScriptEvent)
+    {
+      // Player pressed key with no note
+      // event.dir = direction pressed
+      // event.healthChange = health penalty
+    }
+    
+    public function onNoteHoldDrop(event:HoldNoteScriptEvent)
+    {
+      // Player dropped a hold note
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Timing">
+    ```haxe
+    public function onStepHit(event:SongTimeScriptEvent)
+    {
+      // Every step (16th note)
+      // event.step = current step number
+      // event.beat = current beat number
+    }
+    
+    public function onBeatHit(event:SongTimeScriptEvent)
+    {
+      // Every beat (quarter note)
+      // event.beat = current beat
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Countdown">
+    ```haxe
+    public function onCountdownStart(event:CountdownScriptEvent)
+    {
+      // Countdown starting
+    }
+    
+    public function onCountdownStep(event:CountdownScriptEvent)
+    {
+      // Each countdown step (3, 2, 1, Go)
+      // event.step = countdown step enum
+    }
+    
+    public function onCountdownEnd(event:CountdownScriptEvent)
+    {
+      // Countdown finished, song about to start
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### UI Events
+
+<Tabs>
+  <Tab title="Freeplay">
+    ```haxe
+    public function onCapsuleSelected(event:CapsuleScriptEvent)
+    {
+      // Song capsule selected in Freeplay
+    }
+    
+    public function onDifficultySwitch(event:CapsuleScriptEvent)
+    {
+      // Difficulty changed
+    }
+    
+    public function onSongSelected(event:CapsuleScriptEvent)
+    {
+      // Song confirmed
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Character Select">
+    ```haxe
+    public function onCharacterSelect(event:CharacterSelectScriptEvent)
+    {
+      // Character selected
+      // event.characterId = character ID
+    }
+    
+    public function onCharacterConfirm(event:CharacterSelectScriptEvent)
+    {
+      // Character confirmed
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Pause">
+    ```haxe
+    public function onPause(event:PauseScriptEvent)
+    {
+      // Game paused
+      // event.gitaroo = use gitaroo man pause?
+    }
+    
+    public function onResume(event:ScriptEvent)
+    {
+      // Game resumed
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Event Manipulation
+
+Events can be cancelled or stopped:
+
+```haxe
+public function onCountdownStart(event:CountdownScriptEvent)
+{
+  // Prevent countdown from starting
+  event.cancel();
+  
+  // Stop other scripts from receiving this event
+  event.stopPropagation();
+}
+```
+
+<Warning>
+  Only cancelable events can be cancelled. Check `event.cancelable` before calling `cancel()`.
+</Warning>
+
+## Scripted Classes
+
+Create custom classes that extend Flixel base classes:
+
+### Available Base Classes
+
+From `funkin/modding/base/`:
+
+- `ScriptedFlxBasic`
+- `ScriptedFlxObject`
+- `ScriptedFlxSprite`
+- `ScriptedFlxSpriteGroup`
+- `ScriptedFlxState`
+- `ScriptedFlxSubState`
+- `ScriptedFlxTypedGroup`
+
+### Example: Custom Sprite
+
+```haxe CustomSprite.hxc
+import flixel.FlxSprite;
+
+class CustomSprite extends FlxSprite
+{
+  public function new(x:Float, y:Float)
+  {
+    super(x, y);
+    makeGraphic(64, 64, 0xFFFF0000); // Red square
+  }
+  
+  public override function update(elapsed:Float)
+  {
+    super.update(elapsed);
+    
+    // Rotate sprite
+    angle += 90 * elapsed;
+  }
+}
+```
+
+Usage in another script:
+```haxe
+var sprite = new CustomSprite(100, 100);
+FlxG.state.add(sprite);
+```
+
+## Available Imports
+
+The following classes are automatically imported:
+
+<CodeGroup>
+```haxe PolymodHandler.hx (Default Imports)
+static final DEFAULT_IMPORTS:Array<Class<Dynamic>> = [
+  funkin.Assets,
+  funkin.Paths,
+  funkin.Preferences,
+  funkin.util.Constants,
+  flixel.FlxG
+];
+```
+</CodeGroup>
+
+You can use these directly without importing:
+
+```haxe
+// Access game assets
+var sprite = Assets.getSprite('myImage');
+
+// Get paths
+var soundPath = Paths.sound('mySound');
+
+// Access preferences
+var volume = Preferences.volume;
+
+// Access Flixel globally
+FlxG.camera.flash();
+```
+
+### Manual Imports
+
+For other classes, import them explicitly:
+
+```haxe
+import flixel.FlxSprite;
+import flixel.tweens.FlxTween;
+import flixel.util.FlxColor;
+
+class MyScript
+{
+  public function flashScreen()
+  {
+    FlxG.camera.flash(FlxColor.WHITE, 0.5);
+  }
+}
+```
+
+## Script Event Interface
+
+Scripts can implement the `IScriptedClass` interface:
+
+<CodeGroup>
+```haxe IScriptedClass.hx
+interface IScriptedClass
+{
+  public function onScriptEvent(event:ScriptEvent):Void;
+  public function onCreate(event:ScriptEvent):Void;
+  public function onDestroy(event:ScriptEvent):Void;
+  public function onUpdate(event:UpdateScriptEvent):Void;
+}
+```
+</CodeGroup>
+
+Specialized interfaces add more events:
+
+- `IPlayStateScriptedClass` - All gameplay events
+- `IStateChangingScriptedClass` - State transition events
+- `IFreeplayScriptedClass` - Freeplay menu events
+- `IBPMSyncedScriptedClass` - Beat and step events
+- `INoteScriptedClass` - Note-related events
+
+## Practical Examples
+
+### Example 1: Score Multiplier
+
+```haxe ScoreMultiplier.hxc
+import funkin.modding.module.Module;
+
+class ScoreMultiplier extends Module
+{
+  public function new()
+  {
+    super('scoremultiplier');
+  }
+  
+  public function onNoteHit(event:HitNoteScriptEvent)
+  {
+    // Double the score for sick notes
+    if (event.judgement == 'sick')
+    {
+      event.score *= 2;
+      trace('Score doubled!');
+    }
+  }
+}
+```
+
+### Example 2: Custom Countdown Sound
+
+```haxe CustomCountdown.hxc
+import funkin.modding.module.Module;
+import flixel.FlxG;
+
+class CustomCountdown extends Module
+{
+  public function new()
+  {
+    super('customcountdown');
+  }
+  
+  public function onCountdownStep(event:CountdownScriptEvent)
+  {
+    // Play custom sound on "Go!"
+    if (event.step == CountdownStep.THREE)
+    {
+      FlxG.sound.play(Paths.sound('customGo'));
+    }
+  }
+}
+```
+
+### Example 3: Health Drain
+
+```haxe HealthDrain.hxc
+import funkin.modding.module.Module;
+import funkin.play.PlayState;
+
+class HealthDrain extends Module
+{
+  var drainRate:Float = 0.01;
+  
+  public function new()
+  {
+    super('healthdrain');
+  }
+  
+  public function onUpdate(event:UpdateScriptEvent)
+  {
+    // Only drain in PlayState
+    if (Std.is(FlxG.state, PlayState))
+    {
+      var playState = cast(FlxG.state, PlayState);
+      playState.health -= drainRate * event.elapsed;
+    }
+  }
+}
+```
+
+### Example 4: Camera Flash on Beat
+
+```haxe BeatFlash.hxc
+import funkin.modding.module.Module;
+import flixel.util.FlxColor;
+
+class BeatFlash extends Module
+{
+  public function new()
+  {
+    super('beatflash');
+  }
+  
+  public function onBeatHit(event:SongTimeScriptEvent)
+  {
+    // Flash every 4 beats
+    if (event.beat % 4 == 0)
+    {
+      FlxG.camera.flash(FlxColor.WHITE, 0.15);
+    }
+  }
+}
+```
+
+### Example 5: Chart Modifier
+
+```haxe ChartRandomizer.hxc
+import funkin.modding.module.Module;
+
+class ChartRandomizer extends Module
+{
+  public function new()
+  {
+    super('chartrandomizer');
+  }
+  
+  public function onSongLoaded(event:SongLoadScriptEvent)
+  {
+    // Randomize note directions
+    for (note in event.notes)
+    {
+      note.data = FlxG.random.int(0, 3);
+    }
+    trace('Randomized ' + event.notes.length + ' notes!');
+  }
+}
+```
+
+## ModStore - Persistent Data
+
+Share data between scripts using `ModStore`:
+
+<CodeGroup>
+```haxe ModStore.hx
+public static function register(id:String, ?data:Dynamic):Dynamic
+public static function get(id:String):Null<Dynamic>
+public static function remove(id:String):Null<Dynamic>
+```
+</CodeGroup>
+
+**Usage:**
+
+```haxe
+import funkin.modding.ModStore;
+
+// Register a store
+var myData = ModStore.register('mymod', { score: 0 });
+
+// Access from any script
+var data = ModStore.get('mymod');
+data.score += 100;
+
+// Clean up when done
+ModStore.remove('mymod');
+```
+
+## Security & Limitations
+
+For security, certain classes are blacklisted or sandboxed:
+
+<Warning>
+  **Blacklisted (not accessible):**
+  - `Sys` - System commands
+  - `sys.*` - File system access
+  - `cpp.Lib` - Native libraries
+  - `polymod.*` - Polymod internals
+  - `hscript.*` - Script parser
+</Warning>
+
+<Note>
+  **Sandboxed (limited access):**
+  - `FileUtil` → `FileUtilSandboxed`
+  - `Reflect` → `ReflectUtil` (safe subset)
+  - `Type` → `ReflectUtil` (safe subset)
+  - Newgrounds API (read-only)
+</Note>
+
+## Debugging Scripts
+
+Use `trace()` to log debug information:
+
+```haxe
+trace('Hello from my script!');
+trace('Current beat: ' + event.beat);
+trace('Health: ' + playState.health);
+```
+
+Traces appear in the game console (enable with F5 or compile flags).
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Performance">
+    - Avoid heavy operations in `onUpdate()`
+    - Cache expensive calculations
+    - Use module `active` property to disable when not needed
+    - Set appropriate priority to avoid redundant processing
+  </Accordion>
+  
+  <Accordion title="Error Handling">
+    - Check for null before accessing properties
+    - Validate event data before using
+    - Use try-catch for risky operations
+    - Test scripts thoroughly before distribution
+  </Accordion>
+  
+  <Accordion title="Code Organization">
+    - One class per file
+    - Use descriptive class and variable names
+    - Comment complex logic
+    - Break large scripts into smaller modules
+  </Accordion>
+  
+  <Accordion title="Compatibility">
+    - Don't assume specific class internals
+    - Use public APIs when available
+    - Test with multiple game versions
+    - Document required API version
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Polymod Deep Dive" icon="book" href="polymod">
+    Learn advanced asset manipulation and merging
+  </Card>
+  <Card title="Modding Overview" icon="puzzle-piece" href="overview">
+    Return to the modding overview
+  </Card>
+</CardGroup>

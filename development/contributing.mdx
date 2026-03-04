@@ -1,0 +1,310 @@
+---
+title: Contributing to Friday Night Funkin'
+description: Guidelines for contributing code, opening issues, and submitting pull requests
+---
+
+Welcome to the Contributing Guide! You can contribute to the Funkin' repository by opening issues or pull requests. This guide covers best practices for each type of contribution.
+
+## Etiquette
+
+- **Be respectful** to one another. We're here to help each other out!
+- **Keep titles clear and concise.** Don't put the whole description in the title.
+- **Don't spam** by creating unnecessary issues and pull requests.
+- **Use common sense!**
+
+## Opening Issues
+
+Issues serve many purposes, from reporting bugs to suggesting new features.
+
+### Before You Submit
+
+Make sure you're playing:
+- The **latest version** of the game (currently v0.8.3)
+- **Without any mods**
+- On [Newgrounds](https://www.newgrounds.com/portal/view/770371) or downloaded from [itch.io](https://ninja-muffin24.itch.io/funkin)
+
+<Warning>
+  Use the search bar on the Issues page to check that your issue hasn't already been reported. Duplicate issues make it harder to track problems.
+</Warning>
+
+### Issue Types
+
+Choose the issue template that best suits your needs:
+
+<AccordionGroup>
+  <Accordion title="Bug Report" icon="bug">
+    For minor bugs and general issues with the game. Choose this if none of the other templates fit.
+    
+    [View open bug reports →](https://github.com/FunkinCrew/Funkin/issues?q=is%3Aissue+state%3Aopen+label%3A%22type%3A+minor+bug%22)
+  </Accordion>
+  
+  <Accordion title="Crash Report" icon="bomb">
+    For crashes and freezes that make the game unplayable.
+    
+    [View open crash reports →](https://github.com/FunkinCrew/Funkin/issues?q=is%3Aissue+state%3Aopen+label%3A%22type%3A+major+bug%22)
+  </Accordion>
+  
+  <Accordion title="Charting Issue" icon="music">
+    For misplaced notes, wonky camera movements, broken song events, and everything related to the game's charts.
+    
+    [View open charting issues →](https://github.com/FunkinCrew/Funkin/issues?q=is%3Aissue+state%3Aopen+label%3A%22type%3A+charting+issue%22)
+  </Accordion>
+  
+  <Accordion title="Enhancement" icon="sparkles">
+    For suggestions to add new features or improve existing ones. We'd love to hear your ideas!
+    
+    [View open enhancement requests →](https://github.com/FunkinCrew/Funkin/issues?q=is%3Aissue+state%3Aopen+label%3A%22type%3A+enhancement%22)
+  </Accordion>
+  
+  <Accordion title="Compiling Help" icon="hammer">
+    For issues with compiling the game. **Only after reading the [Troubleshooting Guide](/development/troubleshooting).**
+    
+    Legacy versions (before v0.3.0) are not supported.
+  </Accordion>
+</AccordionGroup>
+
+<Tip>
+  If none of the above templates suit your inquiry (e.g., Questions or Coding Help), please [open a discussion](https://github.com/FunkinCrew/Funkin/discussions).
+</Tip>
+
+### Rejected Features
+
+If you want to suggest a feature, make sure it hasn't already been rejected. Here are commonly suggested features that won't be added:
+
+| Feature | Reason |
+|---------|--------|
+| Combo Break + Accuracy Displays | [See reasoning](https://github.com/FunkinCrew/Funkin/pull/2681#issuecomment-2156308982) |
+| Toggleable Ghost Tapping | [See reasoning](https://github.com/FunkinCrew/Funkin/pull/2564#issuecomment-2119701802) |
+| Perfectly Centered Strumlines | Same as above |
+| MultiKey, 9k, More than 4 keys | [See reasoning](https://github.com/FunkinCrew/Funkin/issues/4243#issuecomment-2692371969) |
+| Flashy Combo Milestones | [See reasoning](https://github.com/FunkinCrew/Funkin/pull/4700#issuecomment-2798916579) |
+| Losing Icons for DD and Parents | [See reasoning](https://github.com/FunkinCrew/Funkin/issues/3048#issuecomment-2243491536) |
+| Quick Restart Keybind (not R) | [See reasoning](https://github.com/FunkinCrew/Funkin/issues/3268#issuecomment-2351095232) |
+| Countdown after Unpausing | [See reasoning](https://github.com/FunkinCrew/Funkin/issues/2721#issuecomment-2159330106) |
+| Importing Charts from Psych Engine | [See reasoning](https://github.com/FunkinCrew/Funkin/issues/2586#issuecomment-2125733327) |
+| Backwards Compatibility for Modding | [See reasoning](https://github.com/FunkinCrew/Funkin/issues/3949#issuecomment-2608391329) |
+| Lua Support | [See reasoning](https://github.com/FunkinCrew/Funkin/issues/2643#issuecomment-2143718093) |
+
+### Issue Checklist
+
+<Warning>
+  If you do not complete each step of the Issue Checklist in your template, **your issue may be closed.**
+</Warning>
+
+Be sure to:
+- Search for duplicates before submitting
+- Report only **one issue per submission**
+- Complete all required fields in the template
+
+## Submitting Pull Requests
+
+Community members are welcome to contribute code changes by opening pull requests.
+
+<Note>
+  This guide does not cover compilation. If you have trouble compiling, refer to the [Compilation Guide](/development/compiling).
+</Note>
+
+### Choosing a Base Branch
+
+<Warning>
+  Avoid using your fork's default branch (`main`) for your PR. This is an [anti-pattern](https://jmeridth.com/posts/do-not-issue-pull-requests-from-your-master-branch/) by GitHub!
+  
+  Instead, make a separate branch (e.g., `docs/fix-typo` or `bugfix/player-health`).
+</Warning>
+
+Choose the **`develop` branch** if you modify:
+- Game code (`.hx` files)
+- Any other type of file
+
+Choose the **`main` branch** if you modify:
+- Documentation (`.md` files)
+- GitHub files (`.yml` files or anything in `.github/`)
+
+<Tip>
+  When in doubt, base your branch on `develop`.
+</Tip>
+
+### Maintaining Your Pull Request
+
+Our maintenance policy:
+- If we require changes, we'll label your PR `status: needs revision`
+- You have **90 days** to implement requested changes
+- After 90 days, your PR will be closed as `status: stale`
+- You can request to reopen closed PRs if you address the issues
+
+### Merge Conflicts and Rebasing
+
+Some game updates may create merge conflicts in your PR. You'll need to resolve them by updating or rebasing.
+
+<Accordion title="When to rebase">
+  If your commit history becomes messy due to large conflicts, perform a [rebase](https://docs.github.com/en/get-started/using-git/about-git-rebase).
+  
+  Rebasing reapplies your changes on top of the updated branch and cleanly resolves conflicts.
+  
+  You can also use rebase to **squash** multiple commits into one.
+</Accordion>
+
+## Code Pull Requests
+
+Code-based PRs make changes like **fixing bugs** or **implementing features**. This involves modifying `.hx` files in the `source/` folder.
+
+### Follow the Style Guide
+
+<Warning>
+  Before submitting, check that your code follows the [Style Guide](/development/style-guide).
+</Warning>
+
+### Code Comments Best Practices
+
+<Tabs>
+  <Tab title="DO ✓">
+    **Good code comments:**
+    
+    ```haxe
+    /**
+     * Jumps forward or backward a number of sections in the song.
+     * Accounts for BPM changes, does not prevent death from skipped notes.
+     * @param sections The number of sections to jump, negative to go backwards.
+     */
+    function changeSection(sections:Int):Void
+    {
+      var targetTimeSteps:Float = Conductor.instance.currentStepTime 
+        + (Conductor.instance.stepsPerMeasure * sections);
+      var targetTimeMs:Float = Conductor.instance.getStepTimeInMs(targetTimeSteps);
+    
+      // Don't go back in time to before the song started.
+      targetTimeMs = Math.max(0, targetTimeMs);
+    
+      if (FlxG.sound.music != null)
+      {
+        FlxG.sound.music.time = targetTimeMs;
+      }
+    
+      handleSkippedNotes();
+      SongEventRegistry.handleSkippedEvents(songEvents, Conductor.instance.songPosition);
+      Conductor.instance.update(FlxG.sound?.music?.time ?? 0.0);
+      resyncVocals();
+    }
+    ```
+    
+    **What makes this good:**
+    - Clear function documentation
+    - Only comments things that need explanation
+    - Concise and meaningful
+  </Tab>
+  
+  <Tab title="DON'T ✗">
+    **Bad code comments:**
+    
+    ```haxe
+    /**
+     * jumps around the song
+     * works with bpm changes but skipped notes still hurt
+     * @param sections how many sections to jump, negative = backwards
+     */
+    function changeSection(sections:Int):Void
+    {
+      // Pause the music, as you probably guessed
+      // FlxG.sound.music.pause();
+    
+      // Set the target time in steps, I don't really get how this works though lol - [Username]
+      var targetTimeSteps:Float = Conductor.instance.currentStepTime 
+        + (Conductor.instance.stepsPerMeasure * sections);
+      var targetTimeMs:Float = Conductor.instance.getStepTimeInMs(targetTimeSteps);
+    
+      // Don't go back in time to before the song started, that would probably 
+      // break a lot of things and cause a bunch of problems!
+      targetTimeMs = Math.max(0, targetTimeMs);
+    
+      if (FlxG.sound.music != null) // If the music is not null, set the time
+      {
+        FlxG.sound.music.time = targetTimeMs;
+      }
+    
+      // Handle skipped notes and events and all that jazz
+      handleSkippedNotes();
+      SongEventRegistry.handleSkippedEvents(songEvents, Conductor.instance.songPosition);
+    
+      Conductor.instance.update(FlxG.sound?.music?.time ?? 0.0);
+    
+      // I hate this function - [Username]
+      resyncVocals();
+    }
+    ```
+    
+    **What makes this bad:**
+    - Commented-out code left in
+    - Explaining obvious things
+    - Personal comments that don't help understanding
+    - Lowercase function documentation
+    - Overly verbose explanations
+  </Tab>
+</Tabs>
+
+### Code Comment Guidelines
+
+- Only comment when code needs explanation
+- Ensure comments provide meaningful insight
+- Write clearly and concisely
+- Only sign comments when changes are complex and may need follow-up
+- **Never leave commented-out code** — remove it or keep it elsewhere
+
+## Documentation Pull Requests
+
+Documentation PRs make changes like **fixing typos** or **adding information** in `.md` files.
+
+Make sure your changes are:
+- Easy to understand
+- Formatted consistently
+- Clear and readable
+
+<Warning>
+  **DO NOT TOUCH THE `LICENSE.md` FILE**, even for small changes!
+</Warning>
+
+## GitHub Pull Requests
+
+GitHub-related PRs modify `.yml` files or anything in the `.github/` folder (like issue templates or workflows).
+
+<Warning>
+  Test these changes on your fork's main branch to avoid breaking the repository!
+</Warning>
+
+## Funkin.assets Pull Requests
+
+The `assets` submodule has its own repository: [funkin.assets](https://github.com/FunkinCrew/funkin.assets).
+
+- If you **only** modify files in `assets/`, open a PR in `funkin.assets`
+- If you modify files in **both** repos, open **two separate PRs** and link them
+- Base your PR on the **`develop`** branch
+
+### Charting Pull Requests
+
+Charting PRs modify `*-metadata.json` files in `preload/data/songs/`.
+
+<Warning>
+  We **do not** accept changes to chart `.json` files themselves.
+  
+  If you find a chart error, open an issue in the main `Funkin` repo. The Funkin' Crew will review and make adjustments.
+</Warning>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Style Guide" icon="palette" href="/development/style-guide">
+    Learn code formatting conventions
+  </Card>
+  <Card title="Compilation Guide" icon="hammer" href="/development/compiling">
+    Set up your development environment
+  </Card>
+  <Card title="Troubleshooting" icon="wrench" href="/development/troubleshooting">
+    Fix common compilation issues
+  </Card>
+  <Card title="GitHub Repository" icon="github" href="https://github.com/FunkinCrew/Funkin">
+    View the source code
+  </Card>
+</CardGroup>
+
+---
+
+Thank you for reading the Contributing Guide. We look forward to seeing your contributions!

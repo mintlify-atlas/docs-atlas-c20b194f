@@ -1,0 +1,375 @@
+---
+title: Debug Hotkeys
+description: Complete reference of all debug hotkeys and development features in Friday Night Funkin'
+icon: keyboard
+---
+
+Friday Night Funkin' includes extensive debug functionality accessible through keyboard shortcuts. Most features are only available in debug builds of the game.
+
+<Warning>
+  **Debug Builds Only**: Most of these hotkeys only work in debug builds. Release builds have limited debug functionality for security and performance reasons.
+</Warning>
+
+## Global Hotkeys (Any State)
+
+These hotkeys work from any screen in the game:
+
+| Hotkey | Function | Description |
+|--------|----------|-------------|
+| `F2` | Debug Overlay | Enables the Flixel debug overlay with partial scripting support |
+| `F3` | Screenshot | Takes a screenshot and saves it to the `screenshots` directory (works in release builds) |
+| `F4` | Eject | Forcibly switch to Main Menu with no transition (useful if stuck) |
+| `F5` | Hot Reload | Reload scripts and data files, then restart current state |
+| `Insert` | Garbage Collection | Immediately perform memory garbage collection |
+| `Ctrl+Alt+Shift+L` | Force Crash | Crash the game with detailed log and stack trace (Main Menu only) |
+
+<Info>
+  **F5 Hot Reload** does not reset song charts or song scripts, but it resets stage layouts, character animations, and most other data files.
+</Info>
+
+## Play State Hotkeys
+
+These hotkeys work during active gameplay:
+
+### UI and Display
+
+| Hotkey | Function | Description |
+|--------|----------|-------------|
+| `H` | Hide UI | Makes the user interface invisible (works in Pause Menu, great for screenshots) |
+
+### Gameplay Manipulation
+
+| Hotkey | Function | Description |
+|--------|----------|-------------|
+| `1` | End Song | Immediately ends the song (Results Screen in Freeplay, next song in Story Mode) |
+| `2` | Gain Health | Add 10% to the player's health |
+| `3` | Lose Health | Subtract 5% from the player's health |
+| `9` | NEATO | Secret debug feature |
+
+### Time Travel
+
+| Hotkey | Function | Description |
+|--------|----------|-------------|
+| `Page Up` (Mac: `Fn+Up`) | Forward Jump | Move forward by 2 sections |
+| `Shift+Page Up` | Big Forward Jump | Move forward by 20 sections |
+| `Page Down` (Mac: `Fn+Down`) | Backward Jump | Move backward by 2 sections |
+| `Shift+Page Down` | Big Backward Jump | Move backward by 20 sections |
+
+<Accordion title="What is a 'Section'?">
+  A section is typically 4 measures (16 beats) of the song. The time travel hotkeys let you skip through the song quickly for testing specific parts.
+</Accordion>
+
+### Editor Access
+
+| Hotkey | Function | Description |
+|--------|----------|-------------|
+| `CHART Hotkey` | Open Chart Editor | Opens the Chart Editor with the current song loaded |
+| `STAGE Hotkey` | Open Stage Editor | Opens the old Stage Editor overlay |
+
+## Freeplay State Hotkeys
+
+These hotkeys work in the Freeplay menu:
+
+| Hotkey | Function | Description |
+|--------|----------|-------------|
+| `P` | Switch Character | Toggle between Pico and Boyfriend (reopens Freeplay) |
+| `T` | Test Rank | Play the Gold Perfect rank animation on selected song |
+| `Shift+Accept` | Botplay Mode | Start song with Botplay mode enabled |
+| `Ctrl+Switch Song` | Preview Alt Instrumental | Play first unlocked alternate instrumental as preview |
+
+<Info>
+  **Botplay Mode** makes the game play perfectly automatically - useful for testing charts without actually playing.
+</Info>
+
+## Title State Hotkeys
+
+These work on the title screen:
+
+| Hotkey | Function | Description |
+|--------|----------|-------------|
+| `Escape` | Quit | Exit the game |
+| `D` | COOL | Secret feature |
+| `UI Left`/`UI Right` | 2COOL | Secret navigation |
+| `Y` | WOAH | Easter egg |
+
+## Main Menu Hotkeys
+
+These work in the main menu:
+
+### Primary Hotkeys
+
+| Hotkey | Function | Description |
+|--------|----------|-------------|
+| `~` (Tilde) | Debug Menu | Opens menu to access Chart Editor and other editors (rebindable) |
+| `Shift+Accept` | Freeplay as Pico | When selecting Freeplay, open with Pico as playable character |
+
+### Debug-Only Hotkeys
+
+<Warning>
+  The following hotkeys **only work on debug builds** and are for testing purposes:
+</Warning>
+
+| Hotkey | Function | Description |
+|--------|----------|-------------|
+| `Ctrl+Alt+Shift+W` | All Access | Unlocks all songs in Freeplay |
+| `Ctrl+Alt+Shift+M` | No More Access | Re-locks all songs except default unlocked ones |
+| `Ctrl+Alt+Shift+R` | Great Score | Give a hypothetical overridden score to test rank maintenance |
+| `Ctrl+Alt+Shift+P` | Character Unlock | Force Character Select screen to play Pico's unlock animation |
+| `Ctrl+Alt+Shift+N` | Character Not Seen | Mark all characters as not seen, enable BF's new unlock animation |
+| `Ctrl+Alt+Shift+E` | Dump Save Data | Export save data as JSON file for inspection |
+
+## Chart Editor Hotkeys
+
+When using the Chart Editor, these additional shortcuts are available:
+
+### File Operations
+
+| Hotkey | Function | Windows/Linux | macOS |
+|--------|----------|---------------|-------|
+| New Chart | `Ctrl+N` | `Ctrl+N` | `⌘+N` |
+| Open Chart | `Ctrl+O` | `Ctrl+O` | `⌘+O` |
+| Save Chart As | `Ctrl+Shift+S` | `Ctrl+Shift+S` | `⌘+⇧+S` |
+| Exit | `Ctrl+Q` | `Ctrl+Q` | `⌘+Q` |
+
+### Edit Operations
+
+| Hotkey | Function | Windows/Linux | macOS |
+|--------|----------|---------------|-------|
+| Undo | `Ctrl+Z` | `Ctrl+Z` | `⌘+Z` |
+| Redo | `Ctrl+Y` | `Ctrl+Y` | `⌘+Y` |
+| Cut | `Ctrl+X` | `Ctrl+X` | `⌘+X` |
+| Copy | `Ctrl+C` | `Ctrl+C` | `⌘+C` |
+| Paste | `Ctrl+V` | `Ctrl+V` | `⌘+V` |
+
+### Selection
+
+| Hotkey | Function | Windows/Linux | macOS |
+|--------|----------|---------------|-------|
+| Select All Notes | `Ctrl+A` | `Ctrl+A` | `⌘+A` |
+| Select All Events | `Ctrl+Alt+A` | `Ctrl+Alt+A` | `⌘+⌥+A` |
+| Invert Selection | `Ctrl+I` | `Ctrl+I` | `⌘+I` |
+| Select None | `Ctrl+D` | `Ctrl+D` | `⌘+D` |
+| Select Before Cursor | `Shift+Home` | `Shift+Home` | `⇧+Home` |
+| Select After Cursor | `Shift+End` | `Shift+End` | `⇧+End` |
+
+### Note Manipulation
+
+| Hotkey | Function | Windows/Linux | macOS |
+|--------|----------|---------------|-------|
+| Mirror X | `Ctrl+Shift+M` | `Ctrl+Shift+M` | `⌘+⇧+M` |
+| Mirror Y | `Ctrl+Alt+M` | `Ctrl+Alt+M` | `⌘+⌥+M` |
+| Mirror XY | `Ctrl+Shift+Alt+M` | `Ctrl+Shift+Alt+M` | `⌘+⇧+⌥+M` |
+
+### Navigation
+
+| Hotkey | Function | Windows/Linux | macOS |
+|--------|----------|---------------|-------|
+| Previous Difficulty | `Ctrl+←` | `Ctrl+Left` | `⌘+←` |
+| Next Difficulty | `Ctrl+→` | `Ctrl+Right` | `⌘+→` |
+| Playtest Full | `Enter` | `Enter` | `Enter` |
+| Playtest Minimal | `Shift+Enter` | `Shift+Enter` | `⇧+Enter` |
+
+## Animation Editor Hotkeys
+
+When using the Animation Editor:
+
+| Hotkey | Function | Description |
+|--------|----------|-------------|
+| `1` | Spritesheet View | Switch to spritesheet view |
+| `2` | Animation View | Switch to animation offset view |
+| `H` | Toggle HUD | Show/hide editor UI |
+| `F4` | Exit Editor | Return to main menu |
+| `Ctrl+S` (Mac: `⌘+S`) | Save Character | Save character JSON with all data |
+| `Ctrl+Shift+S` | Save Offsets | Save legacy offsets text file |
+| `W`/`S`/`A`/`D` | Sing Animations | Play directional sing animations |
+| `Shift+W/S/A/D` | Miss Animations | Play miss animation variants |
+| `Space` | Idle | Play idle animation |
+| `Enter` | Replay | Replay current animation |
+| `E` or `]` | Next Animation | Cycle to next animation |
+| `Q` or `[` | Previous Animation | Cycle to previous animation |
+| `←`/`→`/`↑`/`↓` | Adjust Offset | Move animation offset (5px) |
+| `Ctrl+Arrows` | Fine Adjust | Move animation offset (1px) |
+| `Shift+Arrows` | Coarse Adjust | Move animation offset (10px) |
+| `F` | Toggle Onion Skin | Show/hide reference overlay |
+| `G` | Flip Character | Flip character horizontally |
+
+## Stage Editor Hotkeys
+
+When using the Stage Editor:
+
+| Hotkey | Function | Description |
+|--------|----------|-------------|
+| `H` | Toggle HUD | Show/hide editor UI |
+| `Escape` | Toggle Mode | Switch between Movement and Attributes mode |
+| `V` | Select Tool | Activate selection cursor |
+| `↑`/`↓`/`←`/`→` | Nudge Sprite | Move sprite by 1 pixel (Movement mode) |
+| `←`/`→` | Adjust Parallax | Change scroll factor by 0.1 (Attributes mode) |
+| `[` | Layer Down | Move sprite back one layer |
+| `]` | Layer Up | Move sprite forward one layer |
+| `Delete` | Remove | Delete selected sprite |
+| `Z` | Undo | Undo last action |
+| `Ctrl` (Hold) | Temp Select | Temporarily use select tool while held |
+| `Ctrl+Mouse Wheel` | Zoom | Zoom in/out on stage |
+
+## Platform-Specific Notes
+
+<AccordionGroup>
+  <Accordion title="macOS Keyboard Differences">
+    On macOS, keyboard shortcuts use different modifier keys:
+    - `⌘` (Command) replaces `Ctrl`
+    - `⌥` (Option) replaces `Alt`
+    - `⇧` (Shift) remains the same
+    - `^` (Control) is used separately from Command
+    
+    The Chart Editor automatically displays the correct symbols for your platform.
+  </Accordion>
+
+  <Accordion title="Page Up/Down on Mac">
+    MacBooks without dedicated Page Up/Down keys should use:
+    - `Fn+Up` for Page Up
+    - `Fn+Down` for Page Down
+  </Accordion>
+
+  <Accordion title="Rebindable Hotkeys">
+    Some hotkeys can be rebound in the options menu:
+    - Debug menu toggle (default `~`)
+    - Chart editor hotkey (from Play State)
+    - Stage editor hotkey (from Play State)
+  </Accordion>
+</AccordionGroup>
+
+## Debug Overlay (F2)
+
+The Flixel debug overlay provides advanced debugging features:
+
+### Features Available
+
+- **Watch Window**: Monitor variable values in real-time
+- **Console**: Execute commands and view logs
+- **Stats Display**: FPS, memory usage, draw calls
+- **Visual Debug**: Collision bounds, camera bounds
+- **Scripting**: Limited support for script debugging
+
+<Info>
+  The debug overlay has partial support for modding scripts and can help debug custom functionality.
+</Info>
+
+## Hot Reload (F5)
+
+The hot reload feature is incredibly useful during development:
+
+### What Gets Reloaded
+
+✅ **Reloads:**
+- Stage layout data
+- Character animation data
+- Scripts (most types)
+- Asset files from `assets` folder
+- UI layouts and styles
+
+❌ **Does NOT Reload:**
+- Song charts (known bug)
+- Song scripts
+- Some cached assets
+
+### Using Hot Reload Effectively
+
+<Steps>
+  <Step title="Make Changes">
+    Edit files in your `assets` folder (stage JSON, character data, etc.)
+  </Step>
+  <Step title="Press F5">
+    Hit F5 to trigger hot reload without closing the game
+  </Step>
+  <Step title="State Restarts">
+    The current state restarts with the new data loaded
+  </Step>
+  <Step title="Test Changes">
+    Immediately see your changes in action
+  </Step>
+</Steps>
+
+<Warning>
+  If you need to reload song charts, you must exit to the main menu and re-enter the chart editor.
+</Warning>
+
+## Memory Management (Insert)
+
+The garbage collection hotkey forces immediate memory cleanup:
+
+- Useful when testing memory-intensive features
+- Can help identify memory leaks
+- May cause a brief frame drop during collection
+- Not typically needed during normal gameplay
+
+## Screenshots (F3)
+
+The screenshot feature works in both debug and release builds:
+
+- Saves to `screenshots/` directory in game folder
+- Filename includes timestamp
+- Captures current frame at full resolution
+- Works from any state
+- Use with `H` hotkey to hide UI first
+
+## Force Crash (Debug Only)
+
+The force crash hotkey is for testing crash reporting:
+
+- Generates detailed crash log
+- Includes full stack trace
+- Useful for testing error handling
+- Only works in Main Menu on debug builds
+- Creates crash report file for analysis
+
+<Warning>
+  Only use the force crash feature when testing error reporting systems!
+</Warning>
+
+## Tips for Using Debug Features
+
+<AccordionGroup>
+  <Accordion title="Efficient Testing Workflow">
+    1. Use `F5` to quickly iterate on data changes
+    2. Use time travel (`Page Up/Down`) to test specific song sections
+    3. Use `H` to hide UI for clean screenshots
+    4. Use `1` to quickly skip songs during testing
+  </Accordion>
+
+  <Accordion title="Chart Testing">
+    - Use `2` and `3` to test health drain mechanics
+    - Use `Shift+Accept` in Freeplay for botplay testing
+    - Use time travel to skip to difficult sections
+    - Use Chart Editor hotkey to quickly fix issues
+  </Accordion>
+
+  <Accordion title="Stage Development">
+    - Use `F5` after editing stage JSON files
+    - Use `F4` to quickly escape if stage breaks
+    - Open Stage Editor from Play State to edit live
+  </Accordion>
+
+  <Accordion title="Animation Tuning">
+    - Use Animation Editor's onion skin (`F`) for reference
+    - Save frequently with `Ctrl+S`
+    - Test in gameplay after each major change
+  </Accordion>
+</AccordionGroup>
+
+## Security Note
+
+<Info>
+  Debug features are intentionally disabled in release builds to prevent:
+  - Cheating in gameplay
+  - Unauthorized access to debug tools
+  - Performance overhead from debug systems
+  - Security vulnerabilities
+
+  When distributing your mod, use release builds to ensure debug features are properly disabled.
+</Info>
+
+## Related Documentation
+
+- [Chart Editor](/tools/chart-editor) - Full chart editor guide
+- [Stage Editor](/tools/stage-editor) - Stage creation tool
+- [Animation Editor](/tools/animation-editor) - Character animation editor

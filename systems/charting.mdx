@@ -1,0 +1,602 @@
+---
+title: Charting System
+description: Chart format, note types, events, sections, and chart data structure
+---
+
+The charting system defines note placement, events, and gameplay data for songs in Friday Night Funkin'.
+
+## Chart Data Format
+
+Chart data is stored in `assets/data/songs/[id]/[id]-chart.json`:
+
+```json
+{
+  "version": "2.2.4",
+  "scrollSpeed": {
+    "easy": 1.0,
+    "normal": 1.5,
+    "hard": 2.0
+  },
+  "events": [
+    {
+      "t": 0,
+      "e": "FocusCamera",
+      "v": {"char": 1}
+    },
+    {
+      "t": 4000,
+      "e": "FocusCamera",
+      "v": {"char": 0}
+    }
+  ],
+  "notes": {
+    "easy": [
+      {"t": 1000, "d": 0, "l": 0},
+      {"t": 1500, "d": 1, "l": 0},
+      {"t": 2000, "d": 2, "l": 0},
+      {"t": 2500, "d": 3, "l": 0}
+    ],
+    "normal": [
+      {"t": 1000, "d": 0, "l": 250},
+      {"t": 1500, "d": 1, "l": 0},
+      {"t": 2000, "d": 2, "l": 500},
+      {"t": 2500, "d": 3, "l": 0}
+    ],
+    "hard": []
+  },
+  "generatedBy": "FunkinCrew Chart Editor"
+}
+```
+
+### Chart Data Fields
+
+<ParamField path="version" type="String" required>
+  Chart format version (currently "2.2.4")
+</ParamField>
+
+<ParamField path="scrollSpeed" type="Map<String, Float>" required>
+  Scroll speed for each difficulty (controls note speed)
+</ParamField>
+
+<ParamField path="events" type="Array<SongEventData>" required>
+  Array of song events (camera focus, animations, etc.)
+</ParamField>
+
+<ParamField path="notes" type="Map<String, Array<SongNoteData>>" required>
+  Note data for each difficulty
+</ParamField>
+
+<ParamField path="generatedBy" type="String">
+  Tool or person that generated this chart
+</ParamField>
+
+## Song Note Data
+
+Each note is defined with minimal data:
+
+```haxe
+class SongNoteData
+{
+  public var t:Float;    // Time (in song's time format)
+  public var d:Int;      // Direction (0-7)
+  public var l:Float;    // Length (0 = regular note, >0 = hold note)
+  public var k:String;   // Kind (optional, for special note types)
+}
+```
+
+### Note Fields
+
+<ParamField path="t" type="Float" required>
+  Time when the note should be hit (format depends on song's `timeFormat`)
+</ParamField>
+
+<ParamField path="d" type="Int" required>
+  Note direction/lane (0-3 for opponent, 4-7 for player)
+  - 0/4 = Left
+  - 1/5 = Down
+  - 2/6 = Up
+  - 3/7 = Right
+</ParamField>
+
+<ParamField path="l" type="Float" default="0">
+  Hold note length in milliseconds (0 = regular note, >0 = sustain)
+</ParamField>
+
+<ParamField path="k" type="String" optional>
+  Note kind ID for special note types (e.g., "mine", "hurt")
+</ParamField>
+
+### Note Direction Mapping
+
+**Opponent strumline (left side):**
+- `0` = Left
+- `1` = Down
+- `2` = Up
+- `3` = Right
+
+**Player strumline (right side):**
+- `4` = Left
+- `5` = Down
+- `6` = Up
+- `7` = Right
+
+```haxe
+enum abstract NoteDirection(Int)
+{
+  var LEFT = 0;
+  var DOWN = 1;
+  var UP = 2;
+  var RIGHT = 3;
+}
+
+// Convert to player lane
+var playerLane = baseDirection + 4;
+```
+
+## Note Types
+
+### Regular Notes
+
+Standard notes that must be hit:
+
+```json
+{"t": 1000, "d": 0, "l": 0}
+```
+
+### Hold Notes (Sustains)
+
+Notes that must be held down:
+
+```json
+{"t": 1000, "d": 0, "l": 500}
+```
+
+Hold for 500ms after the note starts. The `l` field defines the hold duration.
+
+**Hold note scoring:**
+- Player must hit the note head
+- Player must hold the key for the sustain duration
+- Releasing early breaks the hold
+- Each sustain "segment" can award points
+
+### Special Note Kinds
+
+Note kinds modify behavior:
+
+```json
+{"t": 1000, "d": 0, "l": 0, "k": "mine"}
+```
+
+**Built-in note kinds:**
+
+- **Default** (no `k` field): Standard note
+- **Custom kinds** defined in `assets/data/notekind/` directory
+
+Custom note kinds can:
+- Change note appearance
+- Modify hit behavior
+- Award different points
+- Trigger special effects
+
+## Song Events
+
+Events trigger gameplay actions at specific times:
+
+```haxe
+class SongEventData
+{
+  public var t:Float;         // Time
+  public var e:String;        // Event kind
+  public var v:Dynamic;       // Event value (data)
+  public var activated:Bool;  // Internal tracking
+}
+```
+
+### Event Structure
+
+```json
+{
+  "t": 4000,
+  "e": "FocusCamera",
+  "v": {
+    "char": 1,
+    "duration": 1.0
+  }
+}
+```
+
+<ParamField path="t" type="Float" required>
+  Time when event triggers (in song's time format)
+</ParamField>
+
+<ParamField path="e" type="String" required>
+  Event kind/type identifier
+</ParamField>
+
+<ParamField path="v" type="Dynamic" optional>
+  Event-specific data (can be any JSON-serializable value)
+</ParamField>
+
+## Built-in Events
+
+### FocusCamera
+
+Changes camera focus to a character:
+
+```json
+{
+  "t": 1000,
+  "e": "FocusCamera",
+  "v": {
+    "char": 1
+  }
+}
+```
+
+**Parameters:**
+- `char`: Character index (0 = player, 1 = opponent, 2 = girlfriend)
+- `duration`: Optional tween duration in seconds
+
+### ZoomCamera
+
+Changes camera zoom level:
+
+```json
+{
+  "t": 2000,
+  "e": "ZoomCamera",
+  "v": {
+    "zoom": 1.2,
+    "duration": 0.5
+  }
+}
+```
+
+**Parameters:**
+- `zoom`: Target zoom level
+- `duration`: Tween duration in seconds
+
+### PlayAnimation
+
+Plays animation on a character or prop:
+
+```json
+{
+  "t": 3000,
+  "e": "PlayAnimation",
+  "v": {
+    "target": "dad",
+    "anim": "hey",
+    "force": true
+  }
+}
+```
+
+**Parameters:**
+- `target`: Character or prop name
+- `anim`: Animation name
+- `force`: Whether to interrupt current animation
+
+### SetCameraBop
+
+Controls camera bopping:
+
+```json
+{
+  "t": 4000,
+  "e": "SetCameraBop",
+  "v": {
+    "intensity": 0.015,
+    "rate": 4
+  }
+}
+```
+
+**Parameters:**
+- `intensity`: Bop strength (zoom amount)
+- `rate`: Bop every X beats (e.g., 4 = every 4 beats)
+
+## Scroll Speed
+
+Controls how fast notes move:
+
+```json
+{
+  "scrollSpeed": {
+    "easy": 1.0,
+    "normal": 1.5,
+    "hard": 2.0,
+    "expert": 2.5
+  }
+}
+```
+
+**Scroll speed values:**
+- `1.0` = Default speed
+- `<1.0` = Slower (more reaction time)
+- `>1.0` = Faster (less reaction time)
+- Typical range: 0.8 - 3.0
+
+**How scroll speed affects gameplay:**
+- Higher values = notes approach faster
+- Lower values = more time to react
+- Does NOT affect timing windows
+- Purely visual speed change
+
+## Chart Organization
+
+### Per-Difficulty Charts
+
+Each difficulty has separate note data:
+
+```json
+{
+  "notes": {
+    "easy": [
+      {"t": 1000, "d": 0, "l": 0},
+      {"t": 2000, "d": 1, "l": 0}
+    ],
+    "normal": [
+      {"t": 1000, "d": 0, "l": 0},
+      {"t": 1500, "d": 2, "l": 0},
+      {"t": 2000, "d": 1, "l": 0}
+    ],
+    "hard": [
+      {"t": 1000, "d": 0, "l": 250},
+      {"t": 1250, "d": 2, "l": 0},
+      {"t": 1500, "d": 1, "l": 0},
+      {"t": 1750, "d": 3, "l": 0},
+      {"t": 2000, "d": 0, "l": 500}
+    ]
+  }
+}
+```
+
+**Difficulty design guidelines:**
+- **Easy**: Fewer notes, simpler patterns, longer gaps
+- **Normal**: Moderate note density, basic patterns
+- **Hard**: Higher density, complex patterns, more sustains
+
+### Shared Events
+
+Events are shared across all difficulties:
+
+```json
+{
+  "events": [
+    {"t": 0, "e": "FocusCamera", "v": {"char": 1}},
+    {"t": 4000, "e": "FocusCamera", "v": {"char": 0}}
+  ]
+}
+```
+
+Camera changes, animations, and other events apply to all difficulties.
+
+## Note Patterns
+
+### Single Notes
+
+Basic rhythm:
+
+```json
+[
+  {"t": 1000, "d": 0, "l": 0},
+  {"t": 1500, "d": 1, "l": 0},
+  {"t": 2000, "d": 2, "l": 0},
+  {"t": 2500, "d": 3, "l": 0}
+]
+```
+
+### Chords
+
+Multiple simultaneous notes:
+
+```json
+[
+  {"t": 1000, "d": 0, "l": 0},
+  {"t": 1000, "d": 2, "l": 0}
+]
+```
+
+Both notes at the same time (`t: 1000`).
+
+### Rolls
+
+Rapid sequential notes:
+
+```json
+[
+  {"t": 1000, "d": 0, "l": 0},
+  {"t": 1125, "d": 1, "l": 0},
+  {"t": 1250, "d": 2, "l": 0},
+  {"t": 1375, "d": 3, "l": 0}
+]
+```
+
+### Holds (Sustains)
+
+Long notes:
+
+```json
+[
+  {"t": 1000, "d": 0, "l": 1000},
+  {"t": 2500, "d": 1, "l": 500}
+]
+```
+
+First note holds for 1 second, second for 0.5 seconds.
+
+### Jacks
+
+Repeated notes in same lane:
+
+```json
+[
+  {"t": 1000, "d": 0, "l": 0},
+  {"t": 1250, "d": 0, "l": 0},
+  {"t": 1500, "d": 0, "l": 0},
+  {"t": 1750, "d": 0, "l": 0}
+]
+```
+
+## Timing Precision
+
+Chart timing uses the song's time format:
+
+### Milliseconds (Most Common)
+
+```json
+{"t": 1234.5, "d": 0, "l": 0}
+```
+
+Direct millisecond timing. Precise to 0.1ms.
+
+### Ticks
+
+```json
+{"t": 384, "d": 0, "l": 0}
+```
+
+With `divisions: 96`:
+- 1 beat = 96 ticks
+- 1/4 beat = 24 ticks
+- 1/16 beat = 6 ticks
+
+Grid-aligned, no floating point errors.
+
+### Step Alignment
+
+Notes should align to musical steps:
+
+**4/4 time, 120 BPM:**
+- 1 beat = 500ms
+- 1 step (1/4 beat) = 125ms
+
+**Common note timings:**
+- Quarter notes: 500ms apart
+- Eighth notes: 250ms apart
+- Sixteenth notes: 125ms apart
+- Thirty-second notes: 62.5ms apart
+
+## Loading Charts
+
+Charts are loaded via the Song system:
+
+```haxe
+var song = SongRegistry.instance.fetchEntry("bopeebo");
+var difficulty = song.getDifficulty("hard");
+
+// Access chart data
+var notes = difficulty.notes;  // Array<SongNoteData>
+var events = difficulty.events; // Array<SongEventData>
+var scrollSpeed = difficulty.getScrollSpeed();
+```
+
+## Charting Best Practices
+
+### 1. Follow the Music
+
+Align notes to musical beats:
+- Use strong beats for emphasis
+- Match note patterns to melody
+- Use holds for sustained notes
+
+### 2. Difficulty Progression
+
+**Easy:**
+- Simple patterns
+- Mostly single notes
+- Clear beat alignment
+- Minimal holds
+
+**Normal:**
+- Moderate complexity
+- Some chords (2 notes)
+- Basic patterns
+- Occasional holds
+
+**Hard:**
+- Complex patterns
+- Frequent chords
+- Fast rolls
+- Long holds
+- Creative patterns
+
+### 3. Playtest Extensively
+
+- Test on different difficulties
+- Check timing accuracy
+- Verify event triggers
+- Ensure patterns are fair
+
+### 4. Use Events Effectively
+
+- Camera focus on singing character
+- Zoom for emphasis
+- Animations at key moments
+- Don't overuse effects
+
+### 5. Balance Opponent and Player
+
+- Opponent notes (d: 0-3) during their sections
+- Player notes (d: 4-7) during player sections
+- Can overlap during duets
+
+## Example: Complete Chart
+
+```json
+{
+  "version": "2.2.4",
+  "scrollSpeed": {
+    "easy": 1.0,
+    "normal": 1.5,
+    "hard": 2.0
+  },
+  "events": [
+    {
+      "t": 0,
+      "e": "FocusCamera",
+      "v": {"char": 1}
+    },
+    {
+      "t": 8000,
+      "e": "FocusCamera",
+      "v": {"char": 0}
+    },
+    {
+      "t": 12000,
+      "e": "ZoomCamera",
+      "v": {"zoom": 1.3, "duration": 0.5}
+    }
+  ],
+  "notes": {
+    "normal": [
+      {"t": 1000, "d": 0, "l": 0},
+      {"t": 1500, "d": 1, "l": 0},
+      {"t": 2000, "d": 2, "l": 0},
+      {"t": 2500, "d": 3, "l": 0},
+      {"t": 3000, "d": 0, "l": 500},
+      
+      {"t": 8000, "d": 4, "l": 0},
+      {"t": 8500, "d": 5, "l": 0},
+      {"t": 9000, "d": 6, "l": 0},
+      {"t": 9500, "d": 7, "l": 0},
+      {"t": 10000, "d": 4, "l": 0},
+      {"t": 10000, "d": 6, "l": 0},
+      
+      {"t": 12000, "d": 4, "l": 250},
+      {"t": 12250, "d": 5, "l": 0},
+      {"t": 12500, "d": 6, "l": 0},
+      {"t": 12750, "d": 7, "l": 0}
+    ]
+  },
+  "generatedBy": "Chart Editor"
+}
+```
+
+This chart demonstrates:
+- Camera focus changes at 0ms and 8000ms
+- Camera zoom at 12000ms
+- Opponent notes (d: 0-3) from 1000-3000ms
+- Player notes (d: 4-7) from 8000ms onward
+- Various patterns: singles, holds, chords, rolls

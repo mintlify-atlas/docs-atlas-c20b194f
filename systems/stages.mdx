@@ -1,0 +1,602 @@
+---
+title: Stage System
+description: Stage architecture, props, camera system, and stage data format
+---
+
+The stage system manages the visual environment, background props, character positioning, and camera behavior during gameplay.
+
+## Stage Architecture
+
+### Stage Class
+
+Stages are groups of props rendered in PlayState:
+
+```haxe
+class Stage extends FlxSpriteGroup
+{
+  public var stageName:String;
+  public var camZoom:Float;  // Default camera zoom
+  
+  var namedProps:Map<String, StageProp>;
+  var characters:Map<String, BaseCharacter>;
+  var boppers:Array<Bopper>;
+}
+```
+
+**Key Properties:**
+
+<ParamField path="stageName" type="String">
+  Display name of the stage
+</ParamField>
+
+<ParamField path="camZoom" type="Float" default="1.0">
+  Default camera zoom level for this stage
+</ParamField>
+
+<ParamField path="namedProps" type="Map<String, StageProp>">
+  Props that can be referenced by name in scripts
+</ParamField>
+
+## Stage Data Format
+
+Stage data is stored in JSON files at `assets/data/stages/[id].json`:
+
+```json
+{
+  "version": "1.0.0",
+  "name": "Main Stage",
+  "cameraZoom": 1.0,
+  "directory": "shared",
+  "props": [
+    {
+      "name": "bg",
+      "assetPath": "stages/mainStage/stageback",
+      "position": [-600, -200],
+      "zIndex": 0,
+      "scale": 1.0,
+      "alpha": 1.0,
+      "scroll": [0.9, 0.9],
+      "isPixel": false
+    },
+    {
+      "name": "stageFront",
+      "assetPath": "stages/mainStage/stagefront",
+      "position": [-650, 600],
+      "zIndex": 500,
+      "scale": 1.0,
+      "scroll": [1.0, 1.0]
+    }
+  ],
+  "characters": {
+    "bf": {
+      "position": [770, 100],
+      "zIndex": 1000,
+      "scale": 1.0,
+      "cameraOffsets": [-100, -100]
+    },
+    "dad": {
+      "position": [100, 100],
+      "zIndex": 1000,
+      "scale": 1.0,
+      "cameraOffsets": [100, -100]
+    },
+    "gf": {
+      "position": [400, 130],
+      "zIndex": 900,
+      "scale": 1.0,
+      "cameraOffsets": [0, 0]
+    }
+  }
+}
+```
+
+### Stage Data Fields
+
+<ParamField path="version" type="String" required>
+  Stage data format version (currently "1.0.0")
+</ParamField>
+
+<ParamField path="name" type="String" required>
+  Display name for the stage
+</ParamField>
+
+<ParamField path="cameraZoom" type="Float" default="1.0">
+  Default camera zoom level
+</ParamField>
+
+<ParamField path="directory" type="String" default="shared">
+  Asset directory for stage props (for modding support)
+</ParamField>
+
+<ParamField path="props" type="Array<StageDataProp>" required>
+  Array of prop definitions (see below)
+</ParamField>
+
+<ParamField path="characters" type="StageDataCharacters" required>
+  Position and settings for bf, dad, and gf
+</ParamField>
+
+## Stage Props
+
+Props are the visual elements that make up a stage.
+
+### Prop Data Structure
+
+```typescript
+type StageDataProp = {
+  name?: string;              // Optional name for script access
+  assetPath: string;          // Path to image or "#color" for solid color
+  position: [number, number]; // [x, y] position
+  zIndex?: number;            // Render order (default: 0)
+  scale?: number | [number, number]; // Scale or [scaleX, scaleY]
+  alpha?: number;             // Opacity (default: 1.0)
+  scroll?: [number, number];  // Parallax scrolling (default: [1, 1])
+  isPixel?: boolean;          // Disable anti-aliasing (default: false)
+  flipX?: boolean;            // Flip horizontally (default: false)
+  flipY?: boolean;            // Flip vertically (default: false)
+  danceEvery?: number;        // Bop every X beats (default: 0)
+  animations?: Array<AnimationData>; // Prop animations
+  startingAnimation?: string; // Initial animation name
+  animType?: string;          // "sparrow", "packer", "animateatlas"
+};
+```
+
+### Basic Prop
+
+Simple static image:
+
+```json
+{
+  "name": "background",
+  "assetPath": "stages/myStage/bg",
+  "position": [0, 0],
+  "zIndex": 0
+}
+```
+
+### Solid Color Prop
+
+Create colored rectangles:
+
+```json
+{
+  "name": "colorBg",
+  "assetPath": "#FF6B9D",
+  "position": [0, 0],
+  "scale": [1280, 720],
+  "zIndex": -100
+}
+```
+
+When `assetPath` starts with `#`, it's treated as a color code, and `scale` defines the rectangle size.
+
+### Animated Props
+
+Props with animations:
+
+```json
+{
+  "name": "speaker",
+  "assetPath": "stages/myStage/speaker",
+  "position": [100, 200],
+  "zIndex": 100,
+  "animType": "sparrow",
+  "danceEvery": 1,
+  "animations": [
+    {
+      "name": "idle",
+      "prefix": "speaker idle",
+      "frameRate": 24,
+      "looped": false
+    },
+    {
+      "name": "bump",
+      "prefix": "speaker bump",
+      "frameRate": 24,
+      "looped": false
+    }
+  ],
+  "startingAnimation": "idle"
+}
+```
+
+### Bopping Props
+
+Props that bop to the music:
+
+```json
+{
+  "name": "bopProp",
+  "assetPath": "stages/myStage/bop",
+  "position": [500, 300],
+  "danceEvery": 1,
+  "animations": [
+    {
+      "name": "danceLeft",
+      "prefix": "prop bop left"
+    },
+    {
+      "name": "danceRight",
+      "prefix": "prop bop right"
+    }
+  ]
+}
+```
+
+Set `danceEvery` to the number of beats between bops (e.g., `1` = every beat, `2` = every other beat).
+
+## Z-Index System
+
+The `zIndex` determines render order:
+
+**Typical z-index ranges:**
+- Background layers: -1000 to 0
+- Mid-ground props: 0 to 500
+- Front-ground props: 500 to 999
+- Girlfriend: 900
+- Boyfriend/Dad: 1000
+- Foreground overlays: 1001+
+
+```haxe
+var zIndex:Int = 0;  // Higher numbers render in front
+```
+
+Props and characters are automatically sorted by z-index during stage construction.
+
+## Parallax Scrolling
+
+The `scroll` property creates depth through parallax:
+
+```json
+{
+  "scroll": [0.9, 0.9]  // Moves 90% as much as camera
+}
+```
+
+**Scroll factor values:**
+- `[1.0, 1.0]`: Moves 1:1 with camera (foreground)
+- `[0.5, 0.5]`: Moves half as much (mid-ground)
+- `[0.0, 0.0]`: Static, doesn't move (UI elements)
+- `[2.0, 2.0]`: Moves twice as much (rare, special effects)
+
+**Example layers:**
+
+```json
+{
+  "props": [
+    {
+      "name": "sky",
+      "assetPath": "stages/outdoor/sky",
+      "position": [0, -200],
+      "scroll": [0.1, 0.1],
+      "zIndex": -500
+    },
+    {
+      "name": "mountains",
+      "assetPath": "stages/outdoor/mountains",
+      "position": [0, 0],
+      "scroll": [0.5, 0.5],
+      "zIndex": -200
+    },
+    {
+      "name": "ground",
+      "assetPath": "stages/outdoor/ground",
+      "position": [0, 500],
+      "scroll": [1.0, 1.0],
+      "zIndex": 0
+    }
+  ]
+}
+```
+
+## Character Positioning
+
+Stages define where characters stand:
+
+```json
+{
+  "characters": {
+    "bf": {
+      "position": [770, 100],
+      "zIndex": 1000,
+      "scale": 1.0,
+      "cameraOffsets": [-100, -100]
+    },
+    "dad": {
+      "position": [100, 100],
+      "zIndex": 1000,
+      "scale": 1.0,
+      "cameraOffsets": [100, -100]
+    },
+    "gf": {
+      "position": [400, 130],
+      "zIndex": 900,
+      "scale": 1.0,
+      "cameraOffsets": [0, 0]
+    }
+  }
+}
+```
+
+### Character Data Fields
+
+<ParamField path="position" type="Array<Float>" required>
+  Character position as [x, y] (at character's feet)
+</ParamField>
+
+<ParamField path="zIndex" type="Int" default="1000">
+  Render order relative to props
+</ParamField>
+
+<ParamField path="scale" type="Float" default="1.0">
+  Scale multiplier applied to character (in addition to character's base scale)
+</ParamField>
+
+<ParamField path="cameraOffsets" type="Array<Float>" default="[0, 0]">
+  Camera focus offset as [x, y] when focusing on this character
+</ParamField>
+
+## Camera System
+
+### Camera Zoom
+
+The stage defines a default camera zoom:
+
+```haxe
+public var camZoom:Float;  // From stage data
+```
+
+This is applied when the stage loads and can be dynamically changed during gameplay.
+
+### Camera Focus Points
+
+The camera focuses on character positions:
+
+```haxe
+public var cameraFollowPoint:FlxObject;  // In PlayState
+```
+
+When a character sings, the camera moves to their `cameraFocusPoint`:
+
+```haxe
+// Character's camera focus point
+var focusPoint = character.cameraFocusPoint;
+focusPoint.x = character.x + character.cameraOffsets[0];
+focusPoint.y = character.y + character.cameraOffsets[1];
+```
+
+**Camera offsets shift focus:**
+- Boyfriend: `[-100, -100]` (left and up)
+- Dad: `[100, -100]` (right and up)
+- Girlfriend: `[0, 0]` (centered)
+
+### Camera Events
+
+Stages can respond to camera events via scripts:
+
+```haxe
+public function onCreate(event:ScriptEvent):Void
+public function onUpdate(event:UpdateScriptEvent):Void
+public function onBeatHit(event:SongTimeScriptEvent):Void
+```
+
+## Stage Props API
+
+### Accessing Props
+
+Named props can be accessed in scripts:
+
+```haxe
+// Get a prop by name
+var prop:StageProp = stage.getNamedProp("background");
+
+// Modify prop properties
+prop.alpha = 0.5;
+prop.x += 100;
+prop.playAnimation("bump");
+```
+
+### Prop Animation
+
+Animate props dynamically:
+
+```haxe
+// Play animation
+prop.playAnimation("idle");
+
+// With callback
+prop.playAnimation("bump", true, false, 0, function() {
+  trace("Animation finished!");
+});
+```
+
+### Adding Props at Runtime
+
+```haxe
+// Create new prop
+var newProp = new StageProp();
+newProp.loadTexture("stages/myStage/newProp");
+newProp.x = 500;
+newProp.y = 300;
+newProp.zIndex = 100;
+
+// Add to stage
+stage.addProp(newProp);
+stage.refresh(); // Re-sort by zIndex
+```
+
+## Stage Lighting
+
+Stages can implement lighting effects:
+
+```haxe
+// In stage script
+function onBeatHit(event:SongTimeScriptEvent):Void
+{
+  if (event.beat % 4 == 0) {
+    // Flash lights on downbeat
+    var lights = stage.getNamedProp("lights");
+    lights.alpha = 1.0;
+    FlxTween.tween(lights, {alpha: 0.5}, 0.5);
+  }
+}
+```
+
+## Pixel Art Stages
+
+For pixel-art stages, disable anti-aliasing:
+
+```json
+{
+  "props": [
+    {
+      "name": "pixelBg",
+      "assetPath": "stages/pixel/bg",
+      "position": [0, 0],
+      "isPixel": true,
+      "scale": 6
+    }
+  ]
+}
+```
+
+**Pixel art best practices:**
+- Set `isPixel: true` on all props
+- Use integer scale factors (6 is common)
+- Save sprites at native resolution, scale up in-engine
+- Ensure characters also have `isPixel: true`
+
+## Stage Scripts
+
+Create custom stage behavior with scripts:
+
+**File:** `assets/data/stages/myStage.hxs`
+
+```haxe
+import funkin.play.stage.Stage;
+import flixel.tweens.FlxTween;
+
+class MyStage extends Stage
+{
+  var bgProp:StageProp;
+  
+  public override function onCreate(event:ScriptEvent):Void
+  {
+    super.onCreate(event);
+    
+    bgProp = getNamedProp("background");
+    
+    // Custom initialization
+  }
+  
+  public override function onBeatHit(event:SongTimeScriptEvent):Void
+  {
+    super.onBeatHit(event);
+    
+    // Pulse background on beat
+    if (event.beat % 2 == 0) {
+      FlxTween.tween(bgProp.scale, {x: 1.05, y: 1.05}, 0.3, {
+        onComplete: function(_) {
+          FlxTween.tween(bgProp.scale, {x: 1.0, y: 1.0}, 0.3);
+        }
+      });
+    }
+  }
+}
+```
+
+## Stage Loading
+
+Stages are loaded via `StageRegistry`:
+
+```haxe
+var stage:Stage = StageRegistry.instance.fetchEntry("mainStage");
+```
+
+The loading process:
+1. Loads JSON data from `assets/data/stages/[id].json`
+2. Creates `Stage` instance
+3. Instantiates all props from `props` array
+4. Loads prop assets and animations
+5. Sorts props by z-index
+6. Positions characters based on `characters` data
+7. Applies camera zoom
+8. Calls `onCreate()` event
+
+## Example: Complete Stage
+
+```json
+{
+  "version": "1.0.0",
+  "name": "Custom Stage",
+  "cameraZoom": 0.9,
+  "props": [
+    {
+      "name": "sky",
+      "assetPath": "#87CEEB",
+      "position": [0, 0],
+      "scale": [2000, 1000],
+      "zIndex": -1000,
+      "scroll": [0.1, 0.1]
+    },
+    {
+      "name": "back",
+      "assetPath": "stages/custom/background",
+      "position": [-600, -200],
+      "zIndex": -100,
+      "scroll": [0.9, 0.9]
+    },
+    {
+      "name": "floor",
+      "assetPath": "stages/custom/floor",
+      "position": [-650, 600],
+      "zIndex": 0
+    },
+    {
+      "name": "speaker",
+      "assetPath": "stages/custom/speaker",
+      "position": [50, 400],
+      "zIndex": 100,
+      "danceEvery": 1,
+      "animType": "sparrow",
+      "animations": [
+        {
+          "name": "danceLeft",
+          "prefix": "speaker left",
+          "frameRate": 24
+        },
+        {
+          "name": "danceRight",
+          "prefix": "speaker right",
+          "frameRate": 24
+        }
+      ]
+    },
+    {
+      "name": "lights",
+      "assetPath": "stages/custom/spotlights",
+      "position": [0, 0],
+      "zIndex": 2000,
+      "alpha": 0.7,
+      "blend": "add"
+    }
+  ],
+  "characters": {
+    "bf": {
+      "position": [850, 200],
+      "zIndex": 1000,
+      "cameraOffsets": [-100, -100]
+    },
+    "dad": {
+      "position": [150, 200],
+      "zIndex": 1000,
+      "cameraOffsets": [100, -100]
+    },
+    "gf": {
+      "position": [500, 150],
+      "zIndex": 900,
+      "cameraOffsets": [0, 0]
+    }
+  }
+}
+```

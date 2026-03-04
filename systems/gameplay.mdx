@@ -1,0 +1,406 @@
+---
+title: Gameplay System
+description: Core gameplay loop, timing system, scoring, and difficulty mechanics
+---
+
+The gameplay system manages the rhythm game mechanics, musical timing, scoring, and player input handling during song playback.
+
+## Core Gameplay Loop
+
+The gameplay state (`PlayState.hx`) orchestrates all rhythm gaming systems:
+
+### PlayState Initialization
+
+```haxe
+class PlayState extends MusicBeatSubState
+{
+  public var currentSong:Song;
+  public var currentDifficulty:String = Constants.DEFAULT_DIFFICULTY;
+  public var currentVariation:String = Constants.DEFAULT_VARIATION;
+  public var currentStage:Null<Stage> = null;
+  
+  public var health:Float = Constants.HEALTH_STARTING;
+  public var songScore:Int = 0;
+  public var startTimestamp:Float = 0.0;
+  public var playbackRate:Float = 1.0;
+}
+```
+
+**Key State Variables:**
+
+<ParamField path="currentSong" type="Song">
+  The currently playing song instance with metadata and chart data
+</ParamField>
+
+<ParamField path="health" type="Float">
+  Player's current health value (starts at `Constants.HEALTH_STARTING`)
+</ParamField>
+
+<ParamField path="songScore" type="Int">
+  Player's accumulated score for the current song
+</ParamField>
+
+<ParamField path="playbackRate" type="Float" default="1.0">
+  Song playback speed multiplier (1.0 = normal speed)
+</ParamField>
+
+### PlayState Parameters
+
+When creating a PlayState instance, use `PlayStateParams`:
+
+```haxe
+typedef PlayStateParams =
+{
+  targetSong:Song,
+  ?targetDifficulty:String,
+  ?targetVariation:String,
+  ?targetInstrumental:String,
+  ?practiceMode:Bool,
+  ?botPlayMode:Bool,
+  ?startTimestamp:Float,
+  ?playbackRate:Float,
+  ?mirrored:Bool
+}
+```
+
+<ParamField path="targetSong" type="Song" required>
+  The song to play
+</ParamField>
+
+<ParamField path="targetDifficulty" type="String" default="Constants.DEFAULT_DIFFICULTY">
+  The difficulty to play the song on
+</ParamField>
+
+<ParamField path="practiceMode" type="Bool" default="false">
+  Whether the song should start in Practice Mode
+</ParamField>
+
+<ParamField path="botPlayMode" type="Bool" default="false">
+  Whether the song should start in Bot Play Mode
+</ParamField>
+
+<ParamField path="startTimestamp" type="Float" default="0.0">
+  If specified, the game will jump to this timestamp (in ms) after countdown
+</ParamField>
+
+## Conductor & Timing System
+
+The `Conductor` class handles musical timing throughout the game:
+
+```haxe
+class Conductor
+{
+  public var songPosition:Float = 0;  // Current position in ms
+  public var bpm(get, never):Float;    // Current BPM
+  
+  public var currentBeat:Int = 0;      // Current beat number
+  public var currentStep:Int = 0;      // Current step number
+  public var currentMeasure:Int = 0;   // Current measure number
+  
+  public var currentBeatTime:Float = 0;    // Beat with fractional component
+  public var currentStepTime:Float = 0;    // Step with fractional component
+  public var currentMeasureTime:Float = 0; // Measure with fractional component
+}
+```
+
+### Musical Time Units
+
+**Understanding the timing hierarchy:**
+
+- **Step**: Quarter of a beat (4/4 time = 16 steps per measure)
+- **Beat**: Quarter note in 4/4 time (determined by time signature denominator)
+- **Measure**: Complete bar of music (determined by time signature numerator)
+
+**Example (4/4 time at 120 BPM):**
+- 120 BPM = 2 beats per second
+- 1 beat = 4 steps
+- 1 measure = 4 beats = 16 steps
+- 120 BPM = 8 steps per second
+
+### Time Signatures
+
+The Conductor supports variable time signatures:
+
+```haxe
+public var timeSignatureNumerator:Int;  // The '4' in 4/4
+public var timeSignatureDenominator:Int; // The '4' in 4/4
+```
+
+**Common time signatures:**
+- **4/4**: 4 beats per measure, quarter note gets the beat
+- **3/4**: 3 beats per measure, quarter note gets the beat
+- **7/8**: 7 beats per measure, eighth note gets the beat
+- **6/8**: 6 beats per measure, eighth note gets the beat
+
+### BPM and Time Changes
+
+Songs can have multiple BPM changes defined via `SongTimeChange`:
+
+```haxe
+class SongTimeChange
+{
+  public var timeStamp:Float;        // When the change occurs (ms)
+  public var bpm:Float;              // New BPM value
+  public var timeSignatureNum:Int;   // Time signature numerator
+  public var timeSignatureDen:Int;   // Time signature denominator
+  public var beatTime:Float;         // Beat time at this change
+  public var beatTuplets:Array<Int>; // Step subdivisions
+}
+```
+
+### Timing Signals
+
+The Conductor dispatches signals for game events:
+
+```haxe
+public static var stepHit:FlxSignal;    // Fired every step
+public static var beatHit:FlxSignal;    // Fired every beat
+public static var measureHit:FlxSignal; // Fired every measure
+```
+
+### Offsets
+
+Multiple offset types compensate for timing discrepancies:
+
+<ParamField path="instrumentalOffset" type="Float">
+  Offset tied to the chart to compensate for instrumental delay
+</ParamField>
+
+<ParamField path="formatOffset" type="Float">
+  Offset tied to the audio file format
+</ParamField>
+
+<ParamField path="globalOffset" type="Int">
+  User-configured offset to compensate for input lag (from save file)
+</ParamField>
+
+<ParamField path="audioVisualOffset" type="Int">
+  User-configured offset to compensate for audio/visual lag (from save file)
+</ParamField>
+
+```haxe
+public var combinedOffset(get, never):Float;
+  // Returns instrumentalOffset + formatOffset + globalOffset
+```
+
+## Scoring System
+
+FNF supports multiple scoring systems defined in `Scoring.hx`:
+
+### Scoring Systems
+
+```haxe
+enum abstract ScoringSystem(String)
+{
+  var LEGACY;  // Week 6 and older
+  var WEEK7;   // Week 7 system (tighter windows)
+  var PBOT1;   // Points Based On Timing v1
+}
+```
+
+### PBOT1 Scoring (Default)
+
+PBOT1 uses a sigmoid curve for scoring based on timing accuracy:
+
+**Judgement Thresholds:**
+
+<ParamField path="PBOT1_SICK_THRESHOLD" type="Float" default="45.0">
+  Notes hit within 45ms are judged as "Sick"
+</ParamField>
+
+<ParamField path="PBOT1_GOOD_THRESHOLD" type="Float" default="90.0">
+  Notes hit within 90ms are judged as "Good"
+</ParamField>
+
+<ParamField path="PBOT1_BAD_THRESHOLD" type="Float" default="135.0">
+  Notes hit within 135ms are judged as "Bad"
+</ParamField>
+
+<ParamField path="PBOT1_SHIT_THRESHOLD" type="Float" default="160.0">
+  Notes hit within 160ms are judged as "Shit"
+</ParamField>
+
+<ParamField path="PBOT1_MISS_THRESHOLD" type="Float" default="160.0">
+  Notes beyond 160ms are missed
+</ParamField>
+
+**Score Calculation:**
+
+```haxe
+public static function scoreNote(msTiming:Float, 
+                                  scoringSystem:ScoringSystem = PBOT1):Int
+{
+  return switch (scoringSystem)
+  {
+    case PBOT1: scoreNotePBOT1(msTiming);
+    // ... other systems
+  }
+}
+
+static function scoreNotePBOT1(msTiming:Float):Int
+{
+  var absTiming:Float = Math.abs(msTiming);
+  
+  return switch (absTiming)
+  {
+    case(_ > PBOT1_MISS_THRESHOLD) => true:
+      PBOT1_MISS_SCORE;  // -100
+    case(_ < PBOT1_PERFECT_THRESHOLD) => true:
+      PBOT1_MAX_SCORE;   // 500
+    default:
+      // Sigmoid curve calculation
+      var factor:Float = 1.0 - (1.0 / (1.0 + 
+        Math.exp(-PBOT1_SCORING_SLOPE * (absTiming - PBOT1_SCORING_OFFSET))));
+      Std.int(PBOT1_MAX_SCORE * factor + PBOT1_MIN_SCORE);
+  }
+}
+```
+
+**Score Constants:**
+
+- `PBOT1_MAX_SCORE`: 500 points
+- `PBOT1_MIN_SCORE`: 9.0 points (minimum for hit)
+- `PBOT1_MISS_SCORE`: -100 points
+- `PBOT1_PERFECT_THRESHOLD`: 5ms (always max score)
+
+### Legacy Scoring
+
+Step-function based scoring from older versions:
+
+```haxe
+public static final LEGACY_HIT_WINDOW:Float = (10 / 60) * 1000; // 166.67ms
+
+public static final LEGACY_SICK_SCORE:Int = 350;
+public static final LEGACY_GOOD_SCORE:Int = 200;
+public static final LEGACY_BAD_SCORE:Int = 100;
+public static final LEGACY_SHIT_SCORE:Int = 50;
+public static final LEGACY_MISS_SCORE:Int = -10;
+```
+
+### Ranking System
+
+Players receive ranks based on completion percentage:
+
+```haxe
+enum abstract ScoringRank(String)
+{
+  var PERFECT_GOLD;  // All Sick hits
+  var PERFECT;       // 100% completion
+  var EXCELLENT;     // >= RANK_EXCELLENT_THRESHOLD
+  var GREAT;         // >= RANK_GREAT_THRESHOLD
+  var GOOD;          // >= RANK_GOOD_THRESHOLD
+  var SHIT;          // Below GOOD threshold
+}
+
+public static function calculateRank(scoreData:SaveScoreData):ScoringRank
+{
+  if (scoreData.tallies.sick == scoreData.tallies.totalNotes)
+    return ScoringRank.PERFECT_GOLD;
+    
+  var completionAmount:Float = 
+    (tallies.sick + tallies.good - tallies.missed) / tallies.totalNotes;
+    
+  // Compare against threshold constants...
+}
+```
+
+## Difficulty System
+
+### Difficulty Levels
+
+Songs support multiple difficulty levels, each with separate chart data:
+
+**Default difficulties:**
+- `easy`
+- `normal` (default)
+- `hard`
+
+**Difficulty-specific data:**
+
+```haxe
+class SongChartData
+{
+  public var scrollSpeed:Map<String, Float>;  // Per-difficulty scroll speed
+  public var notes:Map<String, Array<SongNoteData>>;  // Per-difficulty notes
+}
+```
+
+### Scroll Speed
+
+Controls how fast notes approach the strumline:
+
+```haxe
+public function getScrollSpeed(diff:String = 'default'):Float
+{
+  var result:Float = this.scrollSpeed.get(diff);
+  if (result == 0.0 && diff != 'default') 
+    return getScrollSpeed('default');
+  return (result == 0.0) ? 1.0 : result;
+}
+```
+
+## Health System
+
+Player health affects gameplay outcome:
+
+**Health changes:**
+- Hitting notes increases health
+- Missing notes decreases health
+- Health reaches 0 = Game Over
+- Health > max = clamped to maximum
+
+**Constants:**
+- `Constants.HEALTH_STARTING`: Initial health value
+- Health range: typically 0.0 to 2.0
+
+## Practice & Bot Modes
+
+### Practice Mode
+
+Allows practicing without affecting scores:
+- No score saving
+- Can restart freely
+- Debug information available
+
+### Bot Play Mode
+
+Automatic perfect gameplay:
+- All notes hit automatically
+- Used for testing/demonstration
+- No score saving
+
+```haxe
+typedef PlayStateParams = {
+  // ...
+  ?practiceMode:Bool,
+  ?botPlayMode:Bool,
+}
+```
+
+## Input Handling
+
+Player input is processed through `PreciseInputManager` for accurate timing:
+
+- Timestamps are captured at frame-level precision
+- Input is compared against Conductor timing
+- Supports multiple input methods (keyboard, controller, touch on mobile)
+
+## Performance Metrics
+
+The game tracks various tallies during gameplay:
+
+```haxe
+class SaveScoreTallyData
+{
+  public var sick:Int = 0;      // Perfect hits
+  public var good:Int = 0;      // Good hits
+  public var bad:Int = 0;       // Bad hits  
+  public var shit:Int = 0;      // Poor hits
+  public var missed:Int = 0;    // Missed notes
+  public var totalNotes:Int = 0; // Total notes in chart
+  public var combo:Int = 0;     // Current combo
+  public var maxCombo:Int = 0;  // Highest combo achieved
+}
+```
+
+These tallies determine the final rank and are used for leaderboards and progression tracking.

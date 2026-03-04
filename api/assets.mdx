@@ -1,0 +1,517 @@
+---
+title: Assets
+description: Asset loading and management wrapper around OpenFL's asset system
+icon: box
+---
+
+The `Assets` class is a wrapper around `openfl.utils.Assets` that provides safe access to asset loading functions with Funkin-specific caching.
+
+## Overview
+
+The Assets class provides methods for loading:
+
+- Text files and binary data
+- Images and bitmap data
+- Sound effects and music
+- Asset libraries
+
+All methods are static and can be called directly without instantiation.
+
+## Properties
+
+<ResponseField name="cache" type="openfl.utils.IAssetCache">
+  The OpenFL assets cache. Access directly for cache management.
+</ResponseField>
+
+**Example:**
+
+```haxe
+// Clear specific asset from cache
+Assets.cache.removeBitmapData("assets/images/menuBG.png");
+
+// Check if asset is cached
+if (Assets.cache.hasBitmapData("assets/images/character.png"))
+{
+  trace("Character sprite is cached");
+}
+```
+
+## Methods
+
+### getPath()
+
+Returns the file system path for an asset.
+
+```haxe
+public static function getPath(path:String):String
+```
+
+<ParamField path="path" type="String" required>
+  The asset path relative to the assets folder.
+</ParamField>
+
+**Returns:** The absolute path to the asset on the file system.
+
+**Example:**
+
+```haxe
+var fullPath = Assets.getPath("assets/data/introText.txt");
+trace(fullPath); // e.g., "C:/Games/FunkinGame/assets/data/introText.txt"
+```
+
+### Text and Binary Assets
+
+### getText()
+
+Loads text from an asset synchronously.
+
+```haxe
+public static function getText(path:String):String
+```
+
+<ParamField path="path" type="String" required>
+  The asset path to load from.
+</ParamField>
+
+**Returns:** The text contents of the file.
+
+<Warning>
+Synchronous loading may cause stutters. Use `loadText()` for asynchronous loading when possible.
+</Warning>
+
+**Example:**
+
+```haxe
+// Load intro text synchronously
+var introText = Assets.getText("assets/data/introText.txt");
+trace(introText);
+```
+
+### loadText()
+
+Loads text from an asset asynchronously.
+
+```haxe
+public static function loadText(path:String):Future<String>
+```
+
+<ParamField path="path" type="String" required>
+  The asset path to load from.
+</ParamField>
+
+**Returns:** A Future that resolves with the text contents.
+
+**Example:**
+
+```haxe
+import openfl.utils.Future;
+
+// Load text asynchronously
+Assets.loadText("assets/data/dialogue.txt").onComplete(function(text:String)
+{
+  trace("Loaded dialogue: " + text);
+  processDialogue(text);
+});
+```
+
+### getBytes()
+
+Loads binary data from an asset synchronously.
+
+```haxe
+public static function getBytes(path:String):haxe.io.Bytes
+```
+
+<ParamField path="path" type="String" required>
+  The asset path to load from.
+</ParamField>
+
+**Returns:** The byte contents of the file.
+
+**Example:**
+
+```haxe
+// Load binary data
+var saveData = Assets.getBytes("assets/data/save.dat");
+```
+
+### loadBytes()
+
+Loads binary data from an asset asynchronously.
+
+```haxe
+public static function loadBytes(path:String):Future<openfl.utils.ByteArray>
+```
+
+<ParamField path="path" type="String" required>
+  The asset path to load from.
+</ParamField>
+
+**Returns:** A Future that resolves with the byte contents.
+
+## Image Assets
+
+### getBitmapData()
+
+Loads a bitmap image synchronously.
+
+```haxe
+public static function getBitmapData(path:String, useCache:Bool = true):openfl.display.BitmapData
+```
+
+<ParamField path="path" type="String" required>
+  The asset path to load from.
+</ParamField>
+
+<ParamField path="useCache" type="Bool" default="true">
+  Whether to use the asset cache. Set to false to force a fresh load.
+</ParamField>
+
+**Returns:** The loaded BitmapData.
+
+<Warning>
+Synchronous loading may cause stutters. Use `loadBitmapData()` for asynchronous loading when possible.
+</Warning>
+
+**Example:**
+
+```haxe
+// Load character sprite
+var charSprite = Assets.getBitmapData("assets/images/characters/bf.png");
+
+// Load without caching (for memory management)
+var tempImage = Assets.getBitmapData("assets/images/temp.png", false);
+```
+
+### loadBitmapData()
+
+Loads a bitmap image asynchronously.
+
+```haxe
+public static function loadBitmapData(path:String):Future<openfl.display.BitmapData>
+```
+
+<ParamField path="path" type="String" required>
+  The asset path to load from.
+</ParamField>
+
+**Returns:** A Future that resolves with the loaded BitmapData.
+
+**Example:**
+
+```haxe
+// Load image asynchronously
+Assets.loadBitmapData("assets/images/menuBG.png").onComplete(function(bmp:BitmapData)
+{
+  var sprite = new FlxSprite();
+  sprite.loadGraphic(bmp);
+  add(sprite);
+});
+```
+
+## Audio Assets
+
+### getSound()
+
+Loads a sound file synchronously.
+
+```haxe
+public static function getSound(path:String):openfl.media.Sound
+```
+
+<ParamField path="path" type="String" required>
+  The asset path to load from.
+</ParamField>
+
+**Returns:** The loaded Sound object.
+
+<Warning>
+Synchronous loading may cause stutters. Use `loadSound()` for asynchronous loading when possible.
+</Warning>
+
+**Example:**
+
+```haxe
+// Load sound effect
+var confirmSound = Assets.getSound("assets/sounds/confirmMenu.ogg");
+confirmSound.play();
+```
+
+### loadSound()
+
+Loads a sound file asynchronously.
+
+```haxe
+public static function loadSound(path:String):Future<openfl.media.Sound>
+```
+
+<ParamField path="path" type="String" required>
+  The asset path to load from.
+</ParamField>
+
+**Returns:** A Future that resolves with the loaded Sound.
+
+**Example:**
+
+```haxe
+// Load sound asynchronously
+Assets.loadSound("assets/sounds/explosion.ogg").onComplete(function(sound:Sound)
+{
+  sound.play();
+});
+```
+
+### getMusic()
+
+Loads a music file synchronously with optimizations for long-duration audio.
+
+```haxe
+public static function getMusic(path:String):openfl.media.Sound
+```
+
+<ParamField path="path" type="String" required>
+  The asset path to load from.
+</ParamField>
+
+**Returns:** The loaded Sound object optimized for music.
+
+**Example:**
+
+```haxe
+// Load background music
+var bgMusic = Assets.getMusic("assets/music/freakyMenu.ogg");
+FlxG.sound.playMusic(bgMusic);
+```
+
+### loadMusic()
+
+Loads a music file asynchronously with optimizations for long-duration audio.
+
+```haxe
+public static function loadMusic(path:String):Future<openfl.media.Sound>
+```
+
+<ParamField path="path" type="String" required>
+  The asset path to load from.
+</ParamField>
+
+**Returns:** A Future that resolves with the loaded music Sound.
+
+**Example:**
+
+```haxe
+// Load and play music asynchronously
+Assets.loadMusic("assets/music/breakfast.ogg").onComplete(function(music:Sound)
+{
+  FlxG.sound.playMusic(music);
+});
+```
+
+## Asset Library Management
+
+### exists()
+
+Checks whether an asset exists.
+
+```haxe
+public static function exists(path:String, ?type:openfl.utils.AssetType):Bool
+```
+
+<ParamField path="path" type="String" required>
+  The asset path to check.
+</ParamField>
+
+<ParamField path="type" type="AssetType" optional>
+  The asset type to check (IMAGE, SOUND, TEXT, etc.).
+</ParamField>
+
+**Returns:** True if the asset exists.
+
+**Example:**
+
+```haxe
+if (Assets.exists("assets/images/custom.png", IMAGE))
+{
+  trace("Custom image exists!");
+}
+else
+{
+  trace("Using default image");
+}
+```
+
+### list()
+
+Retrieves a list of all assets of a given type.
+
+```haxe
+public static function list(?type:openfl.utils.AssetType):Array<String>
+```
+
+<ParamField path="type" type="AssetType" optional>
+  The asset type to list. If omitted, lists all assets.
+</ParamField>
+
+**Returns:** Array of asset paths.
+
+**Example:**
+
+```haxe
+// List all image assets
+var images = Assets.list(IMAGE);
+for (img in images)
+{
+  trace("Found image: " + img);
+}
+
+// List all sound assets
+var sounds = Assets.list(SOUND);
+trace("Total sounds: " + sounds.length);
+```
+
+### hasLibrary()
+
+Checks if an asset library exists.
+
+```haxe
+public static function hasLibrary(name:String):Bool
+```
+
+<ParamField path="name" type="String" required>
+  The library name to check.
+</ParamField>
+
+**Returns:** True if the library exists.
+
+### getLibrary()
+
+Retrieves an asset library by name.
+
+```haxe
+public static function getLibrary(name:String):lime.utils.AssetLibrary
+```
+
+<ParamField path="name" type="String" required>
+  The name of the library to get.
+</ParamField>
+
+**Returns:** The AssetLibrary object.
+
+### loadLibrary()
+
+Loads an asset library asynchronously.
+
+```haxe
+public static function loadLibrary(name:String):Future<openfl.utils.AssetLibrary>
+```
+
+<ParamField path="name" type="String" required>
+  The name of the library to load.
+</ParamField>
+
+**Returns:** A Future that resolves with the AssetLibrary.
+
+**Example:**
+
+```haxe
+// Load a custom asset library
+Assets.loadLibrary("week7").onComplete(function(lib:AssetLibrary)
+{
+  trace("Week 7 assets loaded!");
+  // Now week7 assets are available
+});
+```
+
+## Best Practices
+
+### Use Asynchronous Loading
+
+Prefer async methods to avoid frame stutters:
+
+```haxe
+// Bad: Synchronous loading causes stutter
+var image = Assets.getBitmapData("assets/images/large.png");
+
+// Good: Asynchronous loading
+Assets.loadBitmapData("assets/images/large.png").onComplete(function(bmp)
+{
+  // Use image here
+});
+```
+
+### Check Asset Existence
+
+Validate assets exist before loading:
+
+```haxe
+var assetPath = "assets/data/custom.json";
+if (Assets.exists(assetPath, TEXT))
+{
+  var data = Assets.getText(assetPath);
+}
+else
+{
+  trace("Asset not found: " + assetPath);
+}
+```
+
+### Manage Cache
+
+Manually manage cache for memory-intensive assets:
+
+```haxe
+// Load without cache for temporary use
+var tempBitmap = Assets.getBitmapData("assets/images/temp.png", false);
+use(tempBitmap);
+tempBitmap.dispose();
+
+// Or remove from cache when done
+var cachedBitmap = Assets.getBitmapData("assets/images/cached.png");
+use(cachedBitmap);
+Assets.cache.removeBitmapData("assets/images/cached.png");
+```
+
+## Example: Asset Preloader
+
+```haxe
+import funkin.Assets;
+import openfl.utils.Future;
+
+class AssetPreloader
+{
+  public static function preloadAssets(onComplete:Void->Void):Void
+  {
+    var toLoad = [
+      "assets/images/menuBG.png",
+      "assets/images/menuDesat.png",
+      "assets/music/freakyMenu.ogg"
+    ];
+    
+    var loaded = 0;
+    var total = toLoad.length;
+    
+    function checkComplete():Void
+    {
+      loaded++;
+      trace('Loaded ${loaded}/${total} assets');
+      
+      if (loaded >= total)
+      {
+        onComplete();
+      }
+    }
+    
+    // Load images
+    Assets.loadBitmapData(toLoad[0]).onComplete(function(_) checkComplete());
+    Assets.loadBitmapData(toLoad[1]).onComplete(function(_) checkComplete());
+    
+    // Load music
+    Assets.loadMusic(toLoad[2]).onComplete(function(_) checkComplete());
+  }
+}
+```
+
+## See Also
+
+- [OpenFL Assets Documentation](https://api.openfl.org/openfl/utils/Assets.html)
+- [Lime Asset Library](https://lime.openfl.org/docs/api/lime/utils/AssetLibrary.html)

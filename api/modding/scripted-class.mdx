@@ -1,0 +1,403 @@
+---
+title: IScriptedClass
+description: Interface definitions for creating scripted classes that respond to game events
+---
+
+The `IScriptedClass` interfaces define callback methods that scripted classes can implement to respond to game events. These interfaces enable mods to hook into the game's lifecycle and react to player actions.
+
+## Core Interface
+
+### IScriptedClass
+
+The base interface that all scripted classes implement:
+
+```haxe
+interface IScriptedClass {
+  public function onScriptEvent(event:ScriptEvent):Void;
+  public function onCreate(event:ScriptEvent):Void;
+  public function onDestroy(event:ScriptEvent):Void;
+  public function onUpdate(event:UpdateScriptEvent):Void;
+}
+```
+
+#### Lifecycle Methods
+
+**onCreate(event)**  
+Called when the object is first created and added to the game.
+
+**onDestroy(event)**  
+Called when the object is about to be destroyed or removed.
+
+**onUpdate(event)**  
+Called every frame. The `UpdateScriptEvent` contains `elapsed` (delta time in seconds).
+
+**onScriptEvent(event)**  
+Called for any script event dispatched to this object. Use this to handle custom events or as a catch-all.
+
+## State Management
+
+### IStateChangingScriptedClass
+
+For scripts that need to persist across state changes:
+
+```haxe
+interface IStateChangingScriptedClass extends IScriptedClass {
+  // State transitions
+  public function onStateChangeBegin(event:StateChangeScriptEvent):Void;
+  public function onStateChangeEnd(event:StateChangeScriptEvent):Void;
+  
+  // Substate management
+  public function onSubStateOpenBegin(event:SubStateScriptEvent):Void;
+  public function onSubStateOpenEnd(event:SubStateScriptEvent):Void;
+  public function onSubStateCloseBegin(event:SubStateScriptEvent):Void;
+  public function onSubStateCloseEnd(event:SubStateScriptEvent):Void;
+  
+  // Focus management
+  public function onFocusLost(event:FocusScriptEvent):Void;
+  public function onFocusGained(event:FocusScriptEvent):Void;
+}
+```
+
+#### Example: State Transition Handler
+
+```haxe
+class MyModule extends Module {
+  public function onStateChangeBegin(event:StateChangeScriptEvent):Void {
+    trace('Leaving state: ${event.currentState}');
+    trace('Entering state: ${event.targetState}');
+    
+    // Clean up state-specific resources
+    if (Type.getClass(event.currentState) == PlayState) {
+      cleanupGameplay();
+    }
+  }
+  
+  public function onStateChangeEnd(event:StateChangeScriptEvent):Void {
+    trace('Finished transition to: ${event.targetState}');
+    
+    // Initialize resources for new state
+    if (Type.getClass(event.targetState) == FreeplayState) {
+      setupFreeplay();
+    }
+  }
+}
+```
+
+### IStateStageProp
+
+For scripted objects that are added to the game state:
+
+```haxe
+interface IStateStageProp extends IScriptedClass {
+  public function onAdd(event:ScriptEvent):Void;
+}
+```
+
+**onAdd(event)**  
+Called when the element is added to the current state. Generally requires the class to be an instance of `FlxBasic`.
+
+## Gameplay Events
+
+### INoteScriptedClass
+
+For scripts that respond to note events:
+
+```haxe
+interface INoteScriptedClass extends IScriptedClass {
+  public function onNoteIncoming(event:NoteScriptEvent):Void;
+  public function onNoteHit(event:HitNoteScriptEvent):Void;
+  public function onNoteMiss(event:NoteScriptEvent):Void;
+  public function onNoteHoldDrop(event:HoldNoteScriptEvent):Void;
+}
+```
+
+#### Event Details
+
+**onNoteIncoming(event)**  
+Called when a note enters the field of view and approaches the strumline.
+- Access the note: `event.note`
+- Check direction: `event.note.direction`
+
+**onNoteHit(event)**  
+Called when either player hits a note.
+- Access the note: `event.note`
+- Check if player or CPU: `event.note.mustPress`
+- Get accuracy: `event.accuracy`
+- Get judgement: `event.judgement`
+
+**onNoteMiss(event)**  
+Called when a note is missed (usually by the player).
+
+**onNoteHoldDrop(event)**  
+Called when a hold note is dropped early.
+
+#### Example: Note Event Handler
+
+```haxe
+class ScoreMultiplierMod extends Module {
+  var combo:Int = 0;
+  var multiplier:Float = 1.0;
+  
+  public function onNoteHit(event:HitNoteScriptEvent):Void {
+    if (!event.note.mustPress) return; // Only count player notes
+    
+    combo++;
+    
+    // Increase multiplier every 10 notes
+    if (combo % 10 == 0) {
+      multiplier += 0.1;
+      trace('Multiplier increased: ${multiplier}x');
+    }
+    
+    // Apply score multiplier
+    var baseScore = event.score;
+    event.score = Std.int(baseScore * multiplier);
+  }
+  
+  public function onNoteMiss(event:NoteScriptEvent):Void {
+    if (!event.note.mustPress) return;
+    
+    // Reset on miss
+    combo = 0;
+    multiplier = 1.0;
+    trace('Multiplier reset!');
+  }
+}
+```
+
+### IBPMSyncedScriptedClass
+
+For scripts that sync with the music tempo:
+
+```haxe
+interface IBPMSyncedScriptedClass extends IScriptedClass {
+  public function onStepHit(event:SongTimeScriptEvent):Void;
+  public function onBeatHit(event:SongTimeScriptEvent):Void;
+}
+```
+
+**onStepHit(event)**  
+Called once every step (16th note) of the song.
+- Get current step: `event.step`
+
+**onBeatHit(event)**  
+Called once every beat (quarter note) of the song.
+- Get current beat: `event.beat`
+
+#### Example: Beat-Synced Animation
+
+```haxe
+class BeatBounce extends Module {
+  public function onBeatHit(event:SongTimeScriptEvent):Void {
+    // Every 4 beats (one measure)
+    if (event.beat % 4 == 0) {
+      // Access the current state's camera
+      FlxG.camera.zoom += 0.05;
+      
+      // Play a visual effect
+      playBeatEffect();
+    }
+  }
+}
+```
+
+### IPlayStateScriptedClass
+
+Comprehensive interface for gameplay mods:
+
+```haxe
+interface IPlayStateScriptedClass extends INoteScriptedClass extends IBPMSyncedScriptedClass {
+  // Pause/Resume
+  public function onPause(event:PauseScriptEvent):Void;
+  public function onResume(event:ScriptEvent):Void;
+  
+  // Song lifecycle
+  public function onSongLoaded(event:SongLoadScriptEvent):Void;
+  public function onSongStart(event:ScriptEvent):Void;
+  public function onSongEnd(event:ScriptEvent):Void;
+  public function onSongRetry(event:SongRetryEvent):Void;
+  
+  // Countdown
+  public function onCountdownStart(event:CountdownScriptEvent):Void;
+  public function onCountdownStep(event:CountdownScriptEvent):Void;
+  public function onCountdownEnd(event:CountdownScriptEvent):Void;
+  
+  // Game events
+  public function onGameOver(event:ScriptEvent):Void;
+  public function onNoteGhostMiss(event:GhostMissNoteScriptEvent):Void;
+  public function onSongEvent(event:SongEventScriptEvent):Void;
+}
+```
+
+#### Song Manipulation
+
+```haxe
+class ChartModifier extends Module {
+  public function onSongLoaded(event:SongLoadScriptEvent):Void {
+    trace('Song loaded: ${event.songId}');
+    
+    // Modify the chart before notes are placed
+    for (note in event.notes) {
+      // Double the speed of all notes
+      note.time *= 0.5;
+    }
+  }
+  
+  public function onSongStart(event:ScriptEvent):Void {
+    trace('Song started! Current time: ${Conductor.songPosition}');
+  }
+  
+  public function onSongEnd(event:ScriptEvent):Void {
+    trace('Song ended! Final score: ${PlayState.instance.songScore}');
+  }
+}
+```
+
+#### Countdown Control
+
+```haxe
+class CustomCountdown extends Module {
+  public function onCountdownStart(event:CountdownScriptEvent):Void {
+    trace('Countdown starting!');
+    
+    // Cancel default countdown
+    event.cancel();
+    
+    // Start custom countdown
+    startCustomCountdown();
+  }
+  
+  public function onCountdownStep(event:CountdownScriptEvent):Void {
+    // event.step: 0=READY, 1=SET, 2=GO, 3=GO! (last frame)
+    switch (event.step) {
+      case 0: playCustomSound('ready');
+      case 1: playCustomSound('set');
+      case 2: playCustomSound('go');
+    }
+  }
+}
+```
+
+## UI State Events
+
+### IFreeplayScriptedClass
+
+For Freeplay menu interactions:
+
+```haxe
+interface IFreeplayScriptedClass extends IScriptedClass {
+  public function onCapsuleSelected(event:CapsuleScriptEvent):Void;
+  public function onDifficultySwitch(event:CapsuleScriptEvent):Void;
+  public function onSongSelected(event:CapsuleScriptEvent):Void;
+  public function onFreeplayIntroDone(event:FreeplayScriptEvent):Void;
+  public function onFreeplayOutro(event:FreeplayScriptEvent):Void;
+  public function onFreeplayClose(event:FreeplayScriptEvent):Void;
+}
+```
+
+#### Example: Freeplay Menu Mod
+
+```haxe
+class FreeplayTracker extends Module {
+  public function onSongSelected(event:CapsuleScriptEvent):Void {
+    trace('Song selected: ${event.capsule.songData.songName}');
+    trace('Difficulty: ${event.difficulty}');
+    
+    // Check if song has been played before
+    if (!hasSongBeenPlayed(event.capsule.songData.songId)) {
+      showNewSongPopup();
+    }
+  }
+  
+  public function onDifficultySwitch(event:CapsuleScriptEvent):Void {
+    trace('Difficulty changed to: ${event.difficulty}');
+    updateDifficultyDisplay();
+  }
+}
+```
+
+### ICharacterSelectScriptedClass
+
+For Character Select interactions:
+
+```haxe
+interface ICharacterSelectScriptedClass extends IScriptedClass {
+  public function onCharacterSelect(event:CharacterSelectScriptEvent):Void;
+  public function onCharacterDeselect(event:CharacterSelectScriptEvent):Void;
+  public function onCharacterConfirm(event:CharacterSelectScriptEvent):Void;
+}
+```
+
+### IDialogueScriptedClass
+
+For dialogue system interactions:
+
+```haxe
+interface IDialogueScriptedClass extends IScriptedClass {
+  public function onDialogueStart(event:DialogueScriptEvent):Void;
+  public function onDialogueLine(event:DialogueScriptEvent):Void;
+  public function onDialogueCompleteLine(event:DialogueScriptEvent):Void;
+  public function onDialogueSkip(event:DialogueScriptEvent):Void;
+  public function onDialogueEnd(event:DialogueScriptEvent):Void;
+}
+```
+
+## Event Handler Interface
+
+### IEventHandler
+
+For objects that can dispatch events to children:
+
+```haxe
+interface IEventHandler {
+  public function dispatchEvent(event:ScriptEvent):Void;
+}
+```
+
+PlayState and other container classes implement this to broadcast events to all child scripted elements.
+
+## Event Cancellation
+
+Many events are cancellable, allowing mods to prevent default behavior:
+
+```haxe
+class GameOverPrevention extends Module {
+  public function onGameOver(event:ScriptEvent):Void {
+    if (playerHasSecondChance()) {
+      // Prevent game over
+      event.cancel();
+      
+      // Restore player health
+      PlayState.instance.health = 1.0;
+      
+      // Show notification
+      showSecondChancePopup();
+    }
+  }
+}
+```
+
+## Event Propagation
+
+Control whether events continue to other scripts:
+
+```haxe
+class HighPriorityMod extends Module {
+  public function new() {
+    super('high-priority-mod', 1); // Low priority number = high priority
+  }
+  
+  public function onNoteHit(event:HitNoteScriptEvent):Void {
+    if (shouldBlockOtherMods()) {
+      // Stop event from reaching other modules
+      event.stopPropagation();
+    }
+  }
+}
+```
+
+## Related
+
+- [Module System](/api/modding/module) - Create persistent mods using these interfaces
+- [PolymodHandler](/api/modding/polymod-handler) - Mod loading and management
+- [Script Events](/api/events) - Complete event reference

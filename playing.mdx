@@ -1,0 +1,462 @@
+---
+title: Playing Friday Night Funkin'
+description: Master the controls, understand gameplay mechanics, and learn about the different game modes in Friday Night Funkin'.
+---
+
+## Game Overview
+
+Friday Night Funkin' is a rhythm game where you play as Boyfriend, battling opponents in musical rap battles. Your goal is to hit notes in sync with the music, maintaining your health bar to win each song.
+
+<Note>
+The game runs at **60 FPS** with a resolution of **1280x720** by default. All gameplay timing is synchronized to this framerate.
+</Note>
+
+## Controls
+
+### Note Controls
+
+Hit arrow notes using these keys (default bindings):
+
+<CardGroup cols={4}>
+  <Card title="Left" icon="arrow-left">
+    **A** or **Left Arrow**
+  </Card>
+  <Card title="Down" icon="arrow-down">
+    **S** or **Down Arrow**
+  </Card>
+  <Card title="Up" icon="arrow-up">
+    **W** or **Up Arrow**
+  </Card>
+  <Card title="Right" icon="arrow-right">
+    **D** or **Right Arrow**
+  </Card>
+</CardGroup>
+
+```haxe Controls.hx:118-133
+// Note input definitions
+public var NOTE_LEFT(get, never):Bool;
+public var NOTE_DOWN(get, never):Bool;
+public var NOTE_UP(get, never):Bool;
+public var NOTE_RIGHT(get, never):Bool;
+```
+
+<Tip>
+**Controller Support**: The game fully supports gamepad input! Use the D-pad or left stick for notes, and face buttons for menu navigation.
+</Tip>
+
+### Menu Navigation
+
+Navigate menus with these controls:
+
+| Action | Keys | Description |
+|--------|------|-------------|
+| **Navigate Up** | W, Up Arrow | Move selection up |
+| **Navigate Down** | S, Down Arrow | Move selection down |
+| **Navigate Left** | A, Left Arrow | Move selection left |
+| **Navigate Right** | D, Right Arrow | Move selection right |
+| **Accept/Confirm** | Enter, Space | Select menu item |
+| **Back/Cancel** | Escape, Backspace | Go back to previous menu |
+
+### In-Game Controls
+
+| Action | Keys | Description |
+|--------|------|-------------|
+| **Pause** | Enter, Escape | Pause the game mid-song |
+| **Reset** | R | Restart the current song |
+| **Volume Up** | + (Plus) | Increase volume by 10% |
+| **Volume Down** | - (Minus) | Decrease volume by 10% |
+| **Volume Mute** | 0 (Zero) | Toggle mute |
+| **Fullscreen** | F11 | Toggle fullscreen mode |
+| **Screenshot** | F3 | Take a screenshot (saved to `screenshots/` folder) |
+
+```haxe VolumePlugin.hx:29-32
+// Rebindable volume keys
+if (PlayerSettings.player1.controls.VOLUME_MUTE) FlxG.sound.toggleMuted();
+else if (PlayerSettings.player1.controls.VOLUME_UP) FlxG.sound.changeVolume(0.1);
+else if (PlayerSettings.player1.controls.VOLUME_DOWN) FlxG.sound.changeVolume(-0.1);
+```
+
+<Warning>
+Controls can be customized in the **Options > Controls** menu. Your keybindings are saved per-profile.
+</Warning>
+
+### Freeplay-Specific Controls
+
+| Action | Keys | Description |
+|--------|------|-------------|
+| **Favorite Song** | Tab | Mark song as favorite |
+| **Switch Instrumental** | Q / E | Change between instrumental versions |
+| **Character Select** | Space | Open character selection |
+| **Jump to Top** | Home | Jump to first song |
+| **Jump to Bottom** | End | Jump to last song |
+
+### Debug Controls (Debug Builds Only)
+
+These hotkeys only work in debug builds or with `-DGITHUB_BUILD`:
+
+<Accordion title="View Debug Hotkeys">
+| Action | Keys | Description |
+|--------|------|-------------|
+| **Debug Menu** | ~ (Tilde) | Open debug menu |
+| **Chart Editor** | 7 | Open chart editor |
+| **Stage Editor** | 8 | Open stage editor |
+| **Time Travel Forward** | Page Up | Skip forward 2 sections (Shift: 20 sections) |
+| **Time Travel Backward** | Page Down | Skip backward 2 sections (Shift: 20 sections) |
+| **End Song** | 1 | Immediately end song |
+| **Gain Health** | 2 | Add 10% health |
+| **Lose Health** | 3 | Lose 5% health |
+| **Hide UI** | H | Toggle UI visibility |
+| **Hot Reload** | F5 | Reload assets without restarting |
+| **Force Crash** | Ctrl+Alt+Shift+L | Trigger crash log (main menu only) |
+
+For a complete list, see the [Debug Hotkeys documentation](https://github.com/FunkinCrew/funkin/blob/main/docs/Funkin'%20Debug%20Hotkeys.md).
+</Accordion>
+
+## Gameplay Mechanics
+
+### The Note System
+
+<Steps>
+  <Step title="Notes Approach">
+    Arrow notes scroll up from the bottom of the screen toward the receptor arrows at the top.
+  </Step>
+  
+  <Step title="Hit in Time">
+    Press the corresponding arrow key when the note reaches the receptor. Timing determines your accuracy rating.
+  </Step>
+  
+  <Step title="Maintain Health">
+    Successful hits increase your health (green bar). Misses decrease health (red bar).
+  </Step>
+  
+  <Step title="Win or Lose">
+    Keep your health above zero to complete the song. If health reaches zero, you lose.
+  </Step>
+</Steps>
+
+### Timing Windows
+
+Your accuracy is rated based on timing:
+
+<CardGroup cols={4}>
+  <Card title="Sick!!" icon="star">
+    **Perfect timing**  
+    Most health gain  
+    Full combo intact
+  </Card>
+  <Card title="Good" icon="check">
+    **Slightly off**  
+    Moderate health gain  
+    Combo continues
+  </Card>
+  <Card title="Bad" icon="xmark">
+    **Poor timing**  
+    Small health gain  
+    Combo continues
+  </Card>
+  <Card title="Shit" icon="skull">
+    **Very poor timing**  
+    No health change  
+    Combo broken
+  </Card>
+</CardGroup>
+
+<Info>
+**Miss**: If you don't hit a note at all, you lose health and your combo resets to zero. Multiple consecutive misses can quickly drain your health bar.
+</Info>
+
+### Health Bar System
+
+The health bar at the bottom of the screen shows the battle state:
+
+```
+[====Opponent====|====You====]
+     Red          |    Green
+```
+
+- **Green side (right)**: Your health
+- **Red side (left)**: Opponent's domain
+- The character icons move along the bar based on current health
+- Health reaches one extreme = game over
+
+### Scoring System
+
+Your performance is tracked through:
+
+<Tabs>
+  <Tab title="Score">
+    Point value based on note accuracy:
+    - **Sick**: 350 points
+    - **Good**: 200 points
+    - **Bad**: 100 points
+    - **Shit**: 50 points
+  </Tab>
+  
+  <Tab title="Combo">
+    Consecutive successful note hits without missing. Higher combos multiply your score potential.
+  </Tab>
+  
+  <Tab title="Accuracy">
+    Percentage of perfectly hit notes. Tracked across the entire song.
+  </Tab>
+  
+  <Tab title="Rank">
+    Final performance ranking from **D** (lowest) to **Perfect!!** (highest).
+  </Tab>
+</Tabs>
+
+### Hold Notes
+
+Longer notes require you to:
+1. Hit the start of the note accurately
+2. **Hold** the key down for the duration
+3. Release after the note ends
+
+<Warning>
+Releasing a hold note early counts as a miss and breaks your combo!
+</Warning>
+
+## Game Modes
+
+### Story Mode
+
+**Story Mode** presents a narrative campaign with sequential songs:
+
+<Steps>
+  <Step title="Select a Week">
+    Choose from available weeks (chapters). Each week contains 3-4 songs.
+  </Step>
+  
+  <Step title="Choose Difficulty">
+    Select Easy, Normal, or Hard difficulty before starting.
+  </Step>
+  
+  <Step title="Play Through Songs">
+    Complete all songs in the week sequentially. Your health carries between songs!
+  </Step>
+  
+  <Step title="Watch Cutscenes">
+    Enjoy story cutscenes between songs (can be skipped with Enter).
+  </Step>
+  
+  <Step title="Complete the Week">
+    Finish all songs without losing to unlock the next week and add songs to Freeplay.
+  </Step>
+</Steps>
+
+```haxe StoryMenuState.hx:601
+PlayStatePlaylist.isStoryMode = true;
+```
+
+<Note>
+In Story Mode, your health **persists** between songs in a week. If you barely survive song 1, you'll start song 2 with that same low health!
+</Note>
+
+### Freeplay Mode
+
+**Freeplay Mode** lets you play any unlocked song with more control:
+
+<CardGroup cols={2}>
+  <Card title="Song Selection" icon="music">
+    Browse all unlocked songs from any week. Use Up/Down to navigate, Left/Right to change difficulty.
+  </Card>
+  <Card title="Character Selection" icon="user">
+    Play as different characters (Boyfriend, Pico, etc.) with unique vocals and styles.
+  </Card>
+  <Card title="Difficulty Options" icon="sliders">
+    Choose from multiple difficulty levels, including special variations for some songs.
+  </Card>
+  <Card title="Practice Mode" icon="book">
+    Perfect your skills on individual songs without story progression.
+  </Card>
+</CardGroup>
+
+**Freeplay Features:**
+
+<Accordion title="Favorite System">
+Press **Tab** to favorite songs. Favorited songs appear at the top of your list for quick access.
+</Accordion>
+
+<Accordion title="Score Tracking">
+Your best score and rank for each song/difficulty combination is saved and displayed in the song list.
+</Accordion>
+
+<Accordion title="Character-Specific Content">
+Some characters unlock unique dialogue, artwork, and variations when selected in Freeplay.
+</Accordion>
+
+### Difficulty Levels
+
+Each song typically offers multiple difficulties:
+
+| Difficulty | Description |
+|------------|-------------|
+| **Easy** | Slower note speed, fewer notes, simpler patterns |
+| **Normal** | Standard experience, balanced challenge |
+| **Hard** | Faster notes, complex patterns, more notes |
+| **Erect** ★ | Remix difficulty with modified charts (select songs) |
+| **Nightmare** ★ | Expert-level challenge (select songs) |
+
+<Info>
+★ Special difficulties are only available for specific songs and may feature remixed instrumentals.
+</Info>
+
+## Advanced Techniques
+
+### Ghost Tapping
+
+Ghost tapping prevents misses when you press arrow keys during sections with no notes.
+
+```haxe project.hxp:343-344
+// Ghost tapping feature flag
+FEATURE_GHOST_TAPPING.apply(this, isMobile());
+```
+
+<Tabs>
+  <Tab title="Enabled (Mobile Default)">
+    You can press any keys freely without penalty when you don't have notes to hit. Only misses when you **should** hit a note but don't.
+  </Tab>
+  
+  <Tab title="Disabled (Desktop Default)">
+    Pressing the wrong arrow at the wrong time counts as a miss, even if no notes are present. Requires more precision.
+  </Tab>
+</Tabs>
+
+<Tip>
+You can enable ghost tapping on desktop with the build flag: `-DFEATURE_GHOST_TAPPING`
+</Tip>
+
+### Combo Maintenance
+
+Maintaining a high combo multiplier:
+
+1. **Focus on consistency** over perfect hits
+2. **Anticipate patterns** by watching upcoming notes
+3. **Relax your hands** to avoid tension and missed inputs
+4. **Use audio cues** in addition to visual timing
+
+### Input Offset Adjustment
+
+If notes feel off-sync:
+
+<Steps>
+  <Step title="Open Options">
+    Go to **Options > Preferences**
+  </Step>
+  
+  <Step title="Adjust Input Offset">
+    Modify the audio/visual offset to match your monitor and audio latency
+  </Step>
+  
+  <Step title="Test and Refine">
+    Play a familiar song and adjust until timing feels natural
+  </Step>
+</Steps>
+
+<Note>
+This feature is only available on desktop builds with `-DFEATURE_LAG_ADJUSTMENT` (enabled by default).
+</Note>
+
+## Tips for New Players
+
+<CardGroup cols={2}>
+  <Card title="Start on Easy" icon="seedling">
+    Don't be ashamed to start on Easy difficulty! It's the best way to learn patterns and timing.
+  </Card>
+  <Card title="Watch the Notes" icon="eye">
+    Look ahead at upcoming notes rather than staring at the receptors. This helps you anticipate patterns.
+  </Card>
+  <Card title="Learn Patterns" icon="chart-line">
+    Many songs have repeating patterns. Once you recognize them, they become much easier.
+  </Card>
+  <Card title="Take Breaks" icon="coffee">
+    If you're struggling with a song, take a break. Fresh attempts often go better than grinding repeatedly.
+  </Card>
+</CardGroup>
+
+### Common Mistakes
+
+<Warning>
+**Mashing keys**: Pressing all arrows rapidly will break your combo. Press deliberately and in time with the music.
+</Warning>
+
+<Warning>
+**Ignoring hold notes**: Many players miss hold notes by releasing early. Make sure to hold until the note ends.
+</Warning>
+
+<Warning>
+**Playing too tensely**: Tension leads to slower reactions. Stay relaxed and let muscle memory guide you.
+</Warning>
+
+## Performance Optimization
+
+If you experience lag or performance issues:
+
+<Steps>
+  <Step title="Lower Graphics Quality">
+    Disable visual effects in **Options > Preferences**
+  </Step>
+  
+  <Step title="Close Background Programs">
+    Free up system resources by closing unnecessary applications
+  </Step>
+  
+  <Step title="Update Graphics Drivers">
+    Ensure your GPU drivers are up to date
+  </Step>
+  
+  <Step title="Use Release Builds">
+    Debug builds have overhead—use release builds for optimal performance
+  </Step>
+</Steps>
+
+## Accessibility Options
+
+Friday Night Funkin' includes several accessibility features:
+
+- **Naughtyness Toggle**: Control explicit content display
+- **Flashing Lights Warning**: Disable intense visual effects
+- **Colorblind Mode**: Adjust note colors for better visibility
+- **Custom Keybinds**: Remap all controls to your preference
+- **Gameplay Modifiers**: Adjust scroll speed and other parameters
+
+Access these in **Options > Preferences**.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Explore Modding" icon="puzzle-piece" href="https://funkincrew.github.io/funkin-modding-docs/">
+    Create custom songs, characters, and more
+  </Card>
+  <Card title="Join the Community" icon="users" href="https://discord.gg/funkin">
+    Connect with other players and share tips
+  </Card>
+  <Card title="Chart Editor" icon="music">
+    Create your own custom charts (enable with `-DFEATURE_CHART_EDITOR`)
+  </Card>
+  <Card title="Contribute" icon="code" href="https://github.com/FunkinCrew/funkin">
+    Help improve the game on GitHub
+  </Card>
+</CardGroup>
+
+## Mobile Controls
+
+On mobile devices (Android/iOS), the game uses touch controls:
+
+<CardGroup cols={2}>
+  <Card title="Touch Arrows" icon="hand-pointer">
+    Tap the on-screen arrow buttons to hit notes
+  </Card>
+  <Card title="Gesture Support" icon="hand">
+    Swipe gestures for menu navigation
+  </Card>
+</CardGroup>
+
+```haxe project.hxp:503
+// Touch controls feature flag
+FEATURE_TOUCH_CONTROLS.apply(this, isMobile());
+```
+
+<Info>
+Mobile builds automatically enable ghost tapping and other quality-of-life features to compensate for touch input latency.
+</Info>

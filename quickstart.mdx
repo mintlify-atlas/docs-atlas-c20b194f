@@ -1,80 +1,402 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quick Start Guide
+description: Get Friday Night Funkin' compiled and running on your machine with this step-by-step guide for Windows, macOS, and Linux.
 ---
 
-## Get started in three steps
+## Prerequisites
 
-Get your documentation site running locally and make your first customization.
-
-### Step 1: Set up your local environment
-
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
-
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
-
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 3: Go live
-
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
-
-## Next steps
-
-Now that you have your docs running, explore these key features:
+Before compiling Friday Night Funkin', you need to install the required tools:
 
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Haxe" icon="code">
+    Download from [haxe.org](https://haxe.org)  
+    Required for compiling the game
+  </Card>
+  <Card title="Git" icon="git">
+    Download from [git-scm.com](https://git-scm.com)  
+    Required for cloning the repository
+  </Card>
 </CardGroup>
 
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>
+<Warning>
+**Do NOT download using the "Download ZIP" button on GitHub!** This will cause errors with asset loading. Always use Git to clone the repository.
+</Warning>
+
+## Installation Steps
+
+<Steps>
+  <Step title="Navigate to Your Workspace">
+    Open a command prompt/terminal and navigate to where you want the source code:
+    
+    ```bash
+    cd C:\Users\YOURNAME\Documents
+    ```
+    
+    <Tip>
+    On macOS/Linux, use paths like `cd ~/Documents` or `cd ~/Developer`
+    </Tip>
+  </Step>
+
+  <Step title="Clone the Repository">
+    Clone the official Friday Night Funkin' repository:
+    
+    ```bash
+    git clone https://github.com/FunkinCrew/funkin.git
+    ```
+    
+    Then enter the directory:
+    
+    ```bash
+    cd funkin
+    ```
+  </Step>
+
+  <Step title="Download Game Assets">
+    The game assets are in a separate submodule. Download them with:
+    
+    ```bash
+    git submodule update --init --recursive
+    ```
+    
+    <Note>
+    **Important Legal Notice**: By downloading these assets, you are accessing proprietary content protected by copyright and trademark laws. See the [assets LICENSE](https://github.com/FunkinCrew/funkin.assets/blob/main/LICENSE.md) for terms.
+    </Note>
+  </Step>
+
+  <Step title="Install Haxe Package Manager">
+    Install `hmm` (Haxe Module Manager) for managing dependencies:
+    
+    ```bash
+    haxelib --global install hmm
+    haxelib --global run hmm setup
+    ```
+    
+    <Accordion title="Having trouble with Lime?">
+    If you encounter issues installing Lime, try using Funkin's patched libraries:
+    
+    ```bash
+    haxelib --global git haxelib https://github.com/FunkinCrew/haxelib.git
+    haxelib --global git hmm https://github.com/FunkinCrew/hmm.git
+    ```
+    </Accordion>
+  </Step>
+
+  <Step title="Install All Dependencies">
+    Install all required Haxe libraries defined in `hmm.json`:
+    
+    ```bash
+    hmm install
+    ```
+    
+    This installs 30+ dependencies including:
+    - **flixel**: Game engine
+    - **polymod**: Modding framework
+    - **hxvlc**: Video playback (desktop)
+    - **newgrounds**: Newgrounds API
+    - And many more...
+  </Step>
+
+  <Step title="Set Up Lime">
+    Configure the Lime framework:
+    
+    ```bash
+    haxelib run lime setup
+    ```
+    
+    Follow the prompts to complete setup.
+  </Step>
+
+  <Step title="Platform-Specific Setup">
+    Complete the setup for your target platform:
+    
+    <Tabs>
+      <Tab title="Windows">
+        Download [Visual Studio Build Tools](https://aka.ms/vs/17/release/vs_BuildTools.exe)
+        
+        When prompted, select **"Individual Components"** and install:
+        - ✅ MSVC v143 VS 2022 C++ x64/x86 build tools
+        - ✅ Windows 10/11 SDK
+        
+        <Info>
+        You don't need the full Visual Studio IDE—just the Build Tools are sufficient.
+        </Info>
+      </Tab>
+      
+      <Tab title="macOS">
+        Install Xcode Command Line Tools:
+        
+        ```bash
+        xcode-select --install
+        ```
+        
+        Then run Lime's macOS setup:
+        
+        ```bash
+        lime setup mac
+        ```
+        
+        See [Lime's macOS documentation](https://lime.openfl.org/docs/advanced-setup/macos/) for detailed instructions.
+      </Tab>
+      
+      <Tab title="Linux">
+        Install required packages. For Ubuntu/Debian:
+        
+        ```bash
+        sudo apt install libvlc-dev libvlccore-dev libvlccore9
+        ```
+        
+        Then run Lime's Linux setup:
+        
+        ```bash
+        lime setup linux
+        ```
+        
+        <Note>
+        For other distributions, refer to [hxvlc's documentation](https://github.com/MAJigsaw77/hxvlc?tab=readme-ov-file#dependencies) for equivalent packages.
+        </Note>
+      </Tab>
+      
+      <Tab title="HTML5">
+        No additional setup required! HTML5 builds compile without extra dependencies.
+        
+        <Tip>
+        HTML5 builds are great for quick testing since they compile faster than native builds.
+        </Tip>
+      </Tab>
+    </Tabs>
+  </Step>
+
+  <Step title="Build Native Libraries (Optional)">
+    For native desktop builds, rebuild the platform-specific libraries:
+    
+    ```bash
+    # Release build
+    lime rebuild windows
+    
+    # Debug build
+    lime rebuild windows -debug
+    ```
+    
+    Replace `windows` with `mac` or `linux` for other platforms.
+    
+    <Info>
+    This step is optional but recommended for first-time setup to ensure all C++ libraries are properly compiled.
+    </Info>
+  </Step>
+
+  <Step title="Compile and Run">
+    Build and launch the game:
+    
+    ```bash
+    lime test windows
+    ```
+    
+    Replace `windows` with your target platform:
+    - `windows` - Windows desktop
+    - `mac` - macOS desktop
+    - `linux` - Linux desktop
+    - `html5` - Web browser
+    
+    <Tip>
+    The first build will take several minutes. Subsequent builds are much faster thanks to incremental compilation.
+    </Tip>
+  </Step>
+</Steps>
+
+## Build Configurations
+
+### Debug vs Release Builds
+
+<Tabs>
+  <Tab title="Debug Build">
+    Debug builds include development features:
+    
+    ```bash
+    lime test windows -debug
+    ```
+    
+    **Enabled Features:**
+    - In-game debug functions (time travel with PgUp/PgDn)
+    - VSCode debug server for breakpoints
+    - Asset redirection from source folder
+    - No compiler optimizations
+    - Verbose logging
+    
+    **Use Cases:**
+    - Active development
+    - Testing and debugging
+    - Content creation
+  </Tab>
+  
+  <Tab title="Release Build">
+    Release builds are optimized for distribution:
+    
+    ```bash
+    lime test windows
+    ```
+    
+    **Enabled Features:**
+    - Compiler optimizations
+    - Stripped debug symbols
+    - Embedded assets
+    - Better performance
+    
+    **Use Cases:**
+    - Final builds for players
+    - Performance testing
+    - Distribution
+  </Tab>
+</Tabs>
+
+### Common Build Flags
+
+Customize your build with feature flags:
+
+```bash
+# Enable specific features
+lime test windows -DGITHUB_BUILD          # Enable debug features in release
+lime test windows -DFEATURE_CHART_EDITOR  # Enable chart editor
+lime test windows -DFEATURE_STAGE_EDITOR  # Enable stage editor
+lime test windows -DFEATURE_GHOST_TAPPING # Enable ghost tapping
+
+# Disable features
+lime test windows -DNO_FEATURE_VIDEO_PLAYBACK   # Disable videos
+lime test windows -DNO_FEATURE_DISCORD_RPC      # Disable Discord
+lime test windows -DNO_FEATURE_POLYMOD_MODS     # Disable mods
+```
+
+<Info>
+A complete list of build flags is documented in `project.hxp`. The flags control compilation of optional features to reduce build size and dependencies.
+</Info>
+
+### Asset Redirection
+
+For rapid iteration during development:
+
+```bash
+lime test windows -debug -DREDIRECT_ASSETS_FOLDER
+```
+
+This makes the game load assets directly from the `assets/` folder instead of the export folder, allowing you to test changes without recompiling.
+
+<Warning>
+Builds with asset redirection enabled won't work if distributed to other users—they need the full workspace structure.
+</Warning>
+
+## Build Output Locations
+
+Compiled builds are placed in the `export/` directory:
+
+```
+funkin/
+└── export/
+    ├── debug/
+    │   ├── windows/
+    │   │   └── bin/
+    │   │       └── Funkin.exe
+    │   ├── mac/
+    │   ├── linux/
+    │   └── html5/
+    └── release/
+        └── windows/
+            └── bin/
+                └── Funkin.exe
+```
+
+## Verify Your Build
+
+Once the game launches, verify it's working correctly:
+
+<Steps>
+  <Step title="Check Version">
+    The current version should display as **v0.8.3** on the title screen.
+  </Step>
+  
+  <Step title="Test Main Menu">
+    Navigate through the main menu options:
+    - Story Mode
+    - Freeplay
+    - Options
+  </Step>
+  
+  <Step title="Test a Song">
+    Play a song in Freeplay to verify:
+    - Audio playback works
+    - Notes appear correctly
+    - Input is responsive
+    - Graphics render properly
+  </Step>
+</Steps>
+
+<Tip>
+If you encounter issues, check the [Troubleshooting Guide](https://github.com/FunkinCrew/funkin/blob/main/docs/TROUBLESHOOTING.md) in the repository.
+</Tip>
+
+## Quick Reference
+
+### Essential Commands
+
+| Command | Purpose |
+|---------|----------|
+| `hmm install` | Install/update all dependencies |
+| `lime test <platform>` | Compile and run the game |
+| `lime build <platform>` | Compile without running |
+| `lime clean <platform>` | Clean build artifacts |
+| `lime rebuild <platform>` | Rebuild native libraries |
+
+### File Locations
+
+| Path | Contents |
+|------|----------|
+| `source/` | Haxe source code |
+| `assets/` | Game assets (submodule) |
+| `project.hxp` | Build configuration |
+| `hmm.json` | Dependency versions |
+| `export/` | Compiled builds |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Learn to Play" icon="gamepad" href="/playing">
+    Master the controls and gameplay mechanics
+  </Card>
+  <Card title="Start Modding" icon="wrench" href="https://funkincrew.github.io/funkin-modding-docs/">
+    Create custom content with the modding framework
+  </Card>
+  <Card title="Contribute" icon="code-pull-request" href="https://github.com/FunkinCrew/funkin/blob/main/docs/CONTRIBUTING.md">
+    Submit improvements to the main repository
+  </Card>
+  <Card title="Join Community" icon="discord" href="https://discord.gg/funkin">
+    Connect with other developers and modders
+  </Card>
+</CardGroup>
+
+## Development Workflow
+
+Once you have the game running, here's a typical development workflow:
+
+<Steps>
+  <Step title="Make Changes">
+    Edit source code in `source/` or assets in `assets/`
+  </Step>
+  
+  <Step title="Hot Reload (Optional)">
+    Press **F5** in-game to reload scripts and data without recompiling (debug builds only)
+  </Step>
+  
+  <Step title="Recompile">
+    Run `lime test windows -debug` to rebuild and launch
+  </Step>
+  
+  <Step title="Test">
+    Verify your changes work as expected
+  </Step>
+  
+  <Step title="Commit">
+    Use Git to commit your changes
+  </Step>
+</Steps>
+
+<Info>
+The hot reload feature (`F5`) works for most assets and scripts but **does not** reload song charts or compiled code changes—those require a full recompile.
+</Info>

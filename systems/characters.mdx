@@ -1,0 +1,534 @@
+---
+title: Character System
+description: Character architecture, animations, character data format, and rendering
+---
+
+The character system manages all playable and non-playable characters, their animations, and their behavior during gameplay.
+
+## Character Architecture
+
+### BaseCharacter Class
+
+All characters extend `BaseCharacter`, which extends `Bopper`:
+
+```haxe
+class BaseCharacter extends Bopper
+{
+  public var characterId:String;
+  public var characterName:String;
+  public var characterType:CharacterType = OTHER;
+  
+  public var holdTimer:Float = 0;
+  public var isDead:Bool = false;
+  public var debug:Bool = false;
+  public var currentStage:Null<Stage> = null;
+}
+```
+
+**Key Properties:**
+
+<ParamField path="characterId" type="String">
+  Unique identifier for the character (e.g., "bf", "dad", "gf")
+</ParamField>
+
+<ParamField path="characterName" type="String">
+  Display name of the character (e.g., "Boyfriend", "Daddy Dearest")
+</ParamField>
+
+<ParamField path="characterType" type="CharacterType">
+  Type of character: `BF` (player), `DAD` (opponent), `GF` (girlfriend), or `OTHER`
+</ParamField>
+
+<ParamField path="holdTimer" type="Float">
+  Tracks how long the character has been playing the current sing animation (in seconds)
+</ParamField>
+
+### Character Types
+
+Characters are categorized by their role:
+
+```haxe
+enum abstract CharacterType(String)
+{
+  var BF = 'bf';      // Player character
+  var DAD = 'dad';    // Opponent character  
+  var GF = 'gf';      // Girlfriend/background character
+  var OTHER = 'other'; // Other characters
+}
+```
+
+## Character Rendering Types
+
+FNF supports multiple rendering methods:
+
+### SparrowCharacter
+
+Uses Sparrow sprite sheets (Adobe Animate/XML format):
+
+```haxe
+class SparrowCharacter extends BaseCharacter
+{
+  public function new(id:String)
+  {
+    super(id, CharacterRenderType.Sparrow);
+    // Loads from assets/images/characters/[id].png + .xml
+  }
+}
+```
+
+### AnimateAtlasCharacter
+
+Uses Adobe Animate atlas format:
+
+```haxe
+class AnimateAtlasCharacter extends BaseCharacter
+{
+  public function new(id:String)
+  {
+  super(id, CharacterRenderType.AnimateAtlas);
+    // Loads from assets/images/characters/[id]/ directory
+  }
+}
+```
+
+### PackerCharacter
+
+Uses Packer sprite sheets (legacy format):
+
+```haxe
+class PackerCharacter extends BaseCharacter
+{
+  public function new(id:String)
+  {
+    super(id, CharacterRenderType.Packer);
+    // Loads Packer format sprite sheet
+  }
+}
+```
+
+### Multi-Sprite Characters
+
+- **MultiSparrowCharacter**: Multiple Sparrow sheets
+- **MultiAnimateAtlasCharacter**: Multiple Animate atlases
+
+## Character Data Format
+
+Character data is stored in JSON files at `assets/data/characters/[id].json`:
+
+```json
+{
+  "version": "1.0.1",
+  "name": "Boyfriend",
+  "renderType": "sparrow",
+  "assetPath": "characters/bf",
+  "scale": 1.0,
+  "offsets": [0, 0],
+  "cameraOffsets": [-100, -100],
+  "healthIcon": {
+    "id": "bf",
+    "scale": 1.0,
+    "antialiasing": true
+  },
+  "animations": [
+    {
+      "name": "idle",
+      "prefix": "BF idle dance",
+      "offsets": [0, 0],
+      "looped": false,
+      "frameRate": 24,
+      "flipX": false,
+      "flipY": false
+    },
+    {
+      "name": "singLEFT",
+      "prefix": "BF NOTE LEFT",
+      "offsets": [5, -6],
+      "looped": false,
+      "frameRate": 24
+    }
+  ],
+  "startingAnimation": "idle",
+  "flipX": false,
+  "isPixel": false,
+  "danceEvery": 1,
+  "singTime": 8.0
+}
+```
+
+### Character Data Fields
+
+<ParamField path="version" type="String" required>
+  Character data format version (currently "1.0.1")
+</ParamField>
+
+<ParamField path="name" type="String" required>
+  Display name for the character
+</ParamField>
+
+<ParamField path="renderType" type="String" required>
+  Rendering type: `"sparrow"`, `"animateatlas"`, `"packer"`, `"multisparrow"`, or `"multianimateatlas"`
+</ParamField>
+
+<ParamField path="assetPath" type="String" required>
+  Path to character assets (relative to assets/images/)
+</ParamField>
+
+<ParamField path="scale" type="Float" default="1.0">
+  Base scale multiplier for the character sprite
+</ParamField>
+
+<ParamField path="offsets" type="Array<Float>" default="[0, 0]">
+  Global position offsets as [x, y]
+</ParamField>
+
+<ParamField path="cameraOffsets" type="Array<Float>" default="[0, 0]">
+  Camera focus point offsets as [x, y]
+</ParamField>
+
+<ParamField path="flipX" type="Bool" default="false">
+  Whether to flip the character sprite horizontally
+</ParamField>
+
+<ParamField path="isPixel" type="Bool" default="false">
+  Whether this is a pixel-art character (disables anti-aliasing)
+</ParamField>
+
+<ParamField path="danceEvery" type="Int" default="1">
+  How many beats between idle dance animations
+</ParamField>
+
+<ParamField path="singTime" type="Float" default="8.0">
+  How long (in steps) to hold sing animations
+</ParamField>
+
+<ParamField path="startingAnimation" type="String">
+  Name of the animation to play when character is created
+</ParamField>
+
+### Animation Data
+
+Each animation in the `animations` array:
+
+<ParamField path="name" type="String" required>
+  Internal animation name (e.g., "idle", "singLEFT", "singDOWN")
+</ParamField>
+
+<ParamField path="prefix" type="String" required>
+  Animation prefix in the sprite sheet XML
+</ParamField>
+
+<ParamField path="offsets" type="Array<Float>" default="[0, 0]">
+  Position offsets specific to this animation [x, y]
+</ParamField>
+
+<ParamField path="looped" type="Bool" default="false">
+  Whether the animation should loop
+</ParamField>
+
+<ParamField path="frameRate" type="Int" default="24">
+  Frames per second for the animation
+</ParamField>
+
+<ParamField path="flipX" type="Bool" default="false">
+  Flip this animation horizontally
+</ParamField>
+
+<ParamField path="flipY" type="Bool" default="false">
+  Flip this animation vertically
+</ParamField>
+
+<ParamField path="frameIndices" type="Array<Int>" optional>
+  Specific frame indices to use (if not using all frames)
+</ParamField>
+
+## Required Animations
+
+Characters should define these core animations:
+
+### Idle Animations
+
+```json
+{
+  "name": "idle",
+  "prefix": "BF idle dance"
+}
+```
+
+Or alternating left/right:
+
+```json
+[
+  {
+    "name": "danceLeft",
+    "prefix": "BF idle dance LEFT"
+  },
+  {
+    "name": "danceRight",
+    "prefix": "BF idle dance RIGHT"
+  }
+]
+```
+
+### Sing Animations
+
+Required for playable characters:
+
+```json
+[
+  {
+    "name": "singLEFT",
+    "prefix": "BF NOTE LEFT"
+  },
+  {
+    "name": "singDOWN",
+    "prefix": "BF NOTE DOWN"
+  },
+  {
+    "name": "singUP",
+    "prefix": "BF NOTE UP"
+  },
+  {
+    "name": "singRIGHT",
+    "prefix": "BF NOTE RIGHT"
+  }
+]
+```
+
+### Miss Animations (Optional)
+
+For when the player misses notes:
+
+```json
+[
+  {
+    "name": "singLEFTmiss",
+    "prefix": "BF NOTE LEFT MISS"
+  },
+  {
+    "name": "singDOWNmiss",
+    "prefix": "BF NOTE DOWN MISS"
+  },
+  {
+    "name": "singUPmiss",
+    "prefix": "BF NOTE UP MISS"
+  },
+  {
+    "name": "singRIGHTmiss",
+    "prefix": "BF NOTE RIGHT MISS"
+  }
+]
+```
+
+## Character Position System
+
+### Position Properties
+
+Characters use a feet-based origin system:
+
+```haxe
+public var characterOrigin:FlxPoint;  // At character's feet (center-bottom)
+public var cornerPosition:FlxPoint;    // Top-left corner of sprite
+public var feetPosition:FlxPoint;      // Bottom-center of sprite
+public var cameraFocusPoint:FlxPoint;  // Where camera should focus
+```
+
+**Character origin is at the feet:**
+
+```haxe
+function get_characterOrigin():FlxPoint
+{
+  var xPos = (width / 2);  // Horizontal center
+  var yPos = (height);     // Vertical bottom
+  return new FlxPoint(xPos, yPos);
+}
+```
+
+### Camera Focus
+
+The camera focuses on the character's `cameraFocusPoint`:
+
+```haxe
+public var cameraFocusPoint:FlxPoint = new FlxPoint(0, 0);
+```
+
+This point is automatically updated when the character moves, but **not** when animation offsets change. This ensures smooth camera motion.
+
+## Health Icons
+
+Characters have associated health icons:
+
+```json
+{
+  "healthIcon": {
+    "id": "bf",
+    "scale": 1.0,
+    "antialiasing": true,
+    "isPixel": false
+  }
+}
+```
+
+<ParamField path="healthIcon.id" type="String" required>
+  ID of the icon asset (looks for `assets/images/icons/[id].png`)
+</ParamField>
+
+<ParamField path="healthIcon.scale" type="Float" default="1.0">
+  Scale multiplier for the icon
+</ParamField>
+
+<ParamField path="healthIcon.antialiasing" type="Bool" default="true">
+  Whether to use anti-aliasing on the icon
+</ParamField>
+
+## Death Animations
+
+Player characters can define death animation settings:
+
+```json
+{
+  "death": {
+    "cameraOffsets": [0, 0],
+    "cameraZoom": 1.0,
+    "preTransitionDelay": 0.0
+  }
+}
+```
+
+<ParamField path="death.cameraOffsets" type="Array<Float>" default="[0, 0]">
+  Camera offset during game over screen [x, y]
+</ParamField>
+
+<ParamField path="death.cameraZoom" type="Float" default="1.0">
+  Camera zoom level during game over
+</ParamField>
+
+<ParamField path="death.preTransitionDelay" type="Float" default="0.0">
+  Delay before transitioning to game over state (in seconds)
+</ParamField>
+
+## Character Bopping
+
+Characters automatically "bop" to the music:
+
+```haxe
+public var danceEvery:Int;  // Bop every X beats
+public var shouldBop:Bool;  // Whether character should bop
+```
+
+The `Bopper` class handles automatic idle animation:
+
+- If `danceLeft` and `danceRight` exist, alternates between them
+- Otherwise plays `idle` animation
+- Controlled by `danceEvery` (beats between bops)
+
+## Combo Animations
+
+Characters can have special animations for combos:
+
+```haxe
+public var comboNoteCounts:Array<Int>;  // e.g., [50, 100, 250]
+public var dropNoteCounts:Array<Int>;   // Combo break thresholds
+```
+
+When player hits these combo milestones, special animations can play.
+
+## Sing Time
+
+Controls how long characters hold sing animations:
+
+```haxe
+final singTimeSteps:Float;  // From character data
+public var holdTimer:Float; // Current hold time
+```
+
+Sing animations hold for `singTimeSteps` to prevent rapid flickering back to idle between notes.
+
+## Character Scripts
+
+Characters can be scripted for custom behavior:
+
+```haxe
+class ScriptedCharacter extends BaseCharacter
+{
+  // Custom scripted behavior
+}
+```
+
+Scripts can:
+- Override animation behavior
+- Add custom events
+- Implement special mechanics
+- Modify character properties dynamically
+
+## Loading Characters
+
+Characters are loaded via `CharacterDataParser`:
+
+```haxe
+var charData:CharacterData = CharacterDataParser.fetchCharacterData("bf");
+var character = CharacterDataParser.createCharacter("bf");
+```
+
+The system:
+1. Loads JSON data from `assets/data/characters/[id].json`
+2. Validates render type and version
+3. Creates appropriate character class instance
+4. Loads sprite assets and animations
+5. Applies offsets and properties
+
+## Example: Creating a Custom Character
+
+```json
+{
+  "version": "1.0.1",
+  "name": "Custom Character",
+  "renderType": "sparrow",
+  "assetPath": "characters/custom",
+  "scale": 1.0,
+  "offsets": [0, 0],
+  "cameraOffsets": [-100, -100],
+  "flipX": false,
+  "isPixel": false,
+  "danceEvery": 1,
+  "singTime": 8.0,
+  "animations": [
+    {
+      "name": "idle",
+      "prefix": "Custom idle",
+      "offsets": [0, 0],
+      "looped": false,
+      "frameRate": 24
+    },
+    {
+      "name": "singLEFT",
+      "prefix": "Custom left",
+      "offsets": [5, -10],
+      "frameRate": 24
+    },
+    {
+      "name": "singDOWN",
+      "prefix": "Custom down",
+      "offsets": [-10, -20],
+      "frameRate": 24
+    },
+    {
+      "name": "singUP",
+      "prefix": "Custom up",
+      "offsets": [0, 20],
+      "frameRate": 24
+    },
+    {
+      "name": "singRIGHT",
+      "prefix": "Custom right",
+      "offsets": [-5, -10],
+      "frameRate": 24
+    }
+  ],
+  "healthIcon": {
+    "id": "custom",
+    "scale": 1.0
+  }
+}
+```
+
+Place sprite sheet at `assets/images/characters/custom.png` and `custom.xml`.

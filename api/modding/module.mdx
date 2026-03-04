@@ -1,0 +1,614 @@
+---
+title: Module System
+description: Create persistent scripted mods that respond to game events across all states
+---
+
+The Module system enables you to create persistent mods that receive events throughout the game's lifecycle. Modules are scripted classes that can be active at all times or conditionally based on the current game state.
+
+## Overview
+
+Modules are powerful because they:
+
+- **Persist across states**: Continue running when the player navigates between menus and gameplay
+- **Receive all events**: Can respond to any game event without needing specific context
+- **Support priorities**: Control the order in which modules receive events
+- **Can be toggled**: Activate/deactivate dynamically based on conditions
+- **State-scoped**: Optionally limit events to specific game states
+
+## Creating a Module
+
+Modules are created as `.hxc` script files in your mod's scripts directory.
+
+### Basic Module Structure
+
+```haxe
+// scripts/MyModule.hxc
+import funkin.modding.module.Module;
+
+class MyModule extends Module {
+  public function new() {
+    super('my-module'); // Module ID
+  }
+  
+  public override function onCreate(event:ScriptEvent):Void {
+    trace('MyModule created!');
+  }
+  
+  public override function onUpdate(event:UpdateScriptEvent):Void {
+    // Called every frame
+  }
+}
+```
+
+### Module Parameters
+
+```haxe
+public function new(moduleId:String, priority:Int = 1000, ?params:ModuleParams)
+```
+
+**moduleId**  
+Unique identifier for your module. Use kebab-case by convention.
+
+**priority** (default: 1000)  
+Determines event processing order. Lower numbers = higher priority (processed first).
+
+**params** (optional)  
+Configuration object:
+- `state`: Limit module to only receive events when in this specific state
+
+### Example: State-Scoped Module
+
+```haxe
+import funkin.modding.module.Module;
+import funkin.play.PlayState;
+
+class GameplayOnlyModule extends Module {
+  public function new() {
+    // Only active during gameplay
+    super('gameplay-only', 1000, {state: PlayState});
+  }
+  
+  public override function onBeatHit(event:SongTimeScriptEvent):Void {
+    // This only fires during PlayState
+    trace('Beat ${event.beat} hit!');
+  }
+}
+```
+
+## Module Properties
+
+### Active State
+
+```haxe
+public var active(default, set):Bool = true;
+```
+
+Controls whether the module receives events. Inactive modules are skipped.
+
+```haxe
+class ToggleableModule extends Module {
+  public function new() {
+    super('toggleable');
+    
+    // Start inactive
+    this.active = false;
+  }
+  
+  public function activate():Void {
+    this.active = true;
+  }
+  
+  public function deactivate():Void {
+    this.active = false;
+  }
+}
+```
+
+### Priority
+
+```haxe
+public var priority(default, set):Int = 1000;
+```
+
+Modules with lower priority numbers receive events first.
+
+```haxe
+class HighPriorityModule extends Module {
+  public function new() {
+    super('high-priority', 1); // Receives events first
+  }
+}
+
+class LowPriorityModule extends Module {
+  public function new() {
+    super('low-priority', 9999); // Receives events last
+  }
+}
+```
+
+### State Association
+
+```haxe
+public var state:Null<Class<Dynamic>> = null;
+```
+
+If set, the module only receives events when the game is in this state or substate.
+
+## Core Lifecycle Events
+
+### onCreate
+
+```haxe
+public function onCreate(event:ScriptEvent):Void
+```
+
+Called when the module is first created, before the title screen appears.
+
+```haxe
+public override function onCreate(event:ScriptEvent):Void {
+  trace('Module initialized!');
+  
+  // Load configuration
+  loadConfig();
+  
+  // Register custom assets
+  registerAssets();
+  
+  // Set up global state
+  initializeGlobalState();
+}
+```
+
+<Note>
+It may not be safe to reference other modules in `onCreate` since they may not be loaded yet.
+</Note>
+
+### onDestroy
+
+```haxe
+public function onDestroy(event:ScriptEvent):Void
+```
+
+Called when a module is destroyed. Currently only happens when reloading modules with F5.
+
+```haxe
+public override function onDestroy(event:ScriptEvent):Void {
+  // Clean up resources
+  cleanupAssets();
+  saveState();
+  removeEventListeners();
+}
+```
+
+### onUpdate
+
+```haxe
+public function onUpdate(event:UpdateScriptEvent):Void
+```
+
+Called every frame.
+
+```haxe
+public override function onUpdate(event:UpdateScriptEvent):Void {
+  // event.elapsed = delta time in seconds
+  var dt = event.elapsed;
+  
+  // Update custom logic
+  updateParticles(dt);
+  checkInputs();
+}
+```
+
+### onScriptEvent
+
+```haxe
+public function onScriptEvent(event:ScriptEvent):Void
+```
+
+Called for ANY script event. Use this as a catch-all or for custom events.
+
+```haxe
+public override function onScriptEvent(event:ScriptEvent):Void {
+  trace('Received event: ${event.type}');
+  
+  // Handle custom events
+  if (event.type == 'my-custom-event') {
+    handleCustomEvent(event);
+  }
+}
+```
+
+## Gameplay Events
+
+Modules implement `IPlayStateScriptedClass` and receive all gameplay events.
+
+### Note Events
+
+```haxe
+public override function onNoteIncoming(event:NoteScriptEvent):Void {
+  // Note is approaching the strumline
+  var note = event.note;
+  trace('Note incoming: direction=${note.direction}');
+}
+
+public override function onNoteHit(event:HitNoteScriptEvent):Void {
+  // Note was hit by player or opponent
+  var note = event.note;
+  
+  if (note.mustPress) {
+    trace('Player hit note! Accuracy: ${event.accuracy}');
+  } else {
+    trace('Opponent hit note!');
+  }
+}
+
+public override function onNoteMiss(event:NoteScriptEvent):Void {
+  // Note was missed
+  trace('Note missed!');
+}
+
+public override function onNoteGhostMiss(event:GhostMissNoteScriptEvent):Void {
+  // Player pressed key with no note present
+  trace('Ghost miss on direction: ${event.direction}');
+}
+```
+
+### Song Events
+
+```haxe
+public override function onSongLoaded(event:SongLoadScriptEvent):Void {
+  // Song chart loaded, before notes are placed
+  trace('Song: ${event.songId}');
+  trace('Difficulty: ${event.difficulty}');
+  
+  // Modify the chart
+  for (note in event.notes) {
+    note.time *= speedMultiplier;
+  }
+}
+
+public override function onSongStart(event:ScriptEvent):Void {
+  // Conductor time is now 0
+  trace('Song starting!');
+  startTimer();
+}
+
+public override function onSongEnd(event:ScriptEvent):Void {
+  // Song finished
+  trace('Song ended!');
+  calculateFinalScore();
+}
+
+public override function onSongRetry(event:SongRetryEvent):Void {
+  // Player restarted the song
+  trace('Retrying song!');
+  resetState();
+}
+```
+
+### Countdown Events
+
+```haxe
+public override function onCountdownStart(event:CountdownScriptEvent):Void {
+  trace('Countdown beginning!');
+}
+
+public override function onCountdownStep(event:CountdownScriptEvent):Void {
+  // event.step: 0=READY, 1=SET, 2=GO, 3=GO!
+  trace('Countdown step: ${event.step}');
+}
+
+public override function onCountdownEnd(event:CountdownScriptEvent):Void {
+  trace('Countdown finished, song about to start!');
+}
+```
+
+### BPM-Synced Events
+
+```haxe
+public override function onStepHit(event:SongTimeScriptEvent):Void {
+  // Every 16th note
+  if (event.step % 16 == 0) {
+    trace('Every 16 steps');
+  }
+}
+
+public override function onBeatHit(event:SongTimeScriptEvent):Void {
+  // Every quarter note
+  trace('Beat ${event.beat}');
+  
+  // Pulse effect every beat
+  FlxG.camera.zoom += 0.015;
+}
+```
+
+### Game State Events
+
+```haxe
+public override function onPause(event:PauseScriptEvent):Void {
+  trace('Game paused');
+  
+  // Prevent pause easter egg
+  event.pauseMusic = false;
+  
+  // Cancel the pause entirely
+  // event.cancel();
+}
+
+public override function onResume(event:ScriptEvent):Void {
+  trace('Game resumed');
+}
+
+public override function onGameOver(event:ScriptEvent):Void {
+  trace('Player died');
+  
+  // Prevent game over
+  // event.cancel();
+}
+```
+
+### Song Events
+
+```haxe
+public override function onSongEvent(event:SongEventScriptEvent):Void {
+  // Chart event triggered
+  trace('Event: ${event.event.event}');
+  trace('Value: ${event.event.value}');
+  
+  if (event.event.event == 'My Custom Event') {
+    handleCustomEvent(event.event.value);
+  }
+}
+```
+
+## State Management Events
+
+Modules implement `IStateChangingScriptedClass` for state transition events.
+
+```haxe
+public override function onStateChangeBegin(event:StateChangeScriptEvent):Void {
+  trace('Changing from ${event.currentState} to ${event.targetState}');
+}
+
+public override function onStateChangeEnd(event:StateChangeScriptEvent):Void {
+  trace('State change complete: ${event.targetState}');
+}
+
+public override function onSubStateOpenBegin(event:SubStateScriptEvent):Void {
+  trace('Opening substate: ${event.subState}');
+}
+
+public override function onSubStateOpenEnd(event:SubStateScriptEvent):Void {
+  trace('Substate opened: ${event.subState}');
+}
+
+public override function onSubStateCloseBegin(event:SubStateScriptEvent):Void {
+  trace('Closing substate: ${event.subState}');
+}
+
+public override function onSubStateCloseEnd(event:SubStateScriptEvent):Void {
+  trace('Substate closed: ${event.subState}');
+}
+
+public override function onFocusLost(event:FocusScriptEvent):Void {
+  trace('Game lost focus');
+}
+
+public override function onFocusGained(event:FocusScriptEvent):Void {
+  trace('Game regained focus');
+}
+```
+
+## UI State Events
+
+### Freeplay Events
+
+```haxe
+public override function onCapsuleSelected(event:CapsuleScriptEvent):Void {
+  trace('Capsule selected: ${event.capsule.songData.songName}');
+}
+
+public override function onDifficultySwitch(event:CapsuleScriptEvent):Void {
+  trace('Difficulty: ${event.difficulty}');
+}
+
+public override function onSongSelected(event:CapsuleScriptEvent):Void {
+  trace('Song selected!');
+}
+
+public override function onFreeplayIntroDone(event:FreeplayScriptEvent):Void {
+  trace('Freeplay intro finished');
+}
+
+public override function onFreeplayOutro(event:FreeplayScriptEvent):Void {
+  trace('Freeplay outro starting');
+}
+
+public override function onFreeplayClose(event:FreeplayScriptEvent):Void {
+  trace('Freeplay closed');
+}
+```
+
+### Character Select Events
+
+```haxe
+public override function onCharacterSelect(event:CharacterSelectScriptEvent):Void {
+  trace('Character selected: ${event.character}');
+}
+
+public override function onCharacterDeselect(event:CharacterSelectScriptEvent):Void {
+  trace('Character deselected');
+}
+
+public override function onCharacterConfirm(event:CharacterSelectScriptEvent):Void {
+  trace('Character confirmed: ${event.character}');
+}
+```
+
+## Module Management
+
+The `ModuleHandler` class manages all loaded modules.
+
+### Get Module by ID
+
+```haxe
+import funkin.modding.module.ModuleHandler;
+
+var myModule = ModuleHandler.getModule('my-module');
+if (myModule != null) {
+  trace('Found module: ${myModule.moduleId}');
+}
+```
+
+### Activate/Deactivate Modules
+
+```haxe
+// From outside the module
+ModuleHandler.activateModule('my-module');
+ModuleHandler.deactivateModule('my-module');
+
+// From inside the module
+this.active = false; // Deactivate
+this.active = true;  // Activate
+```
+
+### Call Events Manually
+
+```haxe
+import funkin.modding.events.ScriptEvent;
+import funkin.modding.module.ModuleHandler;
+
+var customEvent = new ScriptEvent('my-custom-event', false);
+ModuleHandler.callEvent(customEvent);
+```
+
+## Complete Example: Combo Tracker
+
+```haxe
+// scripts/ComboTracker.hxc
+import funkin.modding.module.Module;
+import funkin.play.PlayState;
+import flixel.text.FlxText;
+
+class ComboTracker extends Module {
+  var comboText:FlxText;
+  var currentCombo:Int = 0;
+  var highestCombo:Int = 0;
+  
+  public function new() {
+    // Only active during gameplay, high priority
+    super('combo-tracker', 100, {state: PlayState});
+  }
+  
+  public override function onCreate(event:ScriptEvent):Void {
+    trace('Combo Tracker initialized!');
+  }
+  
+  public override function onStateChangeEnd(event:StateChangeScriptEvent):Void {
+    // Create UI when entering PlayState
+    if (Type.getClass(event.targetState) == PlayState) {
+      createComboDisplay();
+    }
+  }
+  
+  function createComboDisplay():Void {
+    comboText = new FlxText(10, 10, 0, 'Combo: 0', 24);
+    comboText.setBorderStyle(OUTLINE, FlxColor.BLACK, 2);
+    PlayState.instance.add(comboText);
+  }
+  
+  public override function onNoteHit(event:HitNoteScriptEvent):Void {
+    if (!event.note.mustPress) return; // Only count player notes
+    
+    currentCombo++;
+    
+    if (currentCombo > highestCombo) {
+      highestCombo = currentCombo;
+    }
+    
+    updateDisplay();
+  }
+  
+  public override function onNoteMiss(event:NoteScriptEvent):Void {
+    if (!event.note.mustPress) return;
+    
+    currentCombo = 0;
+    updateDisplay();
+  }
+  
+  public override function onNoteGhostMiss(event:GhostMissNoteScriptEvent):Void {
+    currentCombo = 0;
+    updateDisplay();
+  }
+  
+  function updateDisplay():Void {
+    if (comboText != null) {
+      comboText.text = 'Combo: $currentCombo\nHighest: $highestCombo';
+    }
+  }
+  
+  public override function onSongEnd(event:ScriptEvent):Void {
+    trace('Final combo: $currentCombo');
+    trace('Highest combo: $highestCombo');
+  }
+  
+  public override function onDestroy(event:ScriptEvent):Void {
+    // Clean up UI
+    if (comboText != null) {
+      comboText.destroy();
+    }
+  }
+}
+```
+
+## Best Practices
+
+### Choose Appropriate Priorities
+
+- **1-100**: Critical mods that must run first (core gameplay changes)
+- **100-500**: UI and visual mods
+- **500-1000**: Tracking and analytics mods
+- **1000+**: Low-priority cosmetic mods
+
+### Use State Scoping
+
+Limit modules to specific states when possible to improve performance:
+
+```haxe
+// Good: Only active in PlayState
+super('gameplay-mod', 1000, {state: PlayState});
+
+// Bad: Active everywhere when only needed in PlayState
+super('gameplay-mod', 1000);
+```
+
+### Handle Null Safely
+
+```haxe
+public override function onUpdate(event:UpdateScriptEvent):Void {
+  if (PlayState.instance?.health != null) {
+    checkHealth(PlayState.instance.health);
+  }
+}
+```
+
+### Clean Up Resources
+
+```haxe
+public override function onDestroy(event:ScriptEvent):Void {
+  // Remove added sprites
+  cleanupSprites();
+  
+  // Clear event listeners
+  removeListeners();
+  
+  // Save state
+  saveData();
+}
+```
+
+## Related
+
+- [IScriptedClass](/api/modding/scripted-class) - Interface definitions for all events
+- [PolymodHandler](/api/modding/polymod-handler) - Mod loading system
+- [Script Events](/api/events) - Complete event reference

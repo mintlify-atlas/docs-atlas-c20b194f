@@ -1,0 +1,435 @@
+---
+title: PlayState
+description: Main gameplay state where rhythm gaming happens
+icon: gamepad
+---
+
+The `PlayState` class is the core gameplay state where all rhythm gaming occurs. It manages the song, characters, stage, notes, scoring, health, and all gameplay mechanics.
+
+## Overview
+
+PlayState is implemented as a `MusicBeatSubState` so it can be loaded as a child of the chart editor. It handles:
+
+- Song playback and synchronization
+- Note rendering and hit detection
+- Character animations and stage elements
+- Health and scoring systems
+- Input processing with latency compensation
+- Camera movement and effects
+- Cutscenes and dialogue
+
+## Accessing PlayState
+
+```haxe
+// Access the singleton instance (only exists during gameplay)
+if (PlayState.instance != null)
+{
+  trace("Current health: " + PlayState.instance.health);
+  trace("Current score: " + PlayState.instance.songScore);
+}
+```
+
+<Warning>
+PlayState.instance is null when not in gameplay. Always check for null before accessing.
+</Warning>
+
+## Initialization
+
+### PlayStateParams
+
+PlayState is initialized using a `PlayStateParams` typedef:
+
+```haxe
+typedef PlayStateParams =
+{
+  targetSong:Song,
+  ?targetDifficulty:String,
+  ?targetVariation:String,
+  ?targetInstrumental:String,
+  ?practiceMode:Bool,
+  ?botPlayMode:Bool,
+  ?playtestResults:Bool,
+  ?minimalMode:Bool,
+  ?startTimestamp:Float,
+  ?playbackRate:Float,
+  ?overrideMusic:Bool,
+  ?cameraFollowPoint:FlxPoint,
+  ?mirrored:Bool
+}
+```
+
+<ParamField path="targetSong" type="Song" required>
+  The song to play.
+</ParamField>
+
+<ParamField path="targetDifficulty" type="String" default="Constants.DEFAULT_DIFFICULTY">
+  The difficulty to play (e.g., "easy", "normal", "hard").
+</ParamField>
+
+<ParamField path="targetVariation" type="String" default="Constants.DEFAULT_VARIATION">
+  The chart variation to use.
+</ParamField>
+
+<ParamField path="targetInstrumental" type="String" optional>
+  Alternate instrumental ID if the song supports multiple instrumentals.
+</ParamField>
+
+<ParamField path="practiceMode" type="Bool" default="false">
+  Whether to start in Practice Mode (no score/health penalty).
+</ParamField>
+
+<ParamField path="botPlayMode" type="Bool" default="false">
+  Whether to start in Bot Play Mode (auto-play).
+</ParamField>
+
+<ParamField path="minimalMode" type="Bool" default="false">
+  If true, skips loading stage and characters, using a simple background.
+</ParamField>
+
+<ParamField path="startTimestamp" type="Float" default="0.0">
+  Start position in milliseconds. Used for practice and chart playtesting.
+</ParamField>
+
+<ParamField path="playbackRate" type="Float" default="1.0">
+  Song playback speed multiplier (1.0 = 100% speed).
+</ParamField>
+
+**Example:**
+
+```haxe
+// Load a song from the registry
+var song = SongRegistry.instance.fetchEntry("tutorial");
+
+// Create params
+var params:PlayStateParams = {
+  targetSong: song,
+  targetDifficulty: "hard",
+  practiceMode: false,
+  botPlayMode: false
+};
+
+// Switch to PlayState
+LoadingState.loadPlayState(params, function()
+{
+  FlxG.switchState(() -> new PlayState(params));
+});
+```
+
+## Key Properties
+
+### Song Properties
+
+<ResponseField name="currentSong" type="Song">
+  The currently active song.
+</ResponseField>
+
+<ResponseField name="currentDifficulty" type="String">
+  The currently selected difficulty.
+</ResponseField>
+
+<ResponseField name="currentVariation" type="String">
+  The currently selected chart variation.
+</ResponseField>
+
+<ResponseField name="currentInstrumental" type="String">
+  The currently selected instrumental ID.
+</ResponseField>
+
+<ResponseField name="currentStage" type="Stage">
+  The currently active stage with all props and characters.
+</ResponseField>
+
+### Gameplay State
+
+<ResponseField name="health" type="Float">
+  Player's current health (0-2 range, starts at 1.0).
+</ResponseField>
+
+<ResponseField name="songScore" type="Int">
+  Player's current score.
+</ResponseField>
+
+<ResponseField name="startTimestamp" type="Float">
+  Starting position in milliseconds when the countdown ends.
+</ResponseField>
+
+<ResponseField name="playbackRate" type="Float">
+  Song playback speed multiplier (1.0 = 100%).
+</ResponseField>
+
+<ResponseField name="isPracticeMode" type="Bool">
+  Whether Practice Mode is active.
+</ResponseField>
+
+<ResponseField name="isBotPlayMode" type="Bool">
+  Whether Bot Play Mode is active.
+</ResponseField>
+
+<ResponseField name="isMinimalMode" type="Bool">
+  Whether Minimal Mode is active (no stage/characters).
+</ResponseField>
+
+<ResponseField name="isInCountdown" type="Bool">
+  Whether the countdown before the song is active.
+</ResponseField>
+
+<ResponseField name="isInCutscene" type="Bool">
+  Whether an animated cutscene is playing and gameplay is stopped.
+</ResponseField>
+
+<ResponseField name="disableKeys" type="Bool">
+  Whether inputs are disabled (used after song ends or in stage editor).
+</ResponseField>
+
+### Camera Properties
+
+<ResponseField name="cameraFollowPoint" type="FlxObject">
+  The object the gameplay camera follows. Tween this to move the camera smoothly.
+</ResponseField>
+
+<ResponseField name="currentCameraZoom" type="Float">
+  Current camera zoom level without modifiers applied.
+</ResponseField>
+
+<ResponseField name="cameraBopIntensity" type="Float" default="1.015">
+  Camera bop intensity multiplier applied on beat hits.
+</ResponseField>
+
+<ResponseField name="cameraZoomRate" type="Float" default="4.0">
+  How many beats between camera zooms. Default is one zoom per measure (4 beats).
+</ResponseField>
+
+### Audio Volume
+
+<ResponseField name="instrumentalVolume" type="Float" default="1.0">
+  Volume of the instrumental track (0.0-1.0).
+</ResponseField>
+
+<ResponseField name="playerVocalsVolume" type="Float" default="1.0">
+  Volume of the player vocals track (0.0-1.0).
+</ResponseField>
+
+<ResponseField name="opponentVocalsVolume" type="Float" default="1.0">
+  Volume of the opponent vocals track (0.0-1.0).
+</ResponseField>
+
+## Key Methods
+
+### startCountdown()
+
+Starts the countdown before the song begins.
+
+```haxe
+public function startCountdown():Countdown
+```
+
+**Returns:** The Countdown object that was created.
+
+**Example:**
+
+```haxe
+// Start countdown after a cutscene
+function onCutsceneComplete():Void
+{
+  PlayState.instance.startCountdown();
+}
+```
+
+### endSong()
+
+Ends the song and transitions to results or next song.
+
+```haxe
+public function endSong(?ignoreDelay:Bool = false):Void
+```
+
+<ParamField path="ignoreDelay" type="Bool" default="false">
+  Whether to skip the end-of-song delay.
+</ParamField>
+
+### pauseGame()
+
+Pauses the game and opens the pause menu.
+
+```haxe
+function pauseGame():Void
+```
+
+### resetCamera()
+
+Resets the camera zoom and forces focus on the camera follow point.
+
+```haxe
+public function resetCamera(?resetZoom:Bool = true, ?cancelTweens:Bool = true):Void
+```
+
+<ParamField path="resetZoom" type="Bool" default="true">
+  Whether to reset zoom to the default stage zoom.
+</ParamField>
+
+<ParamField path="cancelTweens" type="Bool" default="true">
+  Whether to cancel any active camera tweens.
+</ParamField>
+
+### focusOnCharacter()
+
+Moves the camera to focus on a specific character.
+
+```haxe
+public function focusOnCharacter(char:BaseCharacter, ?useMidpoint:Bool = true):Void
+```
+
+<ParamField path="char" type="BaseCharacter" required>
+  The character to focus on.
+</ParamField>
+
+<ParamField path="useMidpoint" type="Bool" default="true">
+  Whether to use the character's midpoint for positioning.
+</ParamField>
+
+## Example: Custom Gameplay Mod
+
+```haxe
+import funkin.play.PlayState;
+import funkin.Conductor;
+import flixel.FlxG;
+
+class HealthDrainMod
+{
+  public static function init():Void
+  {
+    // Listen for beat hits
+    Conductor.beatHit.add(onBeatHit);
+  }
+  
+  static function onBeatHit():Void
+  {
+    if (PlayState.instance == null) return;
+    
+    // Drain health every 4 beats
+    if (Conductor.instance.currentBeat % 4 == 0)
+    {
+      PlayState.instance.health -= 0.1;
+      trace("Health drained! Current: " + PlayState.instance.health);
+    }
+  }
+}
+```
+
+## Example: Custom Camera Movement
+
+```haxe
+import funkin.play.PlayState;
+import flixel.tweens.FlxTween;
+import flixel.tweens.FlxEase;
+
+class CameraController
+{
+  public static function panToPosition(x:Float, y:Float, duration:Float = 1.0):Void
+  {
+    if (PlayState.instance == null) return;
+    
+    var followPoint = PlayState.instance.cameraFollowPoint;
+    
+    FlxTween.tween(followPoint, {x: x, y: y}, duration, {
+      ease: FlxEase.sineInOut,
+      onComplete: function(_)
+      {
+        trace("Camera pan complete");
+      }
+    });
+  }
+  
+  public static function zoomTo(zoom:Float, duration:Float = 0.5):Void
+  {
+    if (PlayState.instance == null) return;
+    
+    FlxTween.tween(PlayState.instance, {currentCameraZoom: zoom}, duration, {
+      ease: FlxEase.sineInOut
+    });
+  }
+}
+```
+
+## Example: Accessing Stage Characters
+
+```haxe
+import funkin.play.PlayState;
+
+class CharacterController
+{
+  public static function makeBoyfriendDance():Void
+  {
+    var playState = PlayState.instance;
+    if (playState?.currentStage == null) return;
+    
+    var boyfriend = playState.currentStage.getBoyfriend();
+    if (boyfriend != null)
+    {
+      boyfriend.dance();
+    }
+  }
+  
+  public static function changeDadIdle(newIdle:String):Void
+  {
+    var playState = PlayState.instance;
+    if (playState?.currentStage == null) return;
+    
+    var dad = playState.currentStage.getDad();
+    if (dad != null)
+    {
+      dad.playAnimation(newIdle, true);
+    }
+  }
+}
+```
+
+## Health System
+
+Health ranges from 0.0 to 2.0, with 1.0 being the starting value:
+
+- **Health < 0.0**: Player dies (triggers game over)
+- **Health = 1.0**: Starting health (center of health bar)
+- **Health > 2.0**: Clamped to maximum
+
+Health changes based on note hits:
+
+- **Perfect hit**: +0.023 health
+- **Note miss**: -0.0475 health
+- **Ghost tap**: Small penalty (configurable)
+
+```haxe
+// Modify health directly
+PlayState.instance.health += 0.1; // Heal
+PlayState.instance.health -= 0.2; // Damage
+
+// Check health state
+if (PlayState.instance.health <= 0)
+{
+  trace("Player should die");
+}
+```
+
+## Volume Control
+
+Control individual audio track volumes:
+
+```haxe
+// Mute instrumental during dialogue
+PlayState.instance.instrumentalVolume = 0.0;
+
+// Lower opponent vocals
+PlayState.instance.opponentVocalsVolume = 0.5;
+
+// Restore all volumes
+PlayState.instance.instrumentalVolume = 1.0;
+PlayState.instance.playerVocalsVolume = 1.0;
+PlayState.instance.opponentVocalsVolume = 1.0;
+```
+
+## See Also
+
+- [Conductor](/api/conductor) - Musical timing system used by PlayState
+- [Song](/api/song) - Song data structure
+- [Stage](/api/stage) - Stage and prop management
+- [Character](/api/character) - Character system

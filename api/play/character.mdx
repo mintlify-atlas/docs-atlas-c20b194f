@@ -1,0 +1,335 @@
+---
+title: BaseCharacter
+description: Character system for playable and opponent characters
+---
+
+## Overview
+
+The `BaseCharacter` class is the foundation of the character system in Friday Night Funkin'. It handles character rendering, animations, positioning, and gameplay interactions. Characters are stage props that respond to the music and player inputs.
+
+## Class Hierarchy
+
+```
+Bopper
+  └── BaseCharacter (abstract gameplay logic)
+        ├── SparrowCharacter (Sparrow atlas rendering)
+        ├── AnimateAtlasCharacter (Adobe Animate rendering)
+        ├── PackerCharacter (Packer atlas rendering)
+        └── MultiSparrowCharacter (multiple Sparrow atlases)
+```
+
+## Key Concepts
+
+### Character Origin
+
+Characters are positioned relative to their **feet** (horizontal center, vertical bottom). This makes it easier to position characters on stages consistently.
+
+```haxe
+// Character origin is at the bottom-center
+var characterOrigin = character.characterOrigin; // FlxPoint at feet
+var feetPosition = character.feetPosition; // Absolute position on stage
+```
+
+### Character Types
+
+Characters have different behaviors based on their type:
+
+- **BF** (Boyfriend): Player character, responds to inputs
+- **DAD** (Opponent): CPU-controlled character
+- **GF** (Girlfriend): Plays combo/drop animations
+- **OTHER**: Only plays idle animations
+
+## BaseCharacter
+
+### Properties
+
+<ResponseField name="characterId" type="String" >
+  Unique identifier for the character
+</ResponseField>
+
+<ResponseField name="characterName" type="String" >
+  Human-readable name of the character
+</ResponseField>
+
+<ResponseField name="characterType" type="CharacterType" >
+  The type of character (BF, DAD, GF, or OTHER)
+</ResponseField>
+
+<ResponseField name="holdTimer" type="Float" default="0">
+  Tracks how long the character has been singing (in seconds)
+</ResponseField>
+
+<ResponseField name="isDead" type="Bool" default="false">
+  Set to true when the character is dead
+</ResponseField>
+
+<ResponseField name="cameraFocusPoint" type="FlxPoint" >
+  Point where the camera should focus, centered on the character
+</ResponseField>
+
+<ResponseField name="currentStage" type="Null<Stage>" >
+  Reference to the current stage
+</ResponseField>
+
+### Methods
+
+#### `new(id:String, renderType:CharacterRenderType)`
+
+Creates a new character instance.
+
+```haxe
+var character = new SparrowCharacter('bf');
+```
+
+<ParamField path="id" type="String" required>
+  Character ID matching the character data JSON file
+</ParamField>
+
+<ParamField path="renderType" type="CharacterRenderType" required>
+  Expected render type (must match character data)
+</ParamField>
+
+---
+
+#### `resetCharacter(resetCamera:Bool = true):Void`
+
+Resets the character to its original state and position.
+
+```haxe
+character.resetCharacter(true);
+```
+
+---
+
+#### `setScale(scale:Null<Float>):Void`
+
+Sets the character's scale while maintaining foot position.
+
+```haxe
+character.setScale(1.5); // 150% size
+```
+
+---
+
+#### `playSingAnimation(dir:NoteDirection, miss:Bool = false, ?suffix:String = ''):Void`
+
+Plays the appropriate singing animation for a note direction.
+
+```haxe
+// Hit animation
+character.playSingAnimation(NoteDirection.LEFT, false);
+
+// Miss animation
+character.playSingAnimation(NoteDirection.UP, true);
+
+// Alt note animation
+character.playSingAnimation(NoteDirection.RIGHT, false, 'alt');
+```
+
+<ParamField path="dir" type="NoteDirection" required>
+  Direction of the note (LEFT, DOWN, UP, RIGHT)
+</ParamField>
+
+<ParamField path="miss" type="Bool" default="false">
+  If true, plays the miss animation instead
+</ParamField>
+
+<ParamField path="suffix" type="String" default="''">
+  Optional suffix for animation name (e.g., 'alt')
+</ParamField>
+
+---
+
+#### `isSinging():Bool`
+
+Checks if the character is currently singing.
+
+```haxe
+if (character.isSinging()) {
+  trace('Character is performing!');
+}
+```
+
+---
+
+#### `getHealthIconId():String`
+
+Returns the ID of the health icon for this character.
+
+```haxe
+var iconId = character.getHealthIconId();
+```
+
+---
+
+#### `initHealthIcon(isOpponent:Bool):Void`
+
+Initializes the health icon in the PlayState.
+
+```haxe
+character.initHealthIcon(true); // For opponent
+character.initHealthIcon(false); // For player
+```
+
+## Character Implementations
+
+### SparrowCharacter
+
+Renders characters using Sparrow V2 atlas spritesheets.
+
+```haxe
+class SparrowCharacter extends BaseCharacter
+{
+  public function new(id:String)
+  {
+    super(id, CharacterRenderType.Sparrow);
+  }
+}
+```
+
+**Features:**
+- Loads from Sparrow XML atlas
+- Supports pixel art mode
+- Automatic antialiasing control
+
+---
+
+### AnimateAtlasCharacter
+
+Renders characters using Adobe Animate texture atlas.
+
+```haxe
+class AnimateAtlasCharacter extends BaseCharacter
+{
+  public function new(id:String)
+  {
+    super(id, CharacterRenderType.AnimateAtlas);
+  }
+  
+  public function getAtlasSettings():AtlasSpriteSettings
+}
+```
+
+**Features:**
+- Adobe Animate support
+- Advanced animation features
+- Custom atlas settings
+
+## Animation System
+
+### Singing Animations
+
+Characters automatically play singing animations when notes are hit:
+
+- `singLEFT`, `singDOWN`, `singUP`, `singRIGHT` - Hit animations
+- `singLEFTmiss`, `singDOWNmiss`, etc. - Miss animations
+- `singLEFT-alt`, `singDOWN-alt`, etc. - Alt note animations
+
+### Hold Animations
+
+If a `-hold` animation exists, it plays after the initial sing animation:
+
+- `singLEFT` → `singLEFT-hold` (looped)
+- Animation holds until the note is released
+
+### End Animations
+
+If an `-end` animation exists, it plays when releasing a held note:
+
+- `singLEFT-hold` → `singLEFT-end` → `idle`
+
+### Special Animations
+
+**Combo Animations (GF type only):**
+- `combo50` - Plays at 50 combo
+- `combo100` - Plays at 100 combo
+
+**Drop Animations (GF type only):**
+- `drop10` - Plays when dropping a 10+ combo
+- `drop50` - Plays when dropping a 50+ combo
+
+## Event Handlers
+
+### `onNoteHit(event:HitNoteScriptEvent)`
+
+Called when a note is successfully hit.
+
+```haxe
+public override function onNoteHit(event:HitNoteScriptEvent)
+{
+  super.onNoteHit(event);
+  if (event.eventCanceled) return;
+  
+  // Automatically plays sing animation
+  this.playSingAnimation(event.note.noteData.getDirection(), false);
+}
+```
+
+### `onNoteMiss(event:NoteScriptEvent)`
+
+Called when a note is missed.
+
+```haxe
+public override function onNoteMiss(event:NoteScriptEvent)
+{
+  super.onNoteMiss(event);
+  if (event.eventCanceled) return;
+  
+  // Automatically plays miss animation
+  this.playSingAnimation(event.note.noteData.getDirection(), true);
+}
+```
+
+### `onUpdate(event:UpdateScriptEvent)`
+
+Called every frame.
+
+```haxe
+public override function onUpdate(event:UpdateScriptEvent):Void
+{
+  super.onUpdate(event);
+  
+  // Manages hold timer and animation transitions
+  // Returns to idle after singTime expires
+}
+```
+
+## Usage Example
+
+```haxe
+// Create a character
+var boyfriend = new SparrowCharacter('bf');
+boyfriend.characterType = BF;
+
+// Position the character
+boyfriend.x = 770;
+boyfriend.y = 450;
+
+// Add to stage
+stage.addCharacter(boyfriend, BF);
+
+// Play animations
+boyfriend.playSingAnimation(NoteDirection.LEFT, false);
+
+// Check singing state
+if (boyfriend.isSinging()) {
+  trace('Boyfriend is singing!');
+}
+
+// Reset character
+boyfriend.resetCharacter(true);
+```
+
+## Best Practices
+
+<Warning>
+  Always use `setScale()` instead of directly modifying `scale.x` and `scale.y`. This ensures the character's foot position remains correct.
+</Warning>
+
+<Tip>
+  Character origins are at their feet, making vertical alignment on stages consistent. The camera focus point is automatically calculated at the character's center.
+</Tip>
+
+<Info>
+  The `holdTimer` prevents sing animations from flickering between notes. Characters hold sing poses for at least `singTime` beats (defined in character data).
+</Info>

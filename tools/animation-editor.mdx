@@ -1,0 +1,439 @@
+---
+title: Animation Editor
+description: Edit character animations, adjust frame offsets, and preview sprite atlases
+icon: person-running
+---
+
+The Animation Editor (Debug Bounding State) is a specialized tool for editing character animations and adjusting animation offsets in Friday Night Funkin'. It provides both a spritesheet view and an offset editing view.
+
+## Opening the Animation Editor
+
+<Steps>
+  <Step title="From Main Menu">
+    Press **`~`** (tilde) to open the debug menu, then select **Animation Editor**
+  </Step>
+  <Step title="Direct Launch">
+    Navigate to the Animation Editor in the debug tools menu
+  </Step>
+</Steps>
+
+<Info>
+  The Animation Editor is only available in debug builds with the `FEATURE_ANIMATION_EDITOR` compiler flag enabled.
+</Info>
+
+## Interface Modes
+
+The Animation Editor has two main views that you can switch between:
+
+### View Switching
+
+| Key | View | Purpose |
+|-----|------|----------|
+| `1` | Spritesheet View | View entire sprite atlas with frame outlines |
+| `2` | Animation View | Edit individual animation offsets |
+
+You can also use the view dropdown in the editor dialog to switch views.
+
+## Spritesheet View
+
+The spritesheet view displays the entire sprite atlas for a character:
+
+### Features
+
+- **Full Atlas Display**: Shows the complete spritesheet texture
+- **Frame Outlines**: Red outlines around each animation frame
+- **Frame Information**: Displays frame dimensions and count
+- **File Information**: Shows the XML/JSON file being used
+
+### Navigation
+
+- **Mouse Wheel**: Zoom in/out on the spritesheet
+- **Middle Mouse + Drag**: Pan around the view
+- **H**: Toggle HUD visibility
+- **F4**: Return to main menu
+
+<Info>
+  The spritesheet view is useful for verifying that all frames are properly loaded and positioned in the atlas.
+</Info>
+
+## Animation Offset View
+
+This is the primary mode for editing character animations:
+
+### Loading a Character
+
+<Steps>
+  <Step title="Open Character Dropdown">
+    The editor dialog shows a "Character" dropdown menu
+  </Step>
+  <Step title="Select Character">
+    Choose from the list of available characters:
+    - bf (Boyfriend)
+    - dad (Daddy Dearest)
+    - gf (Girlfriend)
+    - pico
+    - mom
+    - And all other registered characters
+  </Step>
+  <Step title="Character Loads">
+    The character sprite appears in the center of the screen, ready for animation editing
+  </Step>
+</Steps>
+
+## Keyboard Controls
+
+### Animation Selection
+
+| Key | Action | Description |
+|-----|--------|-------------|
+| `W` | Sing Up | Play singUP animation |
+| `S` | Sing Down | Play singDOWN animation |
+| `A` | Sing Left | Play singLEFT animation |
+| `D` | Sing Right | Play singRIGHT animation |
+| `Shift+W/S/A/D` | Miss Animations | Play miss variants (singUPmiss, etc.) |
+| `Space` | Idle | Play idle animation |
+| `Enter` | Replay | Replay current animation |
+| `E` or `]` | Next Animation | Cycle to next animation in list |
+| `Q` or `[` | Previous Animation | Cycle to previous animation |
+
+### Offset Adjustment
+
+| Key | Action | Amount | Description |
+|-----|--------|--------|-------------|
+| `←` | Move Left | 5 pixels | Shift animation left |
+| `→` | Move Right | 5 pixels | Shift animation right |
+| `↑` | Move Up | 5 pixels | Shift animation up |
+| `↓` | Move Down | 5 pixels | Shift animation down |
+| `Ctrl+Arrows` | Fine Adjust | 1 pixel | Precise adjustment |
+| `Shift+Arrows` | Coarse Adjust | 10 pixels | Rapid adjustment |
+
+### Additional Controls
+
+| Key | Action | Description |
+|-----|--------|-------------|
+| `F` | Toggle Onion Skin | Show/hide reference overlay |
+| `G` | Flip Character | Flip character horizontally |
+| `H` | Toggle HUD | Show/hide editor UI |
+| `F4` | Exit | Return to main menu |
+
+## Saving Offsets
+
+The Animation Editor provides two save formats:
+
+### Save Options
+
+| Shortcut | Format | Output |
+|----------|--------|--------|
+| `Ctrl+S` (or `Cmd+S` on Mac) | New Format | Saves full character JSON with all data |
+| `Ctrl+Shift+S` | Legacy Format | Saves offsets-only text file |
+
+<Steps>
+  <Step title="Adjust All Animations">
+    Go through each animation and adjust offsets as needed
+  </Step>
+  <Step title="Choose Save Format">
+    - Use `Ctrl+S` for modern JSON format (recommended)
+    - Use `Ctrl+Shift+S` for legacy text format
+  </Step>
+  <Step title="File Saved">
+    - JSON: `[characterId].json`
+    - Legacy: `[characterId]Offsets.txt`
+  </Step>
+</Steps>
+
+<Warning>
+  Always save your work frequently! The editor doesn't auto-save, and closing without saving will lose your changes.
+</Warning>
+
+## Mouse Controls
+
+You can also adjust offsets directly with the mouse:
+
+### Click and Drag Offset
+
+<Steps>
+  <Step title="Position Mouse">
+    Move your mouse cursor to where you want the animation origin to be
+  </Step>
+  <Step title="Click on Character">
+    Click on the character sprite (not the HaxeUI dialog)
+  </Step>
+  <Step title="Drag to Adjust">
+    While holding the mouse button, drag to adjust the offset
+    - The offset values update in real-time
+    - Release to set the new offset
+  </Step>
+</Steps>
+
+<Info>
+  Mouse offset editing is disabled when the cursor is over HaxeUI components (dialog, dropdowns, etc.).
+</Info>
+
+## Onion Skin Feature
+
+Onion skinning helps visualize animation differences:
+
+### What is Onion Skin?
+
+A semi-transparent overlay showing a reference pose:
+- Displays at 60% opacity
+- Shows the "idle" animation by default (or danceLeft/danceRight)
+- Helps align different animations consistently
+
+### Using Onion Skin
+
+<Steps>
+  <Step title="Enable Onion Skin">
+    Press `F` to toggle the onion skin on/off
+  </Step>
+  <Step title="Select Animation to Edit">
+    Use WASD or animation dropdown to choose an animation
+  </Step>
+  <Step title="Compare and Adjust">
+    The semi-transparent reference helps you align the active animation with the base pose
+  </Step>
+</Steps>
+
+<Accordion title="When to Use Onion Skin">
+  - Aligning all sing animations to match idle position
+  - Ensuring miss animations align with regular animations
+  - Maintaining consistent character position across all frames
+  - Fixing "jumpy" animations that don't line up
+</Accordion>
+
+## Animation Dropdown
+
+The Animation Dropdown in the editor dialog provides:
+
+- Complete list of all animations for the character
+- Alphabetically sorted for easy navigation
+- Current animation highlighted
+- Click to instantly switch to any animation
+
+## Character Flipping
+
+Some characters are drawn facing the wrong direction:
+
+<Steps>
+  <Step title="Load Character">
+    Select the character from the dropdown
+  </Step>
+  <Step title="Check Direction">
+    Verify if the character is facing the correct way
+  </Step>
+  <Step title="Flip if Needed">
+    Press `G` to flip the character horizontally
+  </Step>
+  <Step title="Adjust Offsets">
+    Continue editing offsets with the character in the correct orientation
+  </Step>
+</Steps>
+
+<Info>
+  The flip setting also updates the onion skin to match, ensuring consistent reference.
+</Info>
+
+## Understanding Offsets
+
+Animation offsets compensate for different frame sizes:
+
+### Why Offsets Matter
+
+- Different animations have different frame dimensions
+- Without offsets, characters "jump" between animations
+- Offsets ensure smooth position transitions
+- Proper offsets make animations feel polished
+
+### Offset Coordinate System
+
+```
+Positive X → Moves animation RIGHT
+Negative X → Moves animation LEFT
+Positive Y → Moves animation DOWN  
+Negative Y → Moves animation UP
+```
+
+### Common Offset Patterns
+
+<AccordionGroup>
+  <Accordion title="Idle Animation">
+    Usually has offset of `[0, 0]` as the reference point. All other animations are offset relative to idle.
+  </Accordion>
+
+  <Accordion title="Sing Up">
+    Often needs negative Y offset (move up) since the character raises arms/head.
+  </Accordion>
+
+  <Accordion title="Sing Down">
+    Often needs positive Y offset (move down) since the character lowers their stance.
+  </Accordion>
+
+  <Accordion title="Sing Left/Right">
+    May need X offset adjustments to account for character rotation or arm extension.
+  </Accordion>
+
+  <Accordion title="Miss Animations">
+    Should generally match the regular animation offsets, with minor adjustments for the "miss" pose.
+  </Accordion>
+</AccordionGroup>
+
+## Offset Display
+
+The current offset is displayed at the bottom of the screen:
+
+```
+Offset: [x, y]
+```
+
+- Updates in real-time as you adjust
+- Shows exact pixel values
+- Persists across animation switches (shows offset for current animation)
+
+## Camera Controls
+
+Similar to other debug tools:
+
+| Action | Controls | Description |
+|--------|----------|-------------|
+| Pan | Middle Mouse + Drag | Move the camera around |
+| Zoom | Mouse Wheel (when not over UI) | Zoom in/out |
+| Focus | Auto on character load | Centers on character |
+
+<Info>
+  When switching to Animation View (pressing `2`), the camera automatically focuses on the character and sets zoom to 0.95.
+</Info>
+
+## Output Formats
+
+### New JSON Format (`Ctrl+S`)
+
+Saves complete character data:
+
+```json
+{
+  "id": "characterId",
+  "name": "Character Name",
+  "assetPath": "characters/CHARACTER",
+  "offsets": {
+    "idle": [0, 0],
+    "singLEFT": [-10, 5],
+    "singRIGHT": [12, 5],
+    "singUP": [0, -15],
+    "singDOWN": [0, 20]
+  }
+}
+```
+
+### Legacy Text Format (`Ctrl+Shift+S`)
+
+Simple text format:
+
+```
+idle 0 0
+singLEFT -10 5
+singRIGHT 12 5
+singUP 0 -15
+singDOWN 0 20
+```
+
+<Info>
+  The new JSON format is recommended as it integrates better with the character data system.
+</Info>
+
+## Workflow Guide
+
+<Steps>
+  <Step title="Load Character">
+    Select the character you want to edit from the Character dropdown
+  </Step>
+  <Step title="Start with Idle">
+    Press `Space` to view the idle animation
+    - This is usually the reference animation (offset 0,0)
+  </Step>
+  <Step title="Test Each Animation">
+    Go through each animation:
+    - Press `W` for singUP
+    - Press `S` for singDOWN  
+    - Press `A` for singLEFT
+    - Press `D` for singRIGHT
+  </Step>
+  <Step title="Identify Misalignments">
+    Note where each animation appears misaligned compared to idle
+  </Step>
+  <Step title="Adjust Offsets">
+    For each misaligned animation:
+    - Use arrow keys to adjust position
+    - Use `Ctrl+Arrows` for fine adjustments
+    - Or click and drag with mouse
+  </Step>
+  <Step title="Use Onion Skin">
+    Press `F` to enable onion skin for reference while adjusting
+  </Step>
+  <Step title="Test Miss Animations">
+    Hold `Shift` while pressing WASD to check miss animations
+  </Step>
+  <Step title="Save Your Work">
+    Press `Ctrl+S` to save the character JSON
+  </Step>
+  <Step title="Test In-Game">
+    Exit editor and test the character in actual gameplay to verify
+  </Step>
+</Steps>
+
+## Tips for Perfect Offsets
+
+<AccordionGroup>
+  <Accordion title="Use Visual Landmarks">
+    Pick a body part (like the microphone, head, or feet) and keep it consistent across all animations.
+  </Accordion>
+
+  <Accordion title="Check Multiple Frames">
+    Some animations cycle through multiple frames. Press `Enter` to replay and check each frame.
+  </Accordion>
+
+  <Accordion title="Test with Music">
+    After editing, test the character in the Chart Editor with actual gameplay timing.
+  </Accordion>
+
+  <Accordion title="Reference Original Characters">
+    Check how base game characters (like BF, Dad) handle offsets for similar animation types.
+  </Accordion>
+
+  <Accordion title="Consistent Miss Offsets">
+    Miss animations should generally have the same offsets as their regular counterparts, with slight adjustments.
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Character Not Loading">
+    - Verify character ID exists in character registry
+    - Check that sprite atlas file exists
+    - Ensure animation data is properly formatted
+  </Accordion>
+
+  <Accordion title="Animations Not Playing">
+    - Verify animation names match exactly (case-sensitive)
+    - Check that sprite atlas includes the animation frames
+    - Use Spritesheet View to verify frames are present
+  </Accordion>
+
+  <Accordion title="Offsets Not Saving">
+    - Ensure you're pressing `Ctrl+S` (not just `S`)
+    - Check file permissions in the character data directory
+    - Verify the character JSON path is writable
+  </Accordion>
+
+  <Accordion title="Onion Skin Not Visible">
+    - Press `F` to toggle it on
+    - Check if the character has an idle/danceLeft animation
+    - Try selecting a different animation and toggling again
+  </Accordion>
+</AccordionGroup>
+
+## Related Tools
+
+- [Chart Editor](/tools/chart-editor) - Use characters in charts
+- [Stage Editor](/tools/stage-editor) - Position characters on stages  
+- [Debug Hotkeys](/tools/debug-hotkeys) - Quick access shortcuts

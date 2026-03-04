@@ -1,0 +1,296 @@
+---
+title: VoicesGroup
+description: Specialized sound group for managing separate player and opponent vocal tracks
+---
+
+## Overview
+
+`VoicesGroup` extends `SoundGroup` to provide separate management of player and opponent vocal tracks. It allows independent volume control and time offset adjustments for each vocal type, which is essential for gameplay where different characters have separate vocal tracks.
+
+Location: `funkin.audio.VoicesGroup`
+
+## Key Features
+
+- Separate player and opponent vocal track management
+- Independent volume control for each track type
+- Individual time offset support per track
+- Waveform data access for both tracks
+- Synchronized playback control
+
+## Properties
+
+<ParamField path="playerVolume" type="Float" default="1.0">
+  Controls the volume of all sounds in the player voice group (0.0 to 1.0).
+</ParamField>
+
+<ParamField path="opponentVolume" type="Float" default="1.0">
+  Controls the volume of all sounds in the opponent voice group (0.0 to 1.0).
+</ParamField>
+
+<ParamField path="playerVoicesOffset" type="Float" default="0.0">
+  Time offset in milliseconds for the player's vocal track. Positive values delay playback.
+</ParamField>
+
+<ParamField path="opponentVoicesOffset" type="Float" default="0.0">
+  Time offset in milliseconds for the opponent's vocal track. Positive values delay playback.
+</ParamField>
+
+## Inherited Properties
+
+From `SoundGroup`:
+
+<ParamField path="time" type="Float">
+  Current playback time in milliseconds. Setting this syncs all voices to the same time (with offsets applied).
+</ParamField>
+
+<ParamField path="volume" type="Float">
+  Master volume for all voices in the group (0.0 to 1.0).
+</ParamField>
+
+<ParamField path="muted" type="Bool">
+  Mutes all voices in the group when `true`.
+</ParamField>
+
+<ParamField path="pitch" type="Float">
+  Playback pitch for all voices. Requires `FLX_PITCH` compiler flag.
+</ParamField>
+
+<ParamField path="playing" type="Bool" readonly>
+  Whether any voice in the group is currently playing.
+</ParamField>
+
+## Methods
+
+### addPlayerVoice
+
+```haxe
+addPlayerVoice(sound:FunkinSound):Void
+```
+
+Adds a vocal track to the player voice group.
+
+<ParamField path="sound" type="FunkinSound" required>
+  The vocal sound to add to the player group.
+</ParamField>
+
+### addOpponentVoice
+
+```haxe
+addOpponentVoice(sound:FunkinSound):Void
+```
+
+Adds a vocal track to the opponent voice group.
+
+<ParamField path="sound" type="FunkinSound" required>
+  The vocal sound to add to the opponent group.
+</ParamField>
+
+### getPlayerVoice
+
+```haxe
+getPlayerVoice(index:Int = 0):Null<FunkinSound>
+```
+
+Retrieves a player voice by index.
+
+<ParamField path="index" type="Int" default="0">
+  The index of the voice to retrieve.
+</ParamField>
+
+<ResponseField name="return" type="Null<FunkinSound>">
+  The player voice at the specified index, or `null` if not found.
+</ResponseField>
+
+### getOpponentVoice
+
+```haxe
+getOpponentVoice(index:Int = 0):Null<FunkinSound>
+```
+
+Retrieves an opponent voice by index.
+
+<ParamField path="index" type="Int" default="0">
+  The index of the voice to retrieve.
+</ParamField>
+
+<ResponseField name="return" type="Null<FunkinSound>">
+  The opponent voice at the specified index, or `null` if not found.
+</ResponseField>
+
+### getPlayerVoiceWaveform
+
+```haxe
+getPlayerVoiceWaveform():Null<WaveformData>
+```
+
+Gets the waveform data for the first player voice.
+
+<ResponseField name="return" type="Null<WaveformData>">
+  Waveform data for visualization, or `null` if no player voices exist.
+</ResponseField>
+
+### getOpponentVoiceWaveform
+
+```haxe
+getOpponentVoiceWaveform():Null<WaveformData>
+```
+
+Gets the waveform data for the first opponent voice.
+
+<ResponseField name="return" type="Null<WaveformData>">
+  Waveform data for visualization, or `null` if no opponent voices exist.
+</ResponseField>
+
+### getPlayerVoiceLength
+
+```haxe
+getPlayerVoiceLength():Float
+```
+
+Returns the length of the player's vocal track in milliseconds.
+
+<ResponseField name="return" type="Float">
+  Length in milliseconds, or 0.0 if no player voices exist.
+</ResponseField>
+
+### getOpponentVoiceLength
+
+```haxe
+getOpponentVoiceLength():Float
+```
+
+Returns the length of the opponent's vocal track in milliseconds.
+
+<ResponseField name="return" type="Float">
+  Length in milliseconds, or 0.0 if no opponent voices exist.
+</ResponseField>
+
+### clear
+
+```haxe
+clear():Void
+```
+
+Removes all voices from both player and opponent groups.
+
+### destroy
+
+```haxe
+destroy():Void
+```
+
+Destroys the voices group and all contained voices.
+
+## Inherited Methods
+
+From `SoundGroup`:
+
+- `play(forceRestart:Bool = false, startTime:Float = 0.0, ?endTime:Float)` - Plays all voices
+- `pause()` - Pauses all voices
+- `resume()` - Resumes all voices
+- `stop()` - Stops all voices
+- `fadeIn(duration:Float, ?from:Float = 0.0, ?to:Float = 1.0, ?onComplete:FlxTween->Void)` - Fades in all voices
+- `fadeOut(duration:Float, ?to:Float = 0.0, ?onComplete:FlxTween->Void)` - Fades out all voices
+
+## Example Usage
+
+### Basic Setup
+
+```haxe
+// Create a voices group
+var voices = new VoicesGroup();
+
+// Load and add player vocals
+var playerVocals = FunkinSound.load(Paths.voices('tutorial', 'Player'));
+voices.addPlayerVoice(playerVocals);
+
+// Load and add opponent vocals
+var opponentVocals = FunkinSound.load(Paths.voices('tutorial', 'Opponent'));
+voices.addOpponentVoice(opponentVocals);
+
+// Play synchronized
+voices.play();
+```
+
+### Volume Control
+
+```haxe
+// Mute player vocals (for opponent-only sections)
+voices.playerVolume = 0.0;
+
+// Restore player vocals
+voices.playerVolume = 1.0;
+
+// Adjust opponent volume
+voices.opponentVolume = 0.7;
+
+// Master volume for all voices
+voices.volume = 0.8;
+```
+
+### Time Synchronization
+
+```haxe
+// Sync all voices to a specific time
+voices.time = 5000.0; // 5 seconds
+
+// Apply offset to player vocals (e.g., for calibration)
+voices.playerVoicesOffset = 50.0; // 50ms delay
+
+// Sync with instrumental track
+var instrumental = FlxG.sound.music;
+voices.time = instrumental.time;
+```
+
+### Waveform Visualization
+
+```haxe
+// Get waveform data for visualization
+var playerWaveform = voices.getPlayerVoiceWaveform();
+var opponentWaveform = voices.getOpponentVoiceWaveform();
+
+if (playerWaveform != null) {
+  // Render player waveform
+  renderWaveform(playerWaveform);
+}
+```
+
+### Advanced Usage with Offsets
+
+```haxe
+// Create voices group with calibration
+var voices = new VoicesGroup();
+
+// Add voices
+voices.addPlayerVoice(playerSound);
+voices.addOpponentVoice(opponentSound);
+
+// Apply user calibration offsets
+var calibration = SaveData.getAudioOffset();
+voices.playerVoicesOffset = calibration.player;
+voices.opponentVoicesOffset = calibration.opponent;
+
+// Play with offsets applied
+voices.play();
+```
+
+### Checking Track Lengths
+
+```haxe
+// Verify both tracks have content
+if (voices.getPlayerVoiceLength() > 0 && voices.getOpponentVoiceLength() > 0) {
+  trace('Both vocal tracks loaded successfully');
+  voices.play();
+} else {
+  trace('Warning: Missing vocal tracks');
+}
+```
+
+## Notes
+
+- Time offsets are automatically applied when setting the `time` property
+- Changing offset values adjusts the current playback position of affected tracks
+- Volume controls are independent - `playerVolume` and `opponentVolume` don't affect each other
+- The master `volume` property multiplies with individual track volumes
+- Both groups share the same `muted`, `pitch`, and `playing` state through the parent `SoundGroup`
+- Waveform data is retrieved from the first voice in each group (index 0)

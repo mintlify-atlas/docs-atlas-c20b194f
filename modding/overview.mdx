@@ -1,0 +1,163 @@
+---
+title: Modding Overview
+description: Learn about Friday Night Funkin's modding system powered by Polymod
+icon: puzzle-piece
+---
+
+## What is Modding?
+
+Friday Night Funkin' features a powerful modding system that allows you to customize nearly every aspect of the game. From replacing assets to creating entirely new gameplay mechanics with scripts, the modding framework gives you extensive control over your game experience.
+
+<Card title="Powered by Polymod" icon="code" href="polymod">
+  FNF uses Polymod, an atomic modding framework for Haxe games that provides asset replacement, merging, and scripting capabilities.
+</Card>
+
+## Polymod Architecture
+
+The modding system is built on **Polymod**, a robust framework that handles:
+
+- **Asset Loading**: Automatic detection and loading of mod files from the `mods` folder
+- **Asset Replacement**: Override any game asset by placing a replacement in your mod
+- **Asset Merging**: Append or merge data into existing text files
+- **Script Execution**: Run custom HScript code to extend game functionality
+- **Mod Management**: Load multiple mods with priority ordering
+
+### Core Components
+
+The modding system consists of several key components:
+
+<CardGroup cols={2}>
+  <Card title="PolymodHandler" icon="gear">
+    Main interface for loading and managing mods. Located in `funkin/modding/PolymodHandler.hx`
+  </Card>
+  <Card title="IScriptedClass" icon="code">
+    Interfaces defining callbacks for scripted classes. Located in `funkin/modding/IScriptedClass.hx`
+  </Card>
+  <Card title="Module System" icon="puzzle-piece">
+    Global scripts that receive events from any game state. Located in `funkin/modding/module/`
+  </Card>
+  <Card title="ScriptEvent System" icon="bolt">
+    Event dispatching system for scripts. Located in `funkin/modding/events/`
+  </Card>
+</CardGroup>
+
+## What You Can Mod
+
+### Assets
+
+Replace or modify any game asset:
+
+- **Images** - Character sprites, backgrounds, UI elements
+- **Audio** - Music, sound effects, voice lines
+- **Data Files** - Charts, character data, stage configurations
+- **Text Files** - Dialogue, intro text, credits
+
+### Gameplay
+
+Modify game behavior with scripts:
+
+- **Custom Characters** - Create new characters with unique behaviors
+- **Custom Stages** - Design new stages with interactive elements
+- **Note Types** - Add new note mechanics
+- **Song Events** - Create custom chart events
+- **UI Modifications** - Change menus, HUD elements, transitions
+
+### Scripts
+
+Write custom code using HScript:
+
+- **Modules** - Global scripts that run across all game states
+- **Scripted Classes** - Extend base classes like FlxSprite, FlxState
+- **Event Handlers** - React to gameplay events (notes, beats, state changes)
+- **Custom Logic** - Implement entirely new mechanics
+
+## API Version
+
+Friday Night Funkin' uses semantic versioning for mod compatibility:
+
+<CodeGroup>
+```haxe PolymodHandler.hx
+/**
+ * The API version for the current version of the game.
+ */
+public static var API_VERSION(get, never):String;
+
+static function get_API_VERSION():String
+{
+  return Constants.VERSION;
+}
+
+/**
+ * The Semantic Versioning rule
+ * Indicates which mods are compatible with this version of the game.
+ */
+public static final API_VERSION_RULE:String = ">=0.8.0 <0.9.0";
+```
+</CodeGroup>
+
+Mods must specify a compatible `api_version` in their `_polymod_meta.json` file. The game only loads mods that match the version rule.
+
+## Mod Detection
+
+Mods are loaded from the `mods` folder:
+
+<Tabs>
+  <Tab title="Windows/Linux">
+    ```
+    FridayNightFunkin.exe
+    mods/
+      └── yourmod/
+          ├── _polymod_meta.json
+          └── ...
+    ```
+  </Tab>
+  <Tab title="macOS">
+    ```
+    Funkin.app/
+      └── Contents/
+          └── Resources/
+              └── mods/
+                  └── yourmod/
+                      ├── _polymod_meta.json
+                      └── ...
+    ```
+  </Tab>
+  <Tab title="Mobile">
+    Android: `/sdcard/Android/obb/me.funkin.fnf/mods/`
+    
+    iOS: Files app → On My iPhone → Friday Night Funkin → mods
+  </Tab>
+</Tabs>
+
+The game automatically detects mods on startup by scanning the mods folder for valid `_polymod_meta.json` files.
+
+## Security & Sandboxing
+
+For security, the modding system restricts access to sensitive functionality:
+
+- **File System**: Limited to sandboxed operations via `FileUtilSandboxed`
+- **Newgrounds API**: Read-only access, no score/medal manipulation
+- **System Commands**: No access to `Sys`, `cpp.Lib`, native processes
+- **Reflection**: Restricted via `ReflectUtil` to prevent blacklist bypass
+- **Save Data**: No direct score manipulation
+
+<Note>
+  Scripts cannot execute malicious code or access system resources outside the game's sandbox.
+</Note>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Installing Mods" icon="download" href="installing-mods">
+    Learn how to install mods on your platform
+  </Card>
+  <Card title="Creating Mods" icon="hammer" href="creating-mods">
+    Start building your first mod
+  </Card>
+  <Card title="Scripting Guide" icon="code" href="scripting">
+    Write custom scripts with HScript
+  </Card>
+  <Card title="Polymod Deep Dive" icon="book" href="polymod">
+    Advanced Polymod features and techniques
+  </Card>
+</CardGroup>

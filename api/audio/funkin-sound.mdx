@@ -1,0 +1,441 @@
+---
+title: FunkinSound
+description: Extended FlxSound with delayed playback, pooling, and enhanced audio management
+---
+
+## Overview
+
+`FunkinSound` extends FlxSound with additional functionality including delayed playback via negative song position, sound pooling for efficient memory management, and convenient static methods for immediate playback and recycling.
+
+Location: `funkin.audio.FunkinSound`
+
+## Key Features
+
+- Delayed playback support with negative timestamps
+- Object pooling for efficient memory reuse
+- Waveform data generation and caching
+- Music playback with metadata support
+- Partial sound loading for optimized memory usage
+- Volume change signals
+
+## Properties
+
+<ParamField path="muted" type="Bool">
+  Mute this specific sound without affecting volume. When set to `true`, the sound is silenced.
+</ParamField>
+
+<ParamField path="paused" type="Bool" readonly>
+  Whether the sound is currently paused.
+</ParamField>
+
+<ParamField path="isPlaying" type="Bool" readonly>
+  Returns `true` if the sound is playing or scheduled to play (including negative timestamps).
+</ParamField>
+
+<ParamField path="waveformData" type="WaveformData" readonly>
+  Lazily-loaded waveform data for this sound. Generated on first access and cached for subsequent use.
+</ParamField>
+
+<ParamField path="important" type="Bool">
+  If `true`, forcefully adds this sound's channel to the playing sounds list even when the channel limit is reached. Use sparingly!
+</ParamField>
+
+<ParamField path="volume" type="Float">
+  The volume level (0.0 to 1.0).
+</ParamField>
+
+## Static Properties
+
+<ParamField path="onVolumeChanged" type="FlxTypedSignal<Float->Void>" readonly>
+  A signal dispatched whenever the global volume changes.
+</ParamField>
+
+<ParamField path="pool" type="FlxTypedGroup<FunkinSound>" readonly>
+  Internal pool of FunkinSound instances for efficient recycling.
+</ParamField>
+
+## Methods
+
+### play
+
+```haxe
+play(forceRestart:Bool = false, startTime:Float = 0, ?endTime:Float):FunkinSound
+```
+
+Plays the sound. Supports negative `startTime` values for delayed playback.
+
+<ParamField path="forceRestart" type="Bool" default="false">
+  If `true`, restarts the sound even if already playing.
+</ParamField>
+
+<ParamField path="startTime" type="Float" default="0">
+  Time in milliseconds to start at. Negative values delay playback.
+</ParamField>
+
+<ParamField path="endTime" type="Float" optional>
+  Time in milliseconds to stop at.
+</ParamField>
+
+<ResponseField name="return" type="FunkinSound">
+  Returns the sound instance for method chaining.
+</ResponseField>
+
+### pause
+
+```haxe
+pause():FunkinSound
+```
+
+Pauses the sound, including sounds with negative timestamps that haven't started yet.
+
+<ResponseField name="return" type="FunkinSound">
+  Returns the sound instance for method chaining.
+</ResponseField>
+
+### resume
+
+```haxe
+resume():FunkinSound
+```
+
+Resumes a paused sound. Handles sounds with negative timestamps correctly.
+
+<ResponseField name="return" type="FunkinSound">
+  Returns the sound instance for method chaining.
+</ResponseField>
+
+### togglePlayback
+
+```haxe
+togglePlayback():FunkinSound
+```
+
+Toggles between playing and paused states.
+
+<ResponseField name="return" type="FunkinSound">
+  Returns the sound instance for method chaining.
+</ResponseField>
+
+### clone
+
+```haxe
+clone():FunkinSound
+```
+
+Creates a copy of this sound that shares the same audio buffer and waveform data.
+
+<ResponseField name="return" type="FunkinSound">
+  A new FunkinSound instance with cloned data.
+</ResponseField>
+
+## Static Methods
+
+### load
+
+```haxe
+static function load(
+  embeddedSound:FlxSoundAsset,
+  volume:Float = 1.0,
+  looped:Bool = false,
+  autoDestroy:Bool = false,
+  autoPlay:Bool = false,
+  persist:Bool = false,
+  ?onComplete:Void->Void,
+  ?onLoad:Void->Void,
+  important:Bool = false
+):Null<FunkinSound>
+```
+
+Loads a sound synchronously from the pool or creates a new instance.
+
+<ParamField path="embeddedSound" type="FlxSoundAsset" required>
+  The sound asset path or embedded sound resource.
+</ParamField>
+
+<ParamField path="volume" type="Float" default="1.0">
+  Initial volume (0.0 to 1.0).
+</ParamField>
+
+<ParamField path="looped" type="Bool" default="false">
+  Whether to loop the sound.
+</ParamField>
+
+<ParamField path="autoDestroy" type="Bool" default="false">
+  Whether to destroy the sound when finished. Set to `false` to reuse the instance.
+</ParamField>
+
+<ParamField path="autoPlay" type="Bool" default="false">
+  Whether to play immediately after loading.
+</ParamField>
+
+<ParamField path="persist" type="Bool" default="false">
+  Whether to keep the sound across state changes.
+</ParamField>
+
+<ParamField path="onComplete" type="Void->Void" optional>
+  Callback when the sound finishes playing.
+</ParamField>
+
+<ParamField path="onLoad" type="Void->Void" optional>
+  Callback when the sound finishes loading.
+</ParamField>
+
+<ParamField path="important" type="Bool" default="false">
+  If `true`, bypasses channel limits. Use sparingly!
+</ParamField>
+
+<ResponseField name="return" type="Null<FunkinSound>">
+  Returns the loaded sound, or `null` if loading failed or channels are exhausted.
+</ResponseField>
+
+### loadPartial
+
+```haxe
+static function loadPartial(
+  path:String,
+  start:Float = 0,
+  end:Float = 1,
+  volume:Float = 1.0,
+  looped:Bool = false,
+  autoDestroy:Bool = false,
+  autoPlay:Bool = true,
+  ?onComplete:Void->Void,
+  ?onLoad:Void->Void
+):Promise<Null<FunkinSound>>
+```
+
+Loads only a section of a sound file asynchronously. Useful for Freeplay previews to avoid loading entire songs.
+
+<ParamField path="path" type="String" required>
+  The path to the sound file.
+</ParamField>
+
+<ParamField path="start" type="Float" default="0">
+  Start position as a percentage (0.0 to 1.0).
+</ParamField>
+
+<ParamField path="end" type="Float" default="1">
+  End position as a percentage (0.0 to 1.0).
+</ParamField>
+
+<ParamField path="volume" type="Float" default="1.0">
+  Initial volume (0.0 to 1.0).
+</ParamField>
+
+<ParamField path="looped" type="Bool" default="false">
+  Whether to loop the sound.
+</ParamField>
+
+<ParamField path="autoDestroy" type="Bool" default="false">
+  Whether to destroy the sound when finished.
+</ParamField>
+
+<ParamField path="autoPlay" type="Bool" default="true">
+  Whether to play immediately after loading.
+</ParamField>
+
+<ParamField path="onComplete" type="Void->Void" optional>
+  Callback when the sound finishes playing.
+</ParamField>
+
+<ParamField path="onLoad" type="Void->Void" optional>
+  Callback when the sound finishes loading.
+</ParamField>
+
+<ResponseField name="return" type="Promise<Null<FunkinSound>>">
+  A promise that resolves to the loaded sound or `null` if loading failed.
+</ResponseField>
+
+### playMusic
+
+```haxe
+static function playMusic(
+  key:String,
+  params:FunkinSoundPlayMusicParams
+):Bool
+```
+
+Loads and plays music with optional metadata support. Automatically loads song metadata from `music/<key>/<key>-metadata.json` if available.
+
+<ParamField path="key" type="String" required>
+  The music key. Music is loaded from `music/<key>/<key>.ogg`.
+</ParamField>
+
+<ParamField path="params" type="FunkinSoundPlayMusicParams" required>
+  Configuration object for music playback. See below for properties.
+</ParamField>
+
+<ResponseField name="return" type="Bool">
+  Returns `true` if music started successfully, `false` if music was already playing or couldn't start.
+</ResponseField>
+
+#### FunkinSoundPlayMusicParams
+
+<ParamField path="startingVolume" type="Float" default="1.0">
+  Initial volume for the music.
+</ParamField>
+
+<ParamField path="suffix" type="String" default="''">
+  Suffix for the music file (e.g., "-erect" for alternate tracks).
+</ParamField>
+
+<ParamField path="overrideExisting" type="Bool" default="false">
+  Whether to override music if a different track is playing.
+</ParamField>
+
+<ParamField path="restartTrack" type="Bool" default="false">
+  Whether to restart if the same track is already playing.
+</ParamField>
+
+<ParamField path="loop" type="Bool" default="true">
+  Whether the music should loop.
+</ParamField>
+
+<ParamField path="mapTimeChanges" type="Bool" default="true">
+  Whether to load and apply time signature changes from metadata.
+</ParamField>
+
+<ParamField path="pathsFunction" type="PathsFunction" default="MUSIC">
+  Which Paths function to use (`MUSIC` or `INST`).
+</ParamField>
+
+<ParamField path="partialParams" type="PartialSoundParams" optional>
+  Parameters for partial loading (see `loadPartial`).
+</ParamField>
+
+<ParamField path="persist" type="Bool" optional>
+  Whether the sound persists across state changes.
+</ParamField>
+
+<ParamField path="onComplete" type="Void->Void" optional>
+  Callback when the music finishes.
+</ParamField>
+
+<ParamField path="onLoad" type="Void->Void" optional>
+  Callback when the music finishes loading.
+</ParamField>
+
+### playOnce
+
+```haxe
+static function playOnce(
+  key:String,
+  volume:Float = 1.0,
+  ?onComplete:Void->Void,
+  ?onLoad:Void->Void,
+  important:Bool = false
+):Null<FunkinSound>
+```
+
+Plays a sound effect once and automatically destroys it when finished.
+
+<ParamField path="key" type="String" required>
+  The sound key/path.
+</ParamField>
+
+<ParamField path="volume" type="Float" default="1.0">
+  Playback volume (0.0 to 1.0).
+</ParamField>
+
+<ParamField path="onComplete" type="Void->Void" optional>
+  Callback when the sound finishes.
+</ParamField>
+
+<ParamField path="onLoad" type="Void->Void" optional>
+  Callback when the sound loads.
+</ParamField>
+
+<ParamField path="important" type="Bool" default="false">
+  Bypass channel limits if `true`.
+</ParamField>
+
+<ResponseField name="return" type="Null<FunkinSound>">
+  Returns the sound instance or `null` if loading failed.
+</ResponseField>
+
+### stopAllAudio
+
+```haxe
+static function stopAllAudio(musicToo:Bool = false, persistToo:Bool = false):Void
+```
+
+Stops and destroys all sounds in the pool.
+
+<ParamField path="musicToo" type="Bool" default="false">
+  If `true`, also stops the current music track.
+</ParamField>
+
+<ParamField path="persistToo" type="Bool" default="false">
+  If `true`, also stops sounds marked as persistent.
+</ParamField>
+
+### setMusic
+
+```haxe
+static function setMusic(newMusic:FunkinSound):Void
+```
+
+Sets the given sound as the current music track (`FlxG.sound.music`).
+
+<ParamField path="newMusic" type="FunkinSound" required>
+  The sound to set as music.
+</ParamField>
+
+## Example Usage
+
+### Basic Sound Playback
+
+```haxe
+// Play a sound effect once
+FunkinSound.playOnce('sounds/confirm', 0.7);
+
+// Load and manually control a sound
+var sound = FunkinSound.load('sounds/scroll', 1.0, false, false, false);
+sound.play();
+```
+
+### Playing Music
+
+```haxe
+// Simple music playback
+FunkinSound.playMusic('freakyMenu', {
+  startingVolume: 0.7,
+  loop: true
+});
+
+// With custom configuration
+FunkinSound.playMusic('tutorial', {
+  startingVolume: 0.8,
+  overrideExisting: true,
+  mapTimeChanges: true,
+  onLoad: () -> trace('Music loaded!'),
+  onComplete: () -> trace('Music finished!')
+});
+```
+
+### Delayed Playback
+
+```haxe
+// Start playback 500ms from now
+var sound = FunkinSound.load('music/intro', 1.0);
+sound.play(false, -500.0);
+```
+
+### Partial Loading
+
+```haxe
+// Load only the first 30% of a song
+var promise = FunkinSound.loadPartial('songs/bopeebo/Inst', 0.0, 0.3, 1.0, true);
+promise.future.onComplete(function(sound) {
+  if (sound != null) {
+    trace('Preview loaded!');
+  }
+});
+```
+
+## Notes
+
+- Sounds with negative timestamps require the sound to be added to a scene with `add()` for the countdown timer to work
+- The `important` flag should be used sparingly as it bypasses audio channel limits
+- Waveform data is cached after first access for performance
+- The sound pool automatically recycles dead instances to reduce garbage collection

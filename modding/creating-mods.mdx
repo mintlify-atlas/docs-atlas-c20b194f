@@ -1,0 +1,451 @@
+---
+title: Creating Mods
+description: Step-by-step guide to creating your first Friday Night Funkin' mod
+icon: hammer
+---
+
+## Getting Started
+
+Creating a Friday Night Funkin' mod is straightforward. At its core, a mod is just a folder with a metadata file and whatever assets or scripts you want to add.
+
+<Note>
+  This guide covers basic mod creation. For advanced scripting, see the [Scripting Guide](/modding/scripting).
+</Note>
+
+## Mod Structure
+
+Every mod follows this basic structure:
+
+```
+yourmod/
+├── _polymod_meta.json    # Required: Mod metadata
+├── _polymod_icon.png     # Optional: Icon shown in mod menu
+├── data/                 # JSON data files
+├── images/               # Image assets (.png)
+├── music/                # Music files (.ogg)
+├── sounds/               # Sound effects (.ogg)
+├── songs/                # Song charts and metadata
+├── scripts/              # HScript files (.hscript, .hxc)
+└── _append/              # Special folder for merging files
+```
+
+<Tip>
+  Your mod only needs to include files you want to change. Missing files fall back to the base game.
+</Tip>
+
+## Step 1: Create Mod Metadata
+
+Every mod requires a `_polymod_meta.json` file. This tells Polymod about your mod:
+
+<Steps>
+  <Step title="Create the mod folder">
+    Create a new folder in the game's `mods` directory:
+    
+    ```bash
+    mods/
+      └── myawesomemod/
+    ```
+  </Step>
+  
+  <Step title="Create _polymod_meta.json">
+    Inside your mod folder, create `_polymod_meta.json` with this template:
+    
+    ```json _polymod_meta.json
+    {
+      "title": "My Awesome Mod",
+      "description": "A cool mod that does cool things",
+      "contributors": [
+        {
+          "name": "YourName"
+        }
+      ],
+      "api_version": "0.8.0",
+      "mod_version": "1.0.0",
+      "license": "Apache-2.0"
+    }
+    ```
+  </Step>
+  
+  <Step title="Customize the fields">
+    **Required fields:**
+    - `title` - Display name of your mod
+    - `description` - What your mod does
+    - `api_version` - Game version compatibility (use `"0.8.0"` for current)
+    - `mod_version` - Your mod's version
+    - `license` - License for your mod
+    
+    **Optional fields:**
+    - `contributors` - Array of contributor objects with `name` field
+    - `homepage` - URL to mod page/repository
+  </Step>
+</Steps>
+
+### Example Metadata
+
+Here's the metadata from the included example mod:
+
+<CodeGroup>
+```json introMod/_polymod_meta.json
+{
+  "title": "Intro Mod",
+  "description": "An introductory mod.",
+  "contributors": [
+    {
+      "name": "EliteMasterEric"
+    }
+  ],
+  "api_version": "0.8.0",
+  "mod_version": "1.0.0",
+  "license": "Apache-2.0"
+}
+```
+
+```json testing123/_polymod_meta.json
+{
+  "title": "Testing123",
+  "description": "Newgrounds? More like OLDGROUNDS lol.",
+  "contributors": [
+    {
+      "name": "EliteMasterEric"
+    }
+  ],
+  "api_version": "0.8.0",
+  "mod_version": "1.0.0",
+  "license": "Apache-2.0"
+}
+```
+</CodeGroup>
+
+## Step 2: Add a Mod Icon (Optional)
+
+Create a `_polymod_icon.png` file to give your mod a custom icon:
+
+- **Size**: 256x256 pixels recommended
+- **Format**: PNG with transparency
+- **Location**: Root of your mod folder
+
+```
+myawesomemod/
+├── _polymod_meta.json
+└── _polymod_icon.png  ← 256x256 PNG
+```
+
+## Step 3: Replace Assets
+
+The simplest way to mod FNF is by replacing assets. Just match the game's file structure:
+
+### Replacing Images
+
+To replace an image, create the same path in your mod:
+
+<CodeGroup>
+```bash Game Structure
+images/
+  └── newgrounds_logo.png
+```
+
+```bash Your Mod
+myawesomemod/
+  └── images/
+      └── newgrounds_logo.png  ← Your replacement
+```
+</CodeGroup>
+
+When the game loads `images/newgrounds_logo.png`, it will use your version instead!
+
+<Tip>
+  The `testing123` example mod replaces the Newgrounds logo. Check `example_mods/testing123/images/` to see it in action.
+</Tip>
+
+### Replacing Data Files
+
+Same principle for JSON data:
+
+```
+myawesomemod/
+  └── data/
+      └── characters/
+          └── bf.json  ← Modified Boyfriend data
+```
+
+### Replacing Audio
+
+Replace music or sound effects:
+
+```
+myawesomemod/
+  ├── music/
+  │   └── freakyMenu.ogg  ← New menu music
+  └── sounds/
+      └── confirmMenu.ogg  ← New confirm sound
+```
+
+<Note>
+  Audio files should be in OGG Vorbis format for best compatibility.
+</Note>
+
+## Step 4: Merge Text Files
+
+Instead of replacing files, you can **append** to them using the special `_append` folder:
+
+<Tabs>
+  <Tab title="Concept">
+    The `_append` folder tells Polymod to add your content to the end of existing files instead of replacing them.
+  </Tab>
+  
+  <Tab title="Example">
+    To add lines to the intro text:
+    
+    ```
+    myawesomemod/
+      └── _append/
+          └── data/
+              └── introText.txt
+    ```
+    
+    **Your file (data/introText.txt):**
+    ```text
+    awesomes tream--really awesome
+    ```
+    
+    This gets added to the end of the base game's intro text!
+  </Tab>
+  
+  <Tab title="From Example Mod">
+    The `introMod` demonstrates this:
+    
+    ```bash
+    example_mods/introMod/
+      ├── _polymod_meta.json
+      └── data/
+          └── introText.txt
+    ```
+    
+    From the README:
+    > "You can append to text files simply by placing a text file in the right spot, but under the `_append` directory."
+  </Tab>
+</Tabs>
+
+### Supported Merge Formats
+
+Polymod supports merging for these file types:
+
+- **TXT files** - Line-by-line merging
+- **JSON files** - Deep object merging
+- **CSV files** - Row appending
+- **XML files** - Node merging
+
+<CodeGroup>
+```haxe PolymodHandler.hx
+static function buildParseRules():polymod.format.ParseRules
+{
+  var output:polymod.format.ParseRules = polymod.format.ParseRules.getDefault();
+  // Ensure TXT files have merge support.
+  output.addType('txt', TextFileFormat.LINES);
+  // Ensure script files have merge support.
+  output.addType('hscript', TextFileFormat.PLAINTEXT);
+  output.addType('hxs', TextFileFormat.PLAINTEXT);
+  output.addType('hxc', TextFileFormat.PLAINTEXT);
+  output.addType('hx', TextFileFormat.PLAINTEXT);
+  
+  return output;
+}
+```
+</CodeGroup>
+
+## Step 5: Add Scripts (Optional)
+
+For custom behavior, add HScript files. Scripts go in the root or in a `scripts` folder:
+
+```
+myawesomemod/
+  ├── _polymod_meta.json
+  └── scripts/
+      ├── MyModule.hxc
+      └── CustomSprite.hxc
+```
+
+<Card title="Learn Scripting" icon="code" href="scripting">
+  See the full [Scripting Guide](/modding/scripting) for details on writing scripts.
+</Card>
+
+## Complete Example Mod
+
+Here's what a complete simple mod looks like:
+
+```
+coolskinmod/
+├── _polymod_meta.json
+├── _polymod_icon.png
+├── images/
+│   └── characters/
+│       ├── bf.png        # New Boyfriend sprite
+│       └── bf.xml        # Sprite animation data
+├── data/
+│   └── characters/
+│       └── bf.json       # Modified Boyfriend stats
+└── sounds/
+    └── intro3.ogg        # Custom "Go!" sound
+```
+
+**_polymod_meta.json:**
+```json
+{
+  "title": "Cool Skin Mod",
+  "description": "Gives Boyfriend a cool new look!",
+  "contributors": [{"name": "ModderName"}],
+  "api_version": "0.8.0",
+  "mod_version": "1.0.0",
+  "license": "CC-BY-4.0"
+}
+```
+
+## Testing Your Mod
+
+<Steps>
+  <Step title="Place in mods folder">
+    Ensure your mod folder is in the correct location:
+    
+    ```
+    mods/
+      └── coolskinmod/  ← Your mod here
+    ```
+  </Step>
+  
+  <Step title="Start the game">
+    Launch Friday Night Funkin'. The game will automatically detect and load your mod.
+  </Step>
+  
+  <Step title="Check console logs">
+    Look for messages like:
+    ```
+    Mod loading complete. We loaded 1 / 1 mods.
+     * Cool Skin Mod v1.0.0 [coolskinmod]
+    ```
+  </Step>
+  
+  <Step title="Verify changes">
+    Play the game and check that your assets appear correctly.
+  </Step>
+</Steps>
+
+## Hot Reloading (Development)
+
+During development, you can reload mods without restarting:
+
+<Warning>
+  This is a development feature and requires the game to be compiled with debug features enabled.
+</Warning>
+
+```haxe PolymodHandler.hx
+/**
+ * Clear and reload from disk all data assets.
+ * Useful for "hot reloading" for fast iteration!
+ */
+public static function forceReloadAssets():Void
+{
+  // Forcibly clear scripts so that scripts can be edited.
+  ModuleHandler.clearModuleCache();
+  Polymod.clearScripts();
+  
+  // Forcibly reload Polymod so it finds any new files.
+  funkin.modding.PolymodHandler.loadAllMods();
+  
+  // Reload all registries...
+}
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="File Organization">
+    - Keep your folder structure clean and organized
+    - Use descriptive names for custom assets
+    - Document your changes in a README.md
+    - Include credits for any borrowed assets
+  </Accordion>
+  
+  <Accordion title="Compatibility">
+    - Test your mod with a clean game installation
+    - Check that API version matches current game version
+    - Avoid replacing files unless necessary (use append when possible)
+    - Test with other popular mods to check for conflicts
+  </Accordion>
+  
+  <Accordion title="Performance">
+    - Optimize image file sizes (use PNG compression)
+    - Keep audio files compressed (OGG with reasonable bitrate)
+    - Avoid excessive script calls in update loops
+    - Profile your scripts if you notice lag
+  </Accordion>
+  
+  <Accordion title="Distribution">
+    - Package as a ZIP with your mod folder at the root
+    - Include installation instructions
+    - List compatible game versions
+    - Provide example screenshots
+    - Link to your homepage or source repository
+  </Accordion>
+</AccordionGroup>
+
+## Common File Paths
+
+Here are some commonly modded paths:
+
+<Tabs>
+  <Tab title="Characters">
+    ```
+    images/characters/
+      ├── bf.png          # Boyfriend sprites
+      ├── gf.png          # Girlfriend sprites
+      └── dad.png         # Daddy Dearest sprites
+    
+    data/characters/
+      ├── bf.json         # Boyfriend data
+      ├── gf.json         # Girlfriend data
+      └── dad.json        # Daddy Dearest data
+    ```
+  </Tab>
+  
+  <Tab title="Stages">
+    ```
+    images/stages/
+      └── philly/
+          ├── phillySkybox.png
+          └── phillyForeground.png
+    
+    data/stages/
+      └── philly.json
+    ```
+  </Tab>
+  
+  <Tab title="Songs">
+    ```
+    songs/
+      └── tutorial/
+          ├── tutorial.ogg      # Audio file
+          ├── tutorial.json     # Chart data
+          └── tutorial-metadata.json
+    ```
+  </Tab>
+  
+  <Tab title="UI">
+    ```
+    images/ui/
+      ├── notes.png          # Note skins
+      ├── healthBar.png      # Health bar
+      └── alphabet.png       # Text font
+    ```
+  </Tab>
+</Tabs>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Scripting Guide" icon="code" href="scripting">
+    Learn to write custom scripts with HScript
+  </Card>
+  <Card title="Polymod Deep Dive" icon="book" href="polymod">
+    Advanced modding techniques and asset merging
+  </Card>
+</CardGroup>

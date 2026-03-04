@@ -1,0 +1,348 @@
+---
+title: Troubleshooting Compilation Issues
+description: Solutions to common compilation and runtime problems
+---
+
+This guide covers solutions to common issues encountered when compiling Friday Night Funkin'. Always check here before opening an issue on GitHub.
+
+<Warning>
+  DO NOT open an issue on GitHub for compilation problems without first consulting this guide.
+</Warning>
+
+## General Issues
+
+<AccordionGroup>
+  <Accordion title="Warnings and WDeprecated messages" icon="triangle-exclamation">
+    **Symptom:** Output containing `WARNING` or `(WDeprecated)`
+    
+    **Solution:** These will not disrupt compilation and can be safely ignored.
+  </Accordion>
+  
+  <Accordion title="hxcpp version prompt" icon="question">
+    **Symptom:** `This version of hxcpp` ... `Would you like to do this now [y/n]`
+    
+    **Solution:** Type `y` into the console and press Enter.
+  </Accordion>
+  
+  <Accordion title="Weird macro error with tall call stack" icon="layer-group">
+    **Symptom:** Macro error with a very long stack trace
+    
+    **Solution:** Restart Visual Studio Code.
+    
+    <Note>
+      This is caused by Polymod somewhere, and seems to only occur when there's another compile error in the program. There is a bounty up for fixing this.
+    </Note>
+  </Accordion>
+  
+  <Accordion title="Get Thread Context Failed" icon="circle-xmark">
+    **Symptom:** Build fails with `Get Thread Context Failed`
+    
+    **Solution:** Turn off other expensive applications while building.
+  </Accordion>
+  
+  <Accordion title="Type not found: T1" icon="magnifying-glass">
+    **Symptom:** Error thrown by `json2object`: `Type not found: T1`
+    
+    **Solution:** Make sure the data type of `@:default` is correct.
+    
+    <Note>
+      `flixel.util.typeLimit.OneOfTwo` isn't supported by json2object.
+    </Note>
+  </Accordion>
+  
+  <Accordion title="Class lists not properly generated" icon="html5">
+    **Symptom:** `Class lists not properly generated. Try cleaning out your export folder, restarting your IDE, and rebuilding your project.`
+    
+    **Solution:** This is a bug specific to HTML5. Follow the steps listed:
+    1. Delete the `export` folder
+    2. Restart your IDE
+    3. Rebuild the project
+  </Accordion>
+  
+  <Accordion title="PDB file error (LNK1201)" icon="hard-drive">
+    **Symptom:** `LINK : fatal error LNK1201: error writing to program database ''; check for insufficient disk space, invalid path, or insufficient privilege`
+    
+    **Solution:** The PDB file in your `export` folder is in use or exceeds 4 GB. Delete the `export` folder and build again.
+  </Accordion>
+</AccordionGroup>
+
+## Git and Repository Issues
+
+<AccordionGroup>
+  <Accordion title="RPC failed during cloning" icon="git">
+    **Symptom:** `error: RPC failed; curl 92 HTTP/2 stream 0 was not closed cleanly: PROTOCOL_ERROR (err 1)`
+    
+    **Solution:** This error happens due to poor network connectivity. Run this in your terminal:
+    
+    ```bash
+    git config --global http.postBuffer 4096M
+    ```
+    
+    Then try cloning again.
+  </Accordion>
+  
+  <Accordion title="Missing or empty assets folder" icon="folder-open">
+    **Symptom:** Repository is missing an `assets` folder, or `assets` folder is empty
+    
+    **Solution:** You did not clone the repository correctly! The assets are in a Git submodule.
+    
+    Navigate to your `funkin` folder:
+    ```bash
+    cd path/to/funkin
+    ```
+    
+    Then run:
+    ```bash
+    git submodule update --init --recursive
+    ```
+  </Accordion>
+  
+  <Accordion title="General library issues" icon="books">
+    **Symptom:** Various compilation issues caused by library conflicts
+    
+    **Solution:** Delete the `.haxelib` folder and reinstall libraries:
+    
+    ```bash
+    # Remove the .haxelib folder
+    rm -rf .haxelib
+    
+    # Reinstall hmm
+    haxelib --global install hmm
+    haxelib --global run hmm setup
+    
+    # Reinstall all libraries
+    hmm install
+    
+    # Set up Lime
+    haxelib run lime setup
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Lime-Specific Issues
+
+<AccordionGroup>
+  <Accordion title="Segmentation fault after time changes mapping" icon="bomb">
+    **Symptom:** Segmentation fault or crash after `Done mapping time changes: [SongTimeChange(0ms,102bpm)]`
+    
+    **Solution:** Caused by using official Lime instead of Funkin's fork. Reinstall Lime via hmm:
+    
+    ```bash
+    hmm reinstall -f lime
+    ```
+    
+    <Note>
+      Make sure you reinstall via `hmm` to guarantee you get Funkin's version of Lime.
+    </Note>
+  </Accordion>
+  
+  <Accordion title="Could not find lime.ndll" icon="file-code">
+    **Symptom:** `Uncaught exception - Could not find lime.ndll.` ... `Advanced users may run "lime rebuild cpp" instead.`
+    
+    **Solution varies by platform:**
+    
+    ### Linux
+    
+    The binaries' GLibC version might be more recent than your system supports. Run:
+    
+    ```bash
+    cd .haxelib/lime/git
+    git submodule init
+    git submodule sync
+    git submodule update
+    cd ../../..
+    
+    # Install development packages (Ubuntu/Debian)
+    sudo apt install libgl1-mesa-dev libglu1-mesa-dev g++ g++-multilib \
+      gcc-multilib libasound2-dev libx11-dev libxext-dev libxi-dev \
+      libxrandr-dev libxinerama-dev libpulse-dev
+    
+    # Rebuild Lime
+    lime rebuild cpp -64 -release -clean
+    ```
+    
+    <Note>
+      The package names and install command may differ on non-Debian distros.
+    </Note>
+    
+    ### All Platforms
+    
+    If binaries are missing, download pre-built binaries from [Funkin's Lime](https://github.com/FunkinCrew/lime/tree/dev-funkin/ndll).
+    
+    Copy them to `.haxelib/lime/git/ndll/<PLATFORM>64/`, where `<PLATFORM>` is:
+    - `Windows`
+    - `Linux`
+    - `Mac`
+  </Accordion>
+</AccordionGroup>
+
+## Platform-Specific Issues
+
+### Windows
+
+<AccordionGroup>
+  <Accordion title="Visual Studio Build Tools not found" icon="windows">
+    **Symptom:** Compiler can't find MSVC tools
+    
+    **Solution:** Download and install [Visual Studio Build Tools](https://aka.ms/vs/17/release/vs_BuildTools.exe).
+    
+    Select **Individual Components** and install:
+    - MSVC v143 VS 2022 C++ x64/x86 build tools
+    - Windows 10/11 SDK
+  </Accordion>
+</AccordionGroup>
+
+### Linux
+
+<AccordionGroup>
+  <Accordion title="Missing libVLC dependencies" icon="linux">
+    **Symptom:** Compilation fails due to missing VLC libraries
+    
+    **Solution:** Install libVLC development packages:
+    
+    **Ubuntu/Debian:**
+    ```bash
+    sudo apt install libvlc-dev libvlccore-dev libvlccore9
+    ```
+    
+    **Other distros:** See [hxvlc documentation](https://github.com/MAJigsaw77/hxvlc?tab=readme-ov-file#dependencies)
+  </Accordion>
+</AccordionGroup>
+
+### Mac
+
+<AccordionGroup>
+  <Accordion title="Xcode Command Line Tools missing" icon="apple">
+    **Symptom:** Compiler can't find development tools
+    
+    **Solution:** Install Xcode Command Line Tools:
+    
+    ```bash
+    xcode-select --install
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### Mobile (Android/iOS)
+
+See the [Mobile Compilation Guide](/development/compiling-mobile#troubleshooting) for platform-specific troubleshooting.
+
+## Runtime Issues
+
+<AccordionGroup>
+  <Accordion title="Game crashes on startup" icon="bomb">
+    **Possible causes:**
+    - Missing or corrupted assets
+    - Incorrect build flags
+    - Platform incompatibility
+    
+    **Solutions:**
+    1. Verify assets were downloaded correctly (check `git submodule`)
+    2. Try a clean build: Delete `export` folder and rebuild
+    3. Check you're using the correct platform flags
+  </Accordion>
+  
+  <Accordion title="Assets not loading" icon="image">
+    **Symptom:** Missing textures, sounds, or other assets during gameplay
+    
+    **Solution:**
+    
+    If using `-DREDIRECT_ASSETS_FOLDER`:
+    - This flag makes the game load assets from `assets/` instead of `export/`
+    - Make sure assets exist in the source `assets/` folder
+    
+    Otherwise:
+    - Assets should be in `export/[debug|release]/[platform]/bin/assets/`
+    - Check that the build completed successfully
+    - Try a clean build
+  </Accordion>
+  
+  <Accordion title="Performance issues" icon="gauge-high">
+    **Symptom:** Game runs slowly or stutters
+    
+    **Solutions:**
+    1. Build in release mode (without `-debug` flag)
+    2. Disable logging: `-DNO_FEATURE_LOG_TRACE`
+    3. Enable optimizations (automatic in release mode)
+    4. Close other applications
+    5. Update graphics drivers
+  </Accordion>
+</AccordionGroup>
+
+## Still Having Issues?
+
+<Steps>
+  <Step title="Search existing issues">
+    Check if someone else has reported the same problem:
+    
+    [Search GitHub Issues →](https://github.com/FunkinCrew/Funkin/issues)
+  </Step>
+
+  <Step title="Check discussions">
+    Look for similar questions in Discussions:
+    
+    [Browse Discussions →](https://github.com/FunkinCrew/Funkin/discussions)
+  </Step>
+
+  <Step title="Open a new issue">
+    If you've tried everything and still can't compile, open a **Compiling Help** issue:
+    
+    [Open Issue →](https://github.com/FunkinCrew/Funkin/issues/new/choose)
+    
+    Make sure to include:
+    - Your operating system and version
+    - The complete error message
+    - The command you ran
+    - What you've already tried
+  </Step>
+</Steps>
+
+## Quick Reference
+
+### Clean Build
+
+When in doubt, try a clean build:
+
+```bash
+# Delete export folder
+rm -rf export
+
+# Rebuild Lime
+lime rebuild <platform>
+lime rebuild <platform> -debug
+
+# Build again
+lime test <platform>
+```
+
+### Reinstall Libraries
+
+If libraries are causing issues:
+
+```bash
+# Remove local libraries
+rm -rf .haxelib
+
+# Reinstall everything
+haxelib --global install hmm
+haxelib --global run hmm setup
+hmm install
+haxelib run lime setup
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Compilation Guide" icon="hammer" href="/development/compiling">
+    Return to the main compilation guide
+  </Card>
+  <Card title="Contributing" icon="code-pull-request" href="/development/contributing">
+    Learn how to contribute code
+  </Card>
+  <Card title="Style Guide" icon="palette" href="/development/style-guide">
+    Follow code conventions
+  </Card>
+  <Card title="GitHub Issues" icon="github" href="https://github.com/FunkinCrew/Funkin/issues">
+    Search or report issues
+  </Card>
+</CardGroup>

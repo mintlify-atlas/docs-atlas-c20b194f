@@ -1,0 +1,288 @@
+---
+title: Installing Mods
+description: How to install Friday Night Funkin' mods on different platforms
+icon: download
+---
+
+## Overview
+
+Installing mods in Friday Night Funkin' is straightforward - just place mod folders in the correct location and restart the game. The process varies slightly by platform.
+
+<Warning>
+  Always download mods from trusted sources. While the game has security measures, only install mods from creators you trust.
+</Warning>
+
+## Quick Start
+
+<Steps>
+  <Step title="Run the game once">
+    Start Friday Night Funkin' at least once to create the `mods` folder automatically.
+  </Step>
+  <Step title="Locate the mods folder">
+    Find the mods folder for your platform (see below).
+  </Step>
+  <Step title="Extract and install">
+    Extract the mod from its ZIP file and place the mod folder into the `mods` folder.
+  </Step>
+  <Step title="Restart the game">
+    Restart Friday Night Funkin'. The game will detect and load the mod automatically.
+  </Step>
+</Steps>
+
+## Platform-Specific Instructions
+
+### Windows
+
+<Steps>
+  <Step title="First launch">
+    Start the game at least once. This creates a `mods` folder alongside the executable.
+    
+    ```
+    FridayNightFunkin.exe
+    mods/  ← Created automatically
+    ```
+  </Step>
+  <Step title="Install the mod">
+    Extract the mod you downloaded from its ZIP file, and place the mod folder into the game's `mods` folder.
+    
+    ```
+    mods/
+      └── yourmod/
+          ├── _polymod_meta.json
+          ├── _polymod_icon.png
+          └── ...
+    ```
+  </Step>
+  <Step title="Restart">
+    Restart the game. It should detect the mod and start with it loaded.
+  </Step>
+</Steps>
+
+### Linux
+
+<Steps>
+  <Step title="First launch">
+    Start the game at least once. This creates a `mods` folder alongside the executable.
+    
+    ```bash
+    ./FridayNightFunkin
+    mods/  # Created automatically
+    ```
+  </Step>
+  <Step title="Install the mod">
+    Extract the mod you downloaded from its ZIP file, and place the mod folder into the game's `mods` folder.
+    
+    ```bash
+    cd /path/to/game
+    unzip ~/Downloads/coolmod.zip -d mods/
+    ```
+  </Step>
+  <Step title="Restart">
+    Restart the game. It should detect the mod and start with it loaded.
+  </Step>
+</Steps>
+
+### macOS
+
+<Steps>
+  <Step title="First launch">
+    Start the game at least once. This creates a `mods` folder in the game's system files.
+  </Step>
+  <Step title="Show package contents">
+    Right click `Funkin.app` and select **Show Package Contents**.
+    
+    <Frame>
+      ```
+      Funkin.app
+        └── Contents/
+            └── Resources/
+                └── mods/  ← Navigate here
+      ```
+    </Frame>
+  </Step>
+  <Step title="Navigate to mods folder">
+    Navigate to `Contents/Resources/mods`.
+  </Step>
+  <Step title="Install the mod">
+    Extract the mod you downloaded from its ZIP file, and place the mod folder into the game's `mods` folder.
+  </Step>
+  <Step title="Restart">
+    Restart the game. It should detect the mod and start with it loaded.
+  </Step>
+</Steps>
+
+### Android
+
+<Steps>
+  <Step title="First launch">
+    Start the game at least once. This creates a `mods` folder deep in your system files.
+  </Step>
+  <Step title="Get a file browser">
+    Get an Android file browser that lets you view app data files, or use Android Studio and open the Device Explorer.
+    
+    <Tip>
+      Recommended file browsers: Solid Explorer, Total Commander, or Files by Google with "Show hidden files" enabled.
+    </Tip>
+  </Step>
+  <Step title="Locate the mods folder">
+    Navigate to the mods folder:
+    
+    ```
+    /sdcard/Android/obb/me.funkin.fnf/mods
+    ```
+  </Step>
+  <Step title="Install the mod">
+    Extract the mod you downloaded from its ZIP file, and place the mod folder into the `mods` folder.
+  </Step>
+  <Step title="Force close and restart">
+    Restart the game. You may need to [force close](https://support.google.com/android/answer/9079646?hl=en) the app first.
+    
+    The game should detect the mod and start with it loaded.
+  </Step>
+</Steps>
+
+<Note>
+  Some Android versions may require storage permissions. Grant the game access to external storage if prompted.
+</Note>
+
+### iOS
+
+<Steps>
+  <Step title="First launch">
+    Start the game at least once. This creates a `mods` folder in your system files.
+  </Step>
+  <Step title="Open Files app">
+    Open the **Files** app on your iOS device.
+  </Step>
+  <Step title="Navigate to mods folder">
+    Navigate to:
+    
+    ```
+    On My iPhone → Friday Night Funkin → mods
+    ```
+  </Step>
+  <Step title="Install the mod">
+    Extract the mod you downloaded from its ZIP file, and place the mod folder into the `mods` folder.
+    
+    <Tip>
+      You can extract ZIP files directly in the Files app by tapping on them.
+    </Tip>
+  </Step>
+  <Step title="Force close and restart">
+    Restart the game. You may need to [force close](https://support.apple.com/en-us/109359) the app first.
+    
+    The game should detect the mod and start with it loaded.
+  </Step>
+</Steps>
+
+### HTML5/Web
+
+<Warning>
+  Mods are **not supported** on the HTML5/web version of Friday Night Funkin'.
+  
+  To use mods, download the desktop or mobile version of the game.
+</Warning>
+
+## Verifying Installation
+
+After installing a mod, verify it loaded correctly:
+
+1. **Check console logs** - The game logs loaded mods on startup
+2. **Look for changes** - Asset replacements should be visible immediately
+3. **Test functionality** - Try the features the mod adds
+
+### Expected Mod Structure
+
+A properly structured mod should look like this:
+
+```
+yourmod/
+├── _polymod_meta.json    # Required: Mod metadata
+├── _polymod_icon.png     # Optional: Mod icon
+├── data/                 # Game data overrides
+├── images/               # Image replacements
+├── music/                # Music replacements
+├── sounds/               # Sound effect replacements
+├── songs/                # Song data
+└── scripts/              # HScript files
+```
+
+<Check>
+  If you see the mod's assets in-game, installation was successful!
+</Check>
+
+## Managing Multiple Mods
+
+You can install multiple mods simultaneously:
+
+```
+mods/
+  ├── mod1/
+  │   └── _polymod_meta.json
+  ├── mod2/
+  │   └── _polymod_meta.json
+  └── mod3/
+      └── _polymod_meta.json
+```
+
+Mods are loaded in alphabetical order by folder name. If mods conflict (replace the same assets), the last loaded mod takes priority.
+
+<Tip>
+  Prefix mod folder names with numbers to control load order: `1-basemod`, `2-skinmod`, etc.
+</Tip>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Mod doesn't appear in game">
+    - Verify the mod folder is directly in `mods/`, not nested
+    - Check that `_polymod_meta.json` exists and is valid JSON
+    - Ensure the `api_version` in the metadata is compatible (check mod description)
+    - Look for error messages in console logs
+  </Accordion>
+  
+  <Accordion title="Game crashes on startup">
+    - Remove all mods and add them back one at a time to identify the culprit
+    - Check if the mod is compatible with your game version
+    - Verify all mod files extracted correctly from the ZIP
+  </Accordion>
+  
+  <Accordion title="Assets not replacing correctly">
+    - Ensure file paths in the mod match the game's structure exactly
+    - Check that image formats are correct (PNG for images)
+    - Verify audio files are in supported formats (OGG/MP3)
+  </Accordion>
+  
+  <Accordion title="Can't find mods folder on mobile">
+    **Android**: Enable "Show hidden files" in your file browser
+    
+    **iOS**: Make sure you're looking in "On My iPhone", not iCloud Drive
+  </Accordion>
+</AccordionGroup>
+
+## Uninstalling Mods
+
+To remove a mod:
+
+<Steps>
+  <Step title="Navigate to mods folder">
+    Open the `mods` folder for your platform.
+  </Step>
+  <Step title="Delete the mod folder">
+    Simply delete the mod's folder from the `mods` directory.
+  </Step>
+  <Step title="Restart the game">
+    Restart Friday Night Funkin' to complete the removal.
+  </Step>
+</Steps>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Creating Your Own Mods" icon="hammer" href="creating-mods">
+    Learn how to build your own mods from scratch
+  </Card>
+  <Card title="Scripting Guide" icon="code" href="scripting">
+    Add custom behavior with HScript
+  </Card>
+</CardGroup>

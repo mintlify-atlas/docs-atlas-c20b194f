@@ -1,0 +1,523 @@
+---
+title: Song Events
+description: Song event system for dynamic gameplay changes
+---
+
+## Overview
+
+The song event system allows chart creators to trigger gameplay changes at specific points in a song. Events can control camera focus, zoom, character swaps, stage changes, and more.
+
+## Class Hierarchy
+
+```
+SongEvent (base class)
+  ├── FocusCameraSongEvent
+  ├── ZoomCameraSongEvent
+  ├── SetCharacterSongEvent
+  ├── SetStageSongEvent
+  ├── PlayAnimationSongEvent
+  ├── ScrollSpeedEvent
+  └── ScriptedSongEvent (custom events)
+```
+
+## SongEvent
+
+Base class for all song events.
+
+### Properties
+
+<ResponseField name="id" type="String" >
+  Unique identifier for this event type
+</ResponseField>
+
+<ResponseField name="processOldEvents" type="Bool" default="false">
+  If true, events are handled even when skipping forward in the song
+</ResponseField>
+
+### Methods
+
+#### `new(id:String, ?params:SongEventParams)`
+
+Creates a new event handler.
+
+```haxe
+public function new() {
+  super('MyEvent', {
+    processOldEvents: true
+  });
+}
+```
+
+<ParamField path="id" type="String" required>
+  Event type identifier
+</ParamField>
+
+<ParamField path="params" type="SongEventParams">
+  Optional parameters (processOldEvents)
+</ParamField>
+
+---
+
+#### `handleEvent(data:SongEventData):Void`
+
+Handles the event when it's triggered. Must be overridden.
+
+```haxe
+public override function handleEvent(data:SongEventData):Void
+{
+  var value = data.getFloat('value') ?? 1.0;
+  // Perform event action
+}
+```
+
+---
+
+#### `getEventSchema():SongEventSchema`
+
+Returns the chart editor schema for this event.
+
+```haxe
+public override function getEventSchema():SongEventSchema
+{
+  return new SongEventSchema([{
+    name: 'value',
+    title: 'Value',
+    defaultValue: 1.0,
+    type: SongEventFieldType.FLOAT
+  }]);
+}
+```
+
+---
+
+#### `getTitle():String`
+
+Returns the human-readable title.
+
+```haxe
+public override function getTitle():String {
+  return 'My Custom Event';
+}
+```
+
+---
+
+#### `getIconPath():String`
+
+Returns the path to the event's icon.
+
+```haxe
+public override function getIconPath():String {
+  return 'ui/chart-editor/events/my-event';
+}
+```
+
+## Built-in Events
+
+### FocusCameraSongEvent
+
+Changes camera focus to a character or position.
+
+#### Event Data
+
+```json
+{
+  "e": "FocusCamera",
+  "v": {
+    "char": 0,
+    "x": 0,
+    "y": -10,
+    "duration": 4.0,
+    "ease": "quad",
+    "easeDir": "InOut"
+  }
+}
+```
+
+<ParamField path="char" type="Int" default="0">
+  Target: -1 (Position), 0 (Player/BF), 1 (Opponent/Dad), 2 (Girlfriend)
+</ParamField>
+
+<ParamField path="x" type="Float" default="0">
+  X offset or absolute X position
+</ParamField>
+
+<ParamField path="y" type="Float" default="0">
+  Y offset or absolute Y position
+</ParamField>
+
+<ParamField path="duration" type="Float" default="4.0">
+  Tween duration in steps
+</ParamField>
+
+<ParamField path="ease" type="String" default="CLASSIC">
+  Easing function: linear, INSTANT, CLASSIC, sine, quad, cube, etc.
+</ParamField>
+
+<ParamField path="easeDir" type="String" default="In">
+  Easing direction: In, Out, InOut
+</ParamField>
+
+#### Examples
+
+```haxe
+// Focus on Boyfriend
+{
+  "e": "FocusCamera",
+  "v": { "char": 0 }
+}
+
+// Focus 10px above Girlfriend with smooth easing
+{
+  "e": "FocusCamera",
+  "v": {
+    "char": 2,
+    "y": -10,
+    "duration": 8.0,
+    "ease": "sine",
+    "easeDir": "InOut"
+  }
+}
+
+// Focus on specific position
+{
+  "e": "FocusCamera",
+  "v": {
+    "char": -1,
+    "x": 640,
+    "y": 360,
+    "ease": "INSTANT"
+  }
+}
+```
+
+---
+
+### ZoomCameraSongEvent
+
+Changes camera zoom level.
+
+#### Event Data
+
+```json
+{
+  "e": "ZoomCamera",
+  "v": {
+    "zoom": 1.3,
+    "duration": 4.0,
+    "mode": "direct",
+    "ease": "linear",
+    "easeDir": "In"
+  }
+}
+```
+
+<ParamField path="zoom" type="Float" default="1.0">
+  Target zoom level
+</ParamField>
+
+<ParamField path="duration" type="Float" default="4.0">
+  Tween duration in steps
+</ParamField>
+
+<ParamField path="mode" type="String" default="direct">
+  "stage" (relative to stage zoom) or "direct" (absolute)
+</ParamField>
+
+<ParamField path="ease" type="String" default="linear">
+  Easing function
+</ParamField>
+
+<ParamField path="easeDir" type="String" default="In">
+  Easing direction
+</ParamField>
+
+#### Examples
+
+```haxe
+// Instant zoom to 1.5x
+{
+  "e": "ZoomCamera",
+  "v": {
+    "zoom": 1.5,
+    "ease": "INSTANT"
+  }
+}
+
+// Smooth zoom out
+{
+  "e": "ZoomCamera",
+  "v": {
+    "zoom": 0.8,
+    "duration": 16.0,
+    "ease": "quad",
+    "easeDir": "Out"
+  }
+}
+```
+
+---
+
+### Other Built-in Events
+
+**SetCharacterSongEvent**
+- Swaps a character mid-song
+- Useful for character transformations
+
+**SetStageSongEvent**
+- Changes the entire stage
+- Can trigger scene transitions
+
+**PlayAnimationSongEvent**
+- Forces a character to play a specific animation
+- Useful for cutscenes
+
+**ScrollSpeedEvent**
+- Changes scroll speed mid-song
+- Can speed up or slow down gameplay
+
+**SetCameraBopSongEvent**
+- Controls camera bop intensity
+- Affects camera "bounce" on beats
+
+**SetHealthIconSongEvent**
+- Changes a character's health icon
+- Useful for character transformations
+
+## Creating Custom Events
+
+### Basic Custom Event
+
+```haxe
+package;
+
+import funkin.play.event.SongEvent;
+import funkin.data.song.SongData.SongEventData;
+import funkin.data.event.SongEventSchema;
+import funkin.data.event.SongEventSchema.SongEventFieldType;
+
+class FlashScreenEvent extends SongEvent
+{
+  public function new()
+  {
+    super('FlashScreen');
+  }
+  
+  public override function handleEvent(data:SongEventData):Void
+  {
+    if (PlayState.instance == null) return;
+    
+    var color = data.getString('color') ?? 'FFFFFF';
+    var duration = data.getFloat('duration') ?? 0.5;
+    
+    // Flash the screen
+    FlxG.camera.flash(FlxColor.fromString('#$color'), duration);
+  }
+  
+  public override function getTitle():String
+  {
+    return 'Flash Screen';
+  }
+  
+  public override function getEventSchema():SongEventSchema
+  {
+    return new SongEventSchema([{
+      name: 'color',
+      title: 'Flash Color',
+      defaultValue: 'FFFFFF',
+      type: SongEventFieldType.STRING
+    }, {
+      name: 'duration',
+      title: 'Duration',
+      defaultValue: 0.5,
+      step: 0.1,
+      type: SongEventFieldType.FLOAT,
+      units: 'seconds'
+    }]);
+  }
+}
+```
+
+### Advanced Custom Event
+
+```haxe
+class ShakeStageEvent extends SongEvent
+{
+  public function new()
+  {
+    super('ShakeStage');
+  }
+  
+  public override function handleEvent(data:SongEventData):Void
+  {
+    if (PlayState.instance == null) return;
+    
+    var intensity = data.getFloat('intensity') ?? 0.05;
+    var duration = data.getFloat('duration') ?? 1.0;
+    var axes = data.getString('axes') ?? 'XY';
+    
+    var xShake = axes.indexOf('X') != -1;
+    var yShake = axes.indexOf('Y') != -1;
+    
+    FlxG.camera.shake(intensity, duration, null, true, 
+      xShake ? HORIZONTAL : (yShake ? VERTICAL : BOTH));
+  }
+  
+  public override function getTitle():String
+  {
+    return 'Shake Stage';
+  }
+  
+  public override function getEventSchema():SongEventSchema
+  {
+    return new SongEventSchema([{
+      name: 'intensity',
+      title: 'Intensity',
+      defaultValue: 0.05,
+      min: 0,
+      max: 1,
+      step: 0.01,
+      type: SongEventFieldType.FLOAT
+    }, {
+      name: 'duration',
+      title: 'Duration',
+      defaultValue: 1.0,
+      min: 0,
+      step: 0.1,
+      type: SongEventFieldType.FLOAT,
+      units: 'seconds'
+    }, {
+      name: 'axes',
+      title: 'Shake Axes',
+      defaultValue: 'XY',
+      type: SongEventFieldType.ENUM,
+      keys: ['Both' => 'XY', 'X Only' => 'X', 'Y Only' => 'Y']
+    }]);
+  }
+}
+```
+
+## Event Data Access
+
+### Reading Event Values
+
+```haxe
+public override function handleEvent(data:SongEventData):Void
+{
+  // Get typed values
+  var floatVal = data.getFloat('myFloat') ?? 1.0;
+  var intVal = data.getInt('myInt') ?? 0;
+  var stringVal = data.getString('myString') ?? 'default';
+  var boolVal = data.getBool('myBool') ?? false;
+  
+  // Get raw value
+  var rawValue = data.value;
+}
+```
+
+## Event Schema Types
+
+### Field Types
+
+```haxe
+SongEventFieldType.INTEGER    // Whole numbers
+SongEventFieldType.FLOAT      // Decimal numbers
+SongEventFieldType.STRING     // Text
+SongEventFieldType.BOOL       // True/false
+SongEventFieldType.ENUM       // Dropdown selection
+```
+
+### Schema Example
+
+```haxe
+new SongEventSchema([{
+  name: 'target',           // Internal name
+  title: 'Target Character', // Display name
+  defaultValue: 0,          // Default value
+  type: SongEventFieldType.ENUM,
+  keys: [                   // Enum options
+    'Player' => 0,
+    'Opponent' => 1,
+    'Girlfriend' => 2
+  ]
+}, {
+  name: 'speed',
+  title: 'Speed Multiplier',
+  defaultValue: 1.0,
+  min: 0.1,                 // Minimum value
+  max: 5.0,                 // Maximum value
+  step: 0.1,                // Increment step
+  type: SongEventFieldType.FLOAT,
+  units: 'x'                // Display units
+}]);
+```
+
+## Easing Functions
+
+Available easing functions from FlxEase:
+
+- `linear`
+- `sine`, `quad`, `cube`, `quart`, `quint`
+- `expo`, `circ`, `back`, `bounce`, `elastic`
+- `smoothStep`, `smootherStep`
+
+Easing directions:
+- `In` - Slow start, fast end
+- `Out` - Fast start, slow end
+- `InOut` - Slow start and end
+
+## Usage in Charts
+
+### Chart JSON Format
+
+```json
+{
+  "events": [
+    {
+      "t": 1000,
+      "e": "FocusCamera",
+      "v": {
+        "char": 1,
+        "duration": 4.0,
+        "ease": "quad",
+        "easeDir": "Out"
+      }
+    },
+    {
+      "t": 2000,
+      "e": "ZoomCamera",
+      "v": {
+        "zoom": 1.3,
+        "mode": "direct",
+        "ease": "INSTANT"
+      }
+    }
+  ]
+}
+```
+
+<ParamField path="t" type="Float" required>
+  Event timestamp in milliseconds
+</ParamField>
+
+<ParamField path="e" type="String" required>
+  Event type ID
+</ParamField>
+
+<ParamField path="v" type="Dynamic" required>
+  Event-specific values/parameters
+</ParamField>
+
+## Best Practices
+
+<Tip>
+  Use `processOldEvents: true` for events that should always execute, like camera position changes. Use `false` (default) for momentary effects like flashes.
+</Tip>
+
+<Warning>
+  Always check if `PlayState.instance` exists before accessing it in event handlers. Events can be processed in the chart editor.
+</Warning>
+
+<Info>
+  Event schemas are used by the chart editor to provide a user-friendly interface. Well-defined schemas make events easier to use.
+</Info>

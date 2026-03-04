@@ -1,0 +1,430 @@
+---
+title: Code Style Guide
+description: Coding conventions and best practices for the Funkin' repository
+---
+
+This guide covers code formatting standards to maintain consistency throughout the Friday Night Funkin' codebase.
+
+<Note>
+  Following these conventions makes the repo easier to maintain and helps your pull requests get merged faster.
+</Note>
+
+## IDE Setup
+
+### Visual Studio Code (Recommended)
+
+The repository contains VSCode configurations that automatically format your code.
+
+<Steps>
+  <Step title="Install Visual Studio Code">
+    Download from [code.visualstudio.com](https://code.visualstudio.com/)
+  </Step>
+
+  <Step title="Install Haxe extension">
+    Install the official Haxe extension from the VSCode marketplace.
+    
+    The extension will use the repo's `hxformat.json` to format code automatically.
+  </Step>
+
+  <Step title="Enable Format on Save">
+    In VSCode settings, enable **Format on Save** for automatic formatting.
+    
+    ```json
+    {
+      "editor.formatOnSave": true
+    }
+    ```
+  </Step>
+
+  <Step title="Install CodeDox (optional)">
+    The CodeDox extension provides JavaDoc-style comment support for Haxe.
+    
+    This makes it easy to document functions properly.
+  </Step>
+</Steps>
+
+<Warning>
+  VSCode is the only IDE with good Haxe tooling. Other IDEs may not support the language well.
+</Warning>
+
+## Whitespace and Indentation
+
+The Haxe extension uses the repo's `hxformat.json` file to automatically format code.
+
+**Key formatting rules:**
+- **Indentation:** 2 spaces (not tabs)
+- **Line endings:** LF (Unix-style)
+- **Trailing whitespace:** Removed automatically
+
+<Accordion title="View hxformat.json configuration">
+  The repository's `hxformat.json` file controls all formatting rules. VSCode will apply these automatically when you save a file.
+</Accordion>
+
+## Naming Conventions
+
+### Variables and Functions
+
+Use **lowerCamelCase** for variables and functions:
+
+<CodeGroup>
+```haxe Good ✓
+var playerHealth:Float = 100;
+var currentSongPosition:Int = 0;
+
+function updateHealthBar():Void
+{
+  // ...
+}
+
+function calculateAccuracy(notesHit:Int, totalNotes:Int):Float
+{
+  return notesHit / totalNotes;
+}
+```
+
+```haxe Bad ✗
+var PlayerHealth:Float = 100;  // Don't use UpperCamelCase
+var current_song_position:Int = 0;  // Don't use snake_case
+var hp:Float = 100;  // Avoid unclear abbreviations
+
+function UpdateHealthBar():Void  // Don't use UpperCamelCase
+{
+  // ...
+}
+```
+</CodeGroup>
+
+### Classes and Types
+
+Use **UpperCamelCase** for classes, interfaces, and type names:
+
+```haxe
+class PlayState extends MusicBeatState
+{
+  // ...
+}
+
+interface ISongLoader
+{
+  // ...
+}
+
+enum NoteDirection
+{
+  LEFT;
+  DOWN;
+  UP;
+  RIGHT;
+}
+```
+
+### Constants
+
+Use **UPPER_SNAKE_CASE** for compile-time constants:
+
+```haxe
+static final DEFAULT_HEALTH:Float = 100;
+static final MAX_COMBO:Int = 9999;
+static final GAME_VERSION:String = "0.8.3";
+```
+
+### Descriptive Names
+
+<Tip>
+  Use descriptive names over short abbreviations. There's no penalty for longer names.
+</Tip>
+
+<CodeGroup>
+```haxe Good ✓
+var playerHealth:Float;
+var enemyPosition:FlxPoint;
+var songTimeInMilliseconds:Float;
+```
+
+```haxe Bad ✗
+var hp:Float;  // Too short
+var pos:FlxPoint;  // Unclear
+var t:Float;  // What does 't' mean?
+```
+</CodeGroup>
+
+## Code Comments
+
+### Function Documentation
+
+Use **JavaDoc-style comments** for all public functions:
+
+```haxe
+/**
+ * Finds the largest deviation from the desired time inside this VoicesGroup.
+ *
+ * @param targetTime The time to check against.
+ *                   If none is provided, it checks the time of all members 
+ *                   against the first member of this VoicesGroup.
+ * @return The largest deviation from the target time found.
+ */
+public function checkSyncError(?targetTime:Float):Float
+{
+  // Implementation...
+}
+```
+
+**Benefits of JavaDoc comments:**
+- Automatic documentation generation
+- IDE tooltips show function info
+- Clear parameter and return value descriptions
+
+### Inline Comments
+
+<Tabs>
+  <Tab title="DO ✓">
+    **Good inline comments:**
+    
+    ```haxe
+    // Don't go back in time to before the song started.
+    targetTimeMs = Math.max(0, targetTimeMs);
+    
+    // Prevent the volume from being wrong.
+    FlxG.sound.music.volume = 1.0;
+    if (FlxG.sound.music.fadeTween != null) FlxG.sound.music.fadeTween.cancel();
+    ```
+    
+    **What makes these good:**
+    - Explain the "why", not the "what"
+    - Clear and concise
+    - Proper capitalization and punctuation
+  </Tab>
+  
+  <Tab title="DON'T ✗">
+    **Bad inline comments:**
+    
+    ```haxe
+    // set the volume to 1
+    FlxG.sound.music.volume = 1.0;
+    
+    // cancel the fade tween if it exists
+    if (FlxG.sound.music.fadeTween != null) FlxG.sound.music.fadeTween.cancel();
+    
+    // I hate this function - [GitHub username]
+    resyncVocals();
+    
+    // lol this is broken idk why
+    // functionThatWasntHereBeforeThisPRorSomethingIdKLOL();
+    ```
+    
+    **What makes these bad:**
+    - Stating the obvious
+    - Personal opinions that don't help
+    - Unclear or joke comments
+    - Lowercase sentences
+  </Tab>
+</Tabs>
+
+### Comment Guidelines
+
+<AccordionGroup>
+  <Accordion title="When to comment">
+    Only leave comments when code needs explanation:
+    
+    ✓ Complex algorithms  
+    ✓ Non-obvious behavior  
+    ✓ Workarounds for known issues  
+    ✓ Important warnings  
+    
+    ✗ Self-explanatory code  
+    ✗ Obvious variable assignments  
+    ✗ Every single line  
+  </Accordion>
+  
+  <Accordion title="Provide meaningful insight">
+    Comments should explain:
+    - **Why** the code does something (not what it does)
+    - The purpose or reasoning behind a decision
+    - Edge cases being handled
+    
+    ```haxe
+    // Good: Explains why
+    // A negative instrumental offset means the song skips 
+    // the first few milliseconds of the track.
+    FlxG.sound.music.play(true, Math.max(0, startTimestamp - offset));
+    
+    // Bad: States the obvious
+    // Play the music
+    FlxG.sound.music.play();
+    ```
+  </Accordion>
+  
+  <Accordion title="Sign comments sparingly">
+    Only sign your comments with your name when:
+    - Changes are complex and may require follow-up
+    - You're introducing a temporary workaround
+    - Future developers might need to contact you
+    
+    Don't sign every comment — it adds clutter.
+  </Accordion>
+</AccordionGroup>
+
+### No Commented-Out Code
+
+<Warning>
+  Do NOT leave commented-out code in the repository!
+</Warning>
+
+```haxe
+// Bad ✗
+// var oldHealth:Float = 50;
+// if (oldHealth < 0) doSomething();
+
+var playerHealth:Float = 100;
+```
+
+**Why?**
+- Makes files longer and harder to read
+- Confusing for other developers
+- Old code can be found in Git history if needed
+
+**Exceptions:**
+- Temporarily debugging (remove before committing)
+- Documentation purposes (use clear explanations)
+
+## Imports
+
+Imports should be:
+- Placed at the top of the file
+- Grouped together
+- Sorted alphabetically
+- Conditional imports at the end
+
+<CodeGroup>
+```haxe Good ✓
+import flixel.FlxSprite;
+import flixel.math.FlxMath;
+import flixel.util.FlxColor;
+import haxe.format.JsonParser;
+import openfl.Assets;
+import openfl.geom.Matrix;
+
+#if sys
+import funkin.io.FileUtil;
+import sys.io.File;
+#end
+```
+
+```haxe Bad ✗
+import flixel.FlxSprite;
+import openfl.Assets;
+import flixel.math.FlxMath;
+import sys.io.File;  // Should be in conditional block
+import haxe.format.JsonParser;
+import flixel.util.FlxColor;
+```
+</CodeGroup>
+
+## Function Arguments
+
+### Optional vs Default Arguments
+
+<Warning>
+  Do NOT use optional arguments (`?`) and default values together!
+</Warning>
+
+<CodeGroup>
+```haxe Good ✓
+// Use optional for nullable types
+function doSomething(?input:Int):Void
+{
+  if (input != null) trace(input);
+}
+
+// Use default for non-nullable with default value
+function doSomethingElse(input:Int = 0):Void
+{
+  trace(input);
+}
+```
+
+```haxe Bad ✗
+// Don't combine optional and default!
+function doSomething(?input:Int = 0):Void
+{
+  // This creates a Null<Int> that defaults to 0
+  // but is still annotated as nullable. Confusing!
+}
+```
+</CodeGroup>
+
+**Guidelines:**
+- Use `?argument` when the argument should be `Null<T>` and default to `null`
+- Use `argument = value` when the argument should have a default value but not be nullable
+- Never use both together
+
+## License Headers
+
+<Warning>
+  Do NOT include license headers on individual files!
+</Warning>
+
+The main `LICENSE.md` file covers all code in the repository. Individual file headers are unnecessary and create clutter.
+
+## Quick Reference
+
+### Naming Cheat Sheet
+
+| Type | Convention | Example |
+|------|------------|----------|
+| Variables | lowerCamelCase | `playerHealth` |
+| Functions | lowerCamelCase | `calculateScore()` |
+| Classes | UpperCamelCase | `PlayState` |
+| Interfaces | UpperCamelCase | `ISongLoader` |
+| Enums | UpperCamelCase | `NoteDirection` |
+| Constants | UPPER_SNAKE_CASE | `MAX_HEALTH` |
+
+### Comment Cheat Sheet
+
+✓ **DO:**
+- Use JavaDoc for public functions
+- Explain why, not what
+- Be clear and concise
+- Use proper grammar and punctuation
+
+✗ **DON'T:**
+- State the obvious
+- Leave commented-out code
+- Add personal opinions
+- Use unclear abbreviations
+
+## VSCode Extensions
+
+Recommended extensions for Haxe development:
+
+<CardGroup cols={2}>
+  <Card title="Haxe" icon="code">
+    Official Haxe language support
+  </Card>
+  <Card title="CodeDox" icon="book">
+    JavaDoc-style documentation comments
+  </Card>
+  <Card title="EditorConfig" icon="sliders">
+    Automatic formatting settings
+  </Card>
+  <Card title="GitLens" icon="git">
+    Enhanced Git integration
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Contributing Guide" icon="code-pull-request" href="/development/contributing">
+    Learn how to submit code
+  </Card>
+  <Card title="Compilation Guide" icon="hammer" href="/development/compiling">
+    Set up your dev environment
+  </Card>
+  <Card title="Troubleshooting" icon="wrench" href="/development/troubleshooting">
+    Fix common issues
+  </Card>
+  <Card title="GitHub Repository" icon="github" href="https://github.com/FunkinCrew/Funkin">
+    View the source code
+  </Card>
+</CardGroup>

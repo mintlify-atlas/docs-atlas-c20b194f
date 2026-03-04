@@ -1,0 +1,634 @@
+---
+title: Preferences
+description: User-configurable game settings and preferences
+icon: sliders
+---
+
+The `Preferences` class provides a centralized store for user-configurable, globally relevant settings. All preferences are automatically persisted to the save file.
+
+## Overview
+
+Preferences manages settings such as:
+
+- Display settings (framerate, VSync, debug display)
+- Gameplay settings (downscroll, flashing lights, camera zoom)
+- Accessibility options (naughtyness filter, subtitles)
+- Audio/visual offsets for input lag compensation
+- Mobile-specific settings (haptics, screen timeout, controls)
+
+All properties are implemented as static getters/setters that automatically load from and save to the user's save file.
+
+## Display Settings
+
+### framerate
+
+Target frames per second for the game.
+
+```haxe
+public static var framerate(get, set):Int
+```
+
+- **Web**: Always returns 60 (cannot be changed)
+- **Mobile**: Returns the device's display refresh rate (minimum 60)
+- **Desktop**: User-configurable (default: 60)
+
+**Example:**
+
+```haxe
+// Get current framerate
+trace("Current FPS: " + Preferences.framerate);
+
+// Set framerate (desktop only)
+Preferences.framerate = 144;
+```
+
+### vsyncMode
+
+VSync mode setting.
+
+```haxe
+public static var vsyncMode(get, set):lime.ui.WindowVSyncMode
+```
+
+<ResponseField name="vsyncMode" type="WindowVSyncMode" default="OFF">
+  Possible values: `OFF`, `ON`, `ADAPTIVE`
+</ResponseField>
+
+**Example:**
+
+```haxe
+import lime.ui.WindowVSyncMode;
+
+// Enable VSync
+Preferences.vsyncMode = WindowVSyncMode.ON;
+
+// Enable adaptive VSync
+Preferences.vsyncMode = WindowVSyncMode.ADAPTIVE;
+
+// Disable VSync
+Preferences.vsyncMode = WindowVSyncMode.OFF;
+```
+
+### unlockedFramerate
+
+Unlocks the framerate cap on web builds.
+
+```haxe
+public static var unlockedFramerate(get, set):Bool
+```
+
+<ResponseField name="unlockedFramerate" type="Bool" default="false">
+  Web only. Removes the requestAnimationFrame cap.
+</ResponseField>
+
+**Example:**
+
+```haxe
+#if web
+// Unlock framerate for high refresh rate displays
+Preferences.unlockedFramerate = true;
+#end
+```
+
+### debugDisplay
+
+Controls the debug FPS/memory counter visibility.
+
+```haxe
+public static var debugDisplay(get, set):DebugDisplayMode
+```
+
+<ResponseField name="debugDisplay" type="DebugDisplayMode" default="Off">
+  Possible values: `Off`, `On`, `Advanced`
+</ResponseField>
+
+**Example:**
+
+```haxe
+// Show basic debug display
+Preferences.debugDisplay = DebugDisplayMode.On;
+
+// Show advanced debug display with additional info
+Preferences.debugDisplay = DebugDisplayMode.Advanced;
+
+// Hide debug display
+Preferences.debugDisplay = DebugDisplayMode.Off;
+```
+
+### debugDisplayBGOpacity
+
+Background opacity for the debug display.
+
+```haxe
+public static var debugDisplayBGOpacity(get, set):Int
+```
+
+<ResponseField name="debugDisplayBGOpacity" type="Int" default="50">
+  Value from 0-100 representing background opacity percentage.
+</ResponseField>
+
+**Example:**
+
+```haxe
+// Set semi-transparent background
+Preferences.debugDisplayBGOpacity = 50;
+
+// Fully opaque background
+Preferences.debugDisplayBGOpacity = 100;
+
+// Transparent background
+Preferences.debugDisplayBGOpacity = 0;
+```
+
+## Gameplay Settings
+
+### downscroll
+
+Places the strumline at the bottom of the screen instead of the top.
+
+```haxe
+public static var downscroll(get, set):Bool
+```
+
+<ResponseField name="downscroll" type="Bool" default="false">
+  Desktop default: false. Mobile default: true.
+</ResponseField>
+
+**Example:**
+
+```haxe
+// Enable downscroll
+Preferences.downscroll = true;
+
+// Check downscroll state
+if (Preferences.downscroll)
+{
+  trace("Strumline is at bottom");
+}
+```
+
+### flashingLights
+
+Controls the intensity of flashing lights effects.
+
+```haxe
+public static var flashingLights(get, set):Bool
+```
+
+<ResponseField name="flashingLights" type="Bool" default="true">
+  When false, flashing lights in menus and gameplay are less intense.
+</ResponseField>
+
+**Example:**
+
+```haxe
+// Disable flashing lights for accessibility
+Preferences.flashingLights = false;
+```
+
+### zoomCamera
+
+Enables camera zoom synchronized to the beat.
+
+```haxe
+public static var zoomCamera(get, set):Bool
+```
+
+<ResponseField name="zoomCamera" type="Bool" default="true">
+  When true, the camera bumps on beats during gameplay.
+</ResponseField>
+
+**Example:**
+
+```haxe
+// Disable camera zoom
+Preferences.zoomCamera = false;
+```
+
+### naughtyness
+
+Controls whether explicit language is displayed.
+
+```haxe
+public static var naughtyness(get, set):Bool
+```
+
+<ResponseField name="naughtyness" type="Bool" default="true">
+  When false, filters explicit content. Always false if compiled with NO_FEATURE_NAUGHTYNESS.
+</ResponseField>
+
+**Example:**
+
+```haxe
+// Enable content filter
+Preferences.naughtyness = false;
+```
+
+### subtitles
+
+Enables subtitles during songs and cutscenes.
+
+```haxe
+public static var subtitles(get, set):Bool
+```
+
+<ResponseField name="subtitles" type="Bool" default="true">
+  When true, displays subtitles when available.
+</ResponseField>
+
+**Example:**
+
+```haxe
+// Enable subtitles
+Preferences.subtitles = true;
+```
+
+## Audio/Visual Settings
+
+### globalOffset
+
+Global audio offset to compensate for input lag.
+
+```haxe
+public static var globalOffset(get, set):Int
+```
+
+<ResponseField name="globalOffset" type="Int" default="0">
+  Offset in milliseconds. Positive values make notes appear earlier.
+</ResponseField>
+
+**Example:**
+
+```haxe
+// Add 50ms offset for input lag
+Preferences.globalOffset = 50;
+
+// Negative offset makes notes appear later
+Preferences.globalOffset = -25;
+```
+
+### strumlineBackgroundOpacity
+
+Opacity of the background behind the notes.
+
+```haxe
+public static var strumlineBackgroundOpacity(get, set):Int
+```
+
+<ResponseField name="strumlineBackgroundOpacity" type="Int" default="0">
+  Value from 0-100. 0 = transparent, 100 = fully opaque black.
+</ResponseField>
+
+**Example:**
+
+```haxe
+// Add semi-transparent background behind notes
+Preferences.strumlineBackgroundOpacity = 50;
+
+// Remove background
+Preferences.strumlineBackgroundOpacity = 0;
+```
+
+## System Settings
+
+### autoPause
+
+Automatically pauses the game when tabbing out.
+
+```haxe
+public static var autoPause(get, set):Bool
+```
+
+<ResponseField name="autoPause" type="Bool" default="true">
+  When true, game pauses on focus loss. Always false on mobile.
+</ResponseField>
+
+**Example:**
+
+```haxe
+// Disable auto-pause
+Preferences.autoPause = false;
+```
+
+### autoFullscreen
+
+Automatically launches in fullscreen on startup.
+
+```haxe
+public static var autoFullscreen(get, set):Bool
+```
+
+<ResponseField name="autoFullscreen" type="Bool" default="true">
+  When true, game starts in fullscreen mode.
+</ResponseField>
+
+**Example:**
+
+```haxe
+// Start in windowed mode
+Preferences.autoFullscreen = false;
+```
+
+## Screenshot Settings
+
+### shouldHideMouse
+
+Hides the mouse cursor when taking screenshots.
+
+```haxe
+public static var shouldHideMouse(get, set):Bool
+```
+
+<ResponseField name="shouldHideMouse" type="Bool" default="true">
+  When true, mouse cursor is hidden during screenshot capture.
+</ResponseField>
+
+### fancyPreview
+
+Shows a preview after taking a screenshot.
+
+```haxe
+public static var fancyPreview(get, set):Bool
+```
+
+<ResponseField name="fancyPreview" type="Bool" default="true">
+  When true, displays an animated preview of the screenshot.
+</ResponseField>
+
+### previewOnSave
+
+Only shows preview after the screenshot is successfully saved.
+
+```haxe
+public static var previewOnSave(get, set):Bool
+```
+
+<ResponseField name="previewOnSave" type="Bool" default="true">
+  When true, preview only appears after save completes.
+</ResponseField>
+
+**Example:**
+
+```haxe
+// Configure screenshot behavior
+Preferences.shouldHideMouse = true;
+Preferences.fancyPreview = true;
+Preferences.previewOnSave = false; // Show preview immediately
+```
+
+## Mobile Settings
+
+These settings are only available when compiled with mobile support (`#if mobile`).
+
+### hapticsMode
+
+Controls haptic feedback mode.
+
+```haxe
+public static var hapticsMode(get, set):HapticsMode
+```
+
+<ResponseField name="hapticsMode" type="HapticsMode" default="All">
+  Possible values: `NONE`, `NOTES_ONLY`, `ALL`
+</ResponseField>
+
+**Example:**
+
+```haxe
+#if mobile
+// Enable haptics only for note hits
+Preferences.hapticsMode = HapticsMode.NOTES_ONLY;
+
+// Enable all haptic feedback
+Preferences.hapticsMode = HapticsMode.ALL;
+
+// Disable haptics
+Preferences.hapticsMode = HapticsMode.NONE;
+#end
+```
+
+### hapticsIntensityMultiplier
+
+Multiplier for haptic feedback intensity.
+
+```haxe
+public static var hapticsIntensityMultiplier(get, set):Float
+```
+
+<ResponseField name="hapticsIntensityMultiplier" type="Float" default="1.0">
+  Multiplier for all haptic effects. Higher values = stronger vibration.
+</ResponseField>
+
+**Example:**
+
+```haxe
+#if mobile
+// Increase haptic intensity
+Preferences.hapticsIntensityMultiplier = 2.5;
+
+// Decrease intensity
+Preferences.hapticsIntensityMultiplier = 0.5;
+#end
+```
+
+### screenTimeout
+
+Allows the device screen to sleep.
+
+```haxe
+public static var screenTimeout(get, set):Bool
+```
+
+<ResponseField name="screenTimeout" type="Bool" default="false">
+  When false, prevents screen from sleeping during gameplay.
+</ResponseField>
+
+**Example:**
+
+```haxe
+#if mobile
+// Allow screen to sleep
+Preferences.screenTimeout = true;
+#end
+```
+
+### controlsScheme
+
+Control scheme for the hitbox on mobile.
+
+```haxe
+public static var controlsScheme(get, set):String
+```
+
+<ResponseField name="controlsScheme" type="String" default="Arrows">
+  Control layout type. Default is arrow key layout.
+</ResponseField>
+
+**Example:**
+
+```haxe
+#if mobile
+// Change control scheme
+Preferences.controlsScheme = FunkinHitboxControlSchemes.Arrows;
+#end
+```
+
+## Initialization
+
+### init()
+
+Initializes preferences and applies saved settings.
+
+```haxe
+public static function init():Void
+```
+
+This method is called automatically during game startup. It:
+
+- Applies the autoPause setting
+- Sets up the debug display
+- Configures framerate caps
+- Sets mobile-specific options
+
+**Example:**
+
+```haxe
+// Usually called in Main.hx during initialization
+Preferences.init();
+```
+
+## Example: Settings Menu
+
+```haxe
+import funkin.Preferences;
+import flixel.FlxG;
+import flixel.text.FlxText;
+import flixel.ui.FlxButton;
+
+class SettingsMenu extends MusicBeatState
+{
+  override function create():Void
+  {
+    super.create();
+    
+    var yPos = 50;
+    
+    // Downscroll toggle
+    var downscrollBtn = new FlxButton(100, yPos, "Downscroll: " + Preferences.downscroll, function()
+    {
+      Preferences.downscroll = !Preferences.downscroll;
+      downscrollBtn.text = "Downscroll: " + Preferences.downscroll;
+    });
+    add(downscrollBtn);
+    yPos += 50;
+    
+    // Flashing lights toggle
+    var flashBtn = new FlxButton(100, yPos, "Flashing Lights: " + Preferences.flashingLights, function()
+    {
+      Preferences.flashingLights = !Preferences.flashingLights;
+      flashBtn.text = "Flashing Lights: " + Preferences.flashingLights;
+    });
+    add(flashBtn);
+    yPos += 50;
+    
+    // Global offset adjustment
+    var offsetText = new FlxText(100, yPos, 0, "Global Offset: " + Preferences.globalOffset + "ms");
+    add(offsetText);
+    
+    var offsetPlus = new FlxButton(300, yPos, "+10ms", function()
+    {
+      Preferences.globalOffset += 10;
+      offsetText.text = "Global Offset: " + Preferences.globalOffset + "ms";
+    });
+    add(offsetPlus);
+    
+    var offsetMinus = new FlxButton(400, yPos, "-10ms", function()
+    {
+      Preferences.globalOffset -= 10;
+      offsetText.text = "Global Offset: " + Preferences.globalOffset + "ms";
+    });
+    add(offsetMinus);
+  }
+}
+```
+
+## Example: Performance Optimization
+
+```haxe
+import funkin.Preferences;
+
+class PerformanceSettings
+{
+  public static function applyLowEndSettings():Void
+  {
+    // Disable camera zoom for better performance
+    Preferences.zoomCamera = false;
+    
+    // Disable flashing lights (reduces rendering load)
+    Preferences.flashingLights = false;
+    
+    #if !mobile
+    // Lower framerate on desktop
+    Preferences.framerate = 60;
+    #end
+  }
+  
+  public static function applyHighEndSettings():Void
+  {
+    // Enable all visual effects
+    Preferences.zoomCamera = true;
+    Preferences.flashingLights = true;
+    
+    #if !mobile
+    // Unlock high framerates
+    Preferences.framerate = 144;
+    #end
+  }
+}
+```
+
+## Best Practices
+
+### Auto-Save
+
+Preferences automatically save when changed. No manual save call needed:
+
+```haxe
+// This automatically saves to the save file
+Preferences.downscroll = true;
+```
+
+### Platform-Specific Settings
+
+Check platform before setting platform-specific preferences:
+
+```haxe
+#if mobile
+Preferences.hapticsMode = HapticsMode.ALL;
+#end
+
+#if web
+Preferences.unlockedFramerate = true;
+#end
+
+#if desktop
+Preferences.framerate = 144;
+#end
+```
+
+### Validation
+
+Validate user input when allowing custom values:
+
+```haxe
+// Clamp offset to reasonable range
+var newOffset = userInput;
+if (newOffset < -200) newOffset = -200;
+if (newOffset > 200) newOffset = 200;
+Preferences.globalOffset = newOffset;
+```
+
+## See Also
+
+- [Save](/api/save) - Save system that persists preferences
+- [Conductor](/api/conductor) - Uses globalOffset for timing

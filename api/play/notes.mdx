@@ -1,0 +1,522 @@
+---
+title: Notes & Strumline
+description: Note rendering and strumline management system
+---
+
+## Overview
+
+The notes system handles note rendering, hit detection, and strumline management. The `Strumline` class manages receptors, notes, and sustains for a single player, while `NoteSprite` represents individual notes.
+
+## Class Hierarchy
+
+```
+FlxSpriteGroup
+  └── Strumline
+        ├── notes (FlxTypedSpriteGroup<NoteSprite>)
+        ├── holdNotes (FlxTypedSpriteGroup<SustainTrail>)
+        ├── strumlineNotes (FlxTypedSpriteGroup<StrumlineNote>)
+        └── noteSplashes (FlxTypedSpriteGroup<NoteSplash>)
+
+FunkinSprite
+  └── NoteSprite
+```
+
+## Strumline
+
+A group of sprites that handles receptors, notes, and note splashes for a given player.
+
+### Constants
+
+```haxe
+Strumline.DIRECTIONS = [LEFT, DOWN, UP, RIGHT];
+Strumline.STRUMLINE_SIZE = 104; // pixels
+Strumline.NOTE_SPACING = 112; // pixels (104 + 8)
+Strumline.KEY_COUNT = 4;
+```
+
+### Properties
+
+<ResponseField name="isPlayer" type="Bool" >
+  Whether this strumline is controlled by player input (true) or CPU (false)
+</ResponseField>
+
+<ResponseField name="scrollSpeed" type="Float" default="1.0">
+  Scroll speed multiplier for notes
+</ResponseField>
+
+<ResponseField name="isDownscroll" type="Bool" >
+  Whether notes scroll downward instead of upward
+</ResponseField>
+
+<ResponseField name="notes" type="FlxTypedSpriteGroup<NoteSprite>" >
+  Active notes heading toward the strumline
+</ResponseField>
+
+<ResponseField name="holdNotes" type="FlxTypedSpriteGroup<SustainTrail>" >
+  Active hold/sustain notes
+</ResponseField>
+
+<ResponseField name="strumlineNotes" type="FlxTypedSpriteGroup<StrumlineNote>" >
+  The receptor arrows (4 directions)
+</ResponseField>
+
+<ResponseField name="noteData" type="Array<SongNoteData>" >
+  Note data from the chart
+</ResponseField>
+
+<ResponseField name="showNotesplash" type="Bool" default="true">
+  Whether to show note splash effects on sick hits
+</ResponseField>
+
+### Methods
+
+#### `new(noteStyle:NoteStyle, isPlayer:Bool, ?scrollSpeed:Float)`
+
+Creates a new strumline.
+
+```haxe
+var playerStrumline = new Strumline(noteStyle, true, 1.5);
+var opponentStrumline = new Strumline(noteStyle, false, 1.5);
+```
+
+<ParamField path="noteStyle" type="NoteStyle" required>
+  Note style for visuals (e.g., "funkin", "pixel")
+</ParamField>
+
+<ParamField path="isPlayer" type="Bool" required>
+  True for player-controlled, false for CPU
+</ParamField>
+
+<ParamField path="scrollSpeed" type="Float">
+  Initial scroll speed multiplier
+</ParamField>
+
+---
+
+#### `applyNoteData(data:Array<SongNoteData>):Void`
+
+Loads note data from a chart.
+
+```haxe
+// Load notes for this strumline
+var playerNotes = chartData.notes.filter(n -> n.getMustHitNote());
+strumline.applyNoteData(playerNotes);
+```
+
+<ParamField path="data" type="Array<SongNoteData>" required>
+  Array of note data from the chart
+</ParamField>
+
+---
+
+#### `addNoteData(note:SongNoteData, sort:Bool = true):Void`
+
+Adds a single note to the strumline.
+
+```haxe
+var newNote:SongNoteData = {
+  time: 1000.0,
+  data: 2, // UP
+  length: 0.0
+};
+strumline.addNoteData(newNote);
+```
+
+---
+
+#### `pressKey(dir:NoteDirection, keyCode:Int):Void`
+
+Registers a key press.
+
+```haxe
+// Called by input system
+strumline.pressKey(NoteDirection.LEFT, FlxKey.A);
+```
+
+---
+
+#### `releaseKey(dir:NoteDirection, ?keyCode:Int):Void`
+
+Registers a key release.
+
+```haxe
+strumline.releaseKey(NoteDirection.LEFT, FlxKey.A);
+
+// Release all keys for this direction
+strumline.releaseKey(NoteDirection.LEFT);
+```
+
+---
+
+#### `isKeyHeld(dir:NoteDirection):Bool`
+
+Checks if a direction is being held.
+
+```haxe
+if (strumline.isKeyHeld(NoteDirection.DOWN)) {
+  trace('Down is held!');
+}
+```
+
+---
+
+#### `hitNote(note:NoteSprite, removeNote:Bool = true):Void`
+
+Marks a note as hit.
+
+```haxe
+strumline.hitNote(note, true); // Hit and remove
+strumline.hitNote(note, false); // Hit but keep visible
+```
+
+<ParamField path="note" type="NoteSprite" required>
+  The note that was hit
+</ParamField>
+
+<ParamField path="removeNote" type="Bool" default="true">
+  If true, removes note immediately. If false, makes it transparent.
+</ParamField>
+
+---
+
+#### `killNote(note:NoteSprite):Void`
+
+Kills a note (for misses or cleanup).
+
+```haxe
+strumline.killNote(note);
+```
+
+---
+
+#### `playConfirm(direction:NoteDirection):Void`
+
+Plays the confirm animation on a receptor.
+
+```haxe
+strumline.playConfirm(NoteDirection.LEFT);
+```
+
+---
+
+#### `playPress(direction:NoteDirection):Void`
+
+Plays the press animation on a receptor.
+
+```haxe
+strumline.playPress(NoteDirection.UP);
+```
+
+---
+
+#### `playStatic(direction:NoteDirection):Void`
+
+Returns a receptor to its static/idle state.
+
+```haxe
+strumline.playStatic(NoteDirection.RIGHT);
+```
+
+---
+
+#### `playNoteSplash(direction:NoteDirection):Void`
+
+Plays a note splash effect.
+
+```haxe
+// On sick rating
+strumline.playNoteSplash(NoteDirection.DOWN);
+```
+
+---
+
+#### `getNotesMayHit():Array<NoteSprite>`
+
+Returns notes within the hit window.
+
+```haxe
+var hittableNotes = strumline.getNotesMayHit();
+for (note in hittableNotes) {
+  // Check for inputs
+}
+```
+
+---
+
+#### `clean():Void`
+
+Resets the strumline, removing all notes and resetting state.
+
+```haxe
+// When restarting
+strumline.clean();
+```
+
+---
+
+#### `vwooshNotes():Void`
+
+Animates all notes flying off-screen (for restarts).
+
+```haxe
+strumline.vwooshNotes();
+```
+
+---
+
+#### `vwooshInNotes():Void`
+
+Animates notes flying in from off-screen.
+
+```haxe
+strumline.vwooshInNotes();
+```
+
+---
+
+#### `resetScrollSpeed(?newScrollSpeed:Float):Void`
+
+Resets scroll speed to chart default or specified value.
+
+```haxe
+strumline.resetScrollSpeed(); // Use chart speed
+strumline.resetScrollSpeed(2.0); // Set to 2.0x
+```
+
+## NoteSprite
+
+Represents a single note heading toward the strumline.
+
+### Properties
+
+<ResponseField name="strumTime" type="Float" >
+  Time when the note should be hit (milliseconds)
+</ResponseField>
+
+<ResponseField name="length" type="Float" default="0.0">
+  Hold note length in milliseconds (0 for single notes)
+</ResponseField>
+
+<ResponseField name="direction" type="NoteDirection" >
+  Direction of the note (LEFT, DOWN, UP, RIGHT)
+</ResponseField>
+
+<ResponseField name="kind" type="Null<String>" >
+  Note kind (e.g., "alt", "hurt") for special behavior
+</ResponseField>
+
+<ResponseField name="noteData" type="SongNoteData" >
+  Reference to the chart data for this note
+</ResponseField>
+
+<ResponseField name="hasBeenHit" type="Bool" default="false">
+  True if the note has been hit
+</ResponseField>
+
+<ResponseField name="hasMissed" type="Bool" default="false">
+  True if the note was missed
+</ResponseField>
+
+<ResponseField name="mayHit" type="Bool" default="false">
+  True if the note is within the hit window
+</ResponseField>
+
+<ResponseField name="tooEarly" type="Bool" default="false">
+  True if the note is before the hit window
+</ResponseField>
+
+<ResponseField name="scoreable" type="Bool" default="true">
+  Whether this note contributes to score/accuracy
+</ResponseField>
+
+<ResponseField name="isHoldNote" type="Bool" >
+  True if this is a hold note (length > 0)
+</ResponseField>
+
+<ResponseField name="holdNoteSprite" type="SustainTrail" >
+  Reference to the hold note sprite
+</ResponseField>
+
+### Methods
+
+#### `new(noteStyle:NoteStyle, direction:Int = 0)`
+
+Creates a new note sprite.
+
+```haxe
+var note = new NoteSprite(noteStyle, NoteDirection.LEFT);
+```
+
+---
+
+#### `setupNoteGraphic(noteStyle:NoteStyle):Void`
+
+Sets up the note's visual appearance.
+
+```haxe
+note.setupNoteGraphic(pixelNoteStyle);
+```
+
+---
+
+#### `getParam(name:String):Null<Dynamic>`
+
+Retrieves a custom parameter value.
+
+```haxe
+var customValue = note.getParam('scrollMult');
+if (customValue != null) {
+  scrollSpeed *= customValue;
+}
+```
+
+---
+
+#### `desaturate():Void`
+
+Desaturates the note (used after hitting).
+
+```haxe
+note.desaturate(); // Make it grayscale
+```
+
+---
+
+#### `setHue(hue:Float):Void`
+
+Changes the note's hue.
+
+```haxe
+note.setHue(180.0); // Shift color
+```
+
+## Hit Detection
+
+### Hit Window
+
+Notes can be hit within a time window defined by `Constants.HIT_WINDOW_MS`:
+
+```haxe
+var hitWindow = Constants.HIT_WINDOW_MS; // e.g., 166.67ms
+
+if (Math.abs(note.strumTime - Conductor.songPosition) <= hitWindow) {
+  // Note is hittable
+}
+```
+
+### Judgement Timing
+
+Typical timing windows:
+- **Sick**: ±45ms
+- **Good**: ±90ms
+- **Bad**: ±135ms
+- **Shit**: ±166ms
+
+## Hold Notes (SustainTrail)
+
+Hold notes are rendered as trails that follow regular notes:
+
+### Properties
+
+- `sustainLength`: Remaining length in milliseconds
+- `fullSustainLength`: Original total length
+- `hitNote`: Whether the note head was hit
+- `missedNote`: Whether the hold was dropped
+- `cover`: Visual cover that appears when holding
+
+### Behavior
+
+1. Note head must be hit first
+2. Hold note clips as it's held
+3. Dropped if key is released early
+4. Completed when sustainLength reaches 0
+
+## Usage Examples
+
+### Creating a Strumline
+
+```haxe
+// Create strumlines for both players
+var noteStyle = NoteStyleRegistry.instance.fetchEntry('funkin');
+
+var playerStrumline = new Strumline(noteStyle, true, 1.0);
+playerStrumline.x = 730;
+playerStrumline.y = 100;
+
+var opponentStrumline = new Strumline(noteStyle, false, 1.0);
+opponentStrumline.x = 100;
+opponentStrumline.y = 100;
+
+// Load note data
+var chart = SongRegistry.instance.parseEntryChartData(songId, difficulty);
+var playerNotes = chart.notes.filter(n -> n.getMustHitNote());
+var opponentNotes = chart.notes.filter(n -> !n.getMustHitNote());
+
+playerStrumline.applyNoteData(playerNotes);
+opponentStrumline.applyNoteData(opponentNotes);
+```
+
+### Handling Input
+
+```haxe
+// On key press
+if (controls.NOTE_LEFT_P) {
+  playerStrumline.pressKey(NoteDirection.LEFT, FlxKey.A);
+  
+  var hittableNotes = playerStrumline.getNotesMayHit()
+    .filter(n -> n.direction == NoteDirection.LEFT);
+  
+  if (hittableNotes.length > 0) {
+    var note = hittableNotes[0];
+    var diff = Math.abs(note.strumTime - Conductor.songPosition);
+    
+    if (diff <= 45) {
+      // Sick hit!
+      playerStrumline.hitNote(note);
+      playerStrumline.playNoteSplash(NoteDirection.LEFT);
+    }
+  }
+}
+
+// On key release
+if (controls.NOTE_LEFT_R) {
+  playerStrumline.releaseKey(NoteDirection.LEFT, FlxKey.A);
+}
+```
+
+### Custom Note Behavior
+
+```haxe
+// Create a note with custom parameters
+var bombNote:SongNoteData = {
+  time: 2000.0,
+  data: 1, // DOWN
+  length: 0.0,
+  kind: 'hurt',
+  params: [
+    { name: 'damage', value: 0.5 }
+  ]
+};
+
+strumline.addNoteData(bombNote);
+
+// Later, check note kind
+if (note.kind == 'hurt') {
+  var damage = note.getParam('damage') ?? 0.1;
+  health -= damage;
+}
+```
+
+## Best Practices
+
+<Warning>
+  Always check `note.mayHit` before allowing hits. Notes outside the hit window should not be hittable.
+</Warning>
+
+<Tip>
+  Use `getNotesMayHit()` to get only notes that can currently be hit, avoiding unnecessary iteration.
+</Tip>
+
+<Info>
+  The strumline automatically recycles note sprites for performance. Don't destroy notes manually unless absolutely necessary.
+</Info>

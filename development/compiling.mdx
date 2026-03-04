@@ -1,0 +1,299 @@
+---
+title: Compiling Friday Night Funkin'
+description: Complete guide to compiling Friday Night Funkin' from source for all platforms
+---
+
+This guide will walk you through the complete process of compiling Friday Night Funkin' from source code. Make sure to follow each step carefully to avoid compilation errors.
+
+<Warning>
+  Do NOT download the repository using the Download ZIP button on GitHub or you may run into errors! Use Git clone instead.
+</Warning>
+
+## Prerequisites
+
+Before you begin, you'll need to install the following tools:
+
+- [Haxe](https://haxe.org) - The programming language and compiler
+- [Git](https://www.git-scm.com) - Version control system
+
+## Initial Setup
+
+<Steps>
+  <Step title="Navigate to your desired directory">
+    Open a command prompt and navigate to the folder where you want the source code:
+    
+    ```bash
+    cd C:\Users\YOURNAME\Documents
+    ```
+    
+    Replace the path with your preferred location.
+  </Step>
+
+  <Step title="Clone the repository">
+    Clone the base repository using Git:
+    
+    ```bash
+    git clone https://github.com/FunkinCrew/funkin.git
+    ```
+  </Step>
+
+  <Step title="Enter the repository directory">
+    ```bash
+    cd funkin
+    ```
+  </Step>
+
+  <Step title="Download game assets">
+    Download the game's proprietary assets as a submodule:
+    
+    ```bash
+    git submodule update --init --recursive
+    ```
+    
+    <Note>
+      By performing this operation, you are downloading Content which is proprietary and protected by national and international copyright and trademark laws. See [the LICENSE.md file for Funkin.assets](https://github.com/FunkinCrew/funkin.assets/blob/main/LICENSE.md) for more information.
+    </Note>
+  </Step>
+
+  <Step title="Install hmm (Haxe Module Manager)">
+    Install hmm globally and set it up:
+    
+    ```bash
+    haxelib --global install hmm
+    haxelib --global run hmm setup
+    ```
+  </Step>
+
+  <Step title="Install Haxe libraries">
+    Install all required Haxe libraries for the current branch:
+    
+    ```bash
+    hmm install
+    ```
+    
+    <Accordion title="Troubleshooting Lime installation issues">
+      If you have issues installing Lime, try using Funkin's patched libraries:
+      
+      ```bash
+      haxelib --global git haxelib https://github.com/FunkinCrew/haxelib.git
+      haxelib --global git hmm https://github.com/FunkinCrew/hmm.git
+      ```
+    </Accordion>
+  </Step>
+
+  <Step title="Set up Lime">
+    Configure Lime for your system:
+    
+    ```bash
+    haxelib run lime setup
+    ```
+  </Step>
+</Steps>
+
+## Platform-Specific Setup
+
+<Tabs>
+  <Tab title="Windows">
+    ### Windows Requirements
+    
+    Download and install the [Visual Studio Build Tools](https://aka.ms/vs/17/release/vs_BuildTools.exe).
+    
+    When prompted, select **Individual Components** and make sure to download:
+    - MSVC v143 VS 2022 C++ x64/x86 build tools
+    - Windows 10/11 SDK
+  </Tab>
+  
+  <Tab title="Mac">
+    ### Mac Requirements
+    
+    Follow the [Lime macOS setup documentation](https://lime.openfl.org/docs/advanced-setup/macos/).
+    
+    See also: [Mac-Specific Compilation Guide](/development/compiling-mac)
+  </Tab>
+  
+  <Tab title="Linux">
+    ### Linux Requirements
+    
+    Follow the [Lime Linux setup documentation](https://lime.openfl.org/docs/advanced-setup/linux/).
+    
+    One of Funkin's dependencies uses libVLC, which requires development packages:
+    
+    **Ubuntu/Debian:**
+    ```bash
+    sudo apt install libvlc-dev libvlccore-dev libvlccore9
+    ```
+    
+    **Other distros:** Refer to [hxvlc's documentation](https://github.com/MAJigsaw77/hxvlc?tab=readme-ov-file#dependencies)
+  </Tab>
+  
+  <Tab title="HTML5">
+    ### HTML5 Requirements
+    
+    HTML5 compiles without any extra setup!
+  </Tab>
+</Tabs>
+
+## Building the Game
+
+<Steps>
+  <Step title="Rebuild Lime binaries (Native only)">
+    If you are targeting native platforms, rebuild Lime for your platform:
+    
+    <CodeGroup>
+    ```bash Windows
+    lime rebuild windows
+    lime rebuild windows -debug
+    ```
+    
+    ```bash Mac
+    lime rebuild mac
+    lime rebuild mac -debug
+    ```
+    
+    ```bash Linux
+    lime rebuild linux
+    lime rebuild linux -debug
+    ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Build and run the game">
+    Build and launch the game for your platform:
+    
+    <CodeGroup>
+    ```bash Windows
+    lime test windows
+    ```
+    
+    ```bash Mac
+    lime test mac
+    ```
+    
+    ```bash Linux
+    lime test linux
+    ```
+    
+    ```bash HTML5
+    lime test html5
+    ```
+    </CodeGroup>
+  </Step>
+</Steps>
+
+## Build Flags
+
+You can customize your build with various flags. Add them after your build command:
+
+```bash
+lime test windows -debug -DGITHUB_BUILD
+```
+
+### Debug and Development Flags
+
+<AccordionGroup>
+  <Accordion title="-debug - Debug Mode">
+    Builds the game in debug mode with:
+    - In-game debug functions enabled
+    - Disabled compile-time optimizations
+    - Asset redirection enabled
+    - VSCode debug server enabled (may slow the game)
+    
+    ```bash
+    lime test windows -debug
+    ```
+  </Accordion>
+  
+  <Accordion title="-DGITHUB_BUILD - Playtester Build">
+    Enables in-game debug functions (like time travel with `PgUp`/`PgDn`) without other debug features:
+    
+    ```bash
+    lime test windows -DGITHUB_BUILD
+    ```
+  </Accordion>
+  
+  <Accordion title="-DREDIRECT_ASSETS_FOLDER - Asset Redirection">
+    Forces the game to load assets from the project's assets folder rather than the exported folder. Great for fast iteration:
+    
+    ```bash
+    lime test windows -debug -DREDIRECT_ASSETS_FOLDER
+    ```
+    
+    <Warning>The game will break if you try to distribute it with this flag enabled.</Warning>
+  </Accordion>
+</AccordionGroup>
+
+### Feature Flags
+
+<AccordionGroup>
+  <Accordion title="Modding Support">
+    **Enable:** `-DFEATURE_POLYMOD_MODS`  
+    **Disable:** `-DNO_FEATURE_POLYMOD_MODS`
+    
+    Controls whether the game loads mods from the `./mods` folder.
+  </Accordion>
+  
+  <Accordion title="Discord Rich Presence">
+    **Enable:** `-DFEATURE_DISCORD_RPC`  
+    **Disable:** `-DNO_FEATURE_DISCORD_RPC`
+    
+    Controls Discord integration for status updates.
+  </Accordion>
+  
+  <Accordion title="Video Playback">
+    **Enable:** `-DFEATURE_VIDEO_PLAYBACK`  
+    **Disable:** `-DNO_FEATURE_VIDEO_PLAYBACK`
+    
+    Controls support for video cutscenes.
+  </Accordion>
+  
+  <Accordion title="Screenshots">
+    **Enable:** `-DFEATURE_SCREENSHOTS`  
+    **Disable:** `-DNO_FEATURE_SCREENSHOTS`
+    
+    Controls the screenshot feature.
+  </Accordion>
+  
+  <Accordion title="Chart Editor">
+    **Enable:** `-DFEATURE_CHART_EDITOR`  
+    **Disable:** `-DNO_FEATURE_CHART_EDITOR`
+    
+    Controls access to the chart editor in the Debug menu.
+  </Accordion>
+  
+  <Accordion title="Stage Editor (Experimental)">
+    **Enable:** `-DFEATURE_STAGE_EDITOR`
+    
+    Enables the experimental stage editor.
+  </Accordion>
+  
+  <Accordion title="Ghost Tapping (Experimental)">
+    **Enable:** `-DFEATURE_GHOST_TAPPING`
+    
+    Enables experimental gameplay changes to the anti-mash system.
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Mac Compilation" icon="apple" href="/development/compiling-mac">
+    Additional considerations for Mac builds
+  </Card>
+  <Card title="Mobile Compilation" icon="mobile" href="/development/compiling-mobile">
+    Android and iOS compilation guides
+  </Card>
+  <Card title="Troubleshooting" icon="wrench" href="/development/troubleshooting">
+    Fix common compilation issues
+  </Card>
+  <Card title="Contributing" icon="code-pull-request" href="/development/contributing">
+    Learn how to contribute code
+  </Card>
+</CardGroup>
+
+## Troubleshooting
+
+If you experience any issues during compilation, check the [Troubleshooting Guide](/development/troubleshooting) for solutions to common problems.
+
+<Warning>
+  DO NOT open an issue on GitHub for compilation problems without first consulting the troubleshooting guide.
+</Warning>

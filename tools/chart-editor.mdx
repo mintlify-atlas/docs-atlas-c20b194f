@@ -1,0 +1,325 @@
+---
+title: Chart Editor
+description: Complete guide to using the Chart Editor to create and edit song charts in Friday Night Funkin'
+icon: chart-line
+---
+
+The Chart Editor is a comprehensive built-in tool for creating and editing song charts. It features a visual grid-based interface with advanced toolboxes for managing notes, events, metadata, and more.
+
+## Opening the Chart Editor
+
+There are several ways to access the Chart Editor:
+
+<Steps>
+  <Step title="From Main Menu">
+    Press **`~`** (tilde) to open the debug menu, then select **Chart Editor**
+  </Step>
+  <Step title="From Play State">
+    While playing a song in debug mode, press the **CHART hotkey** to open the editor with the current song loaded
+  </Step>
+  <Step title="Direct Launch">
+    Navigate to the Chart Editor option in the debug menu
+  </Step>
+</Steps>
+
+## Interface Overview
+
+The Chart Editor interface consists of several key components:
+
+### Main Grid
+
+The central grid displays your chart visually:
+- **Grid Size**: 40 pixels per step (160 pixels per beat)
+- **Left Side**: Opponent/Dad notes (4 lanes)
+- **Right Side**: Player/BF notes (4 lanes)
+- **Vertical Axis**: Time (scrolls vertically)
+- **Measure Ticks**: Visual indicators for beats and measures
+
+### Playhead
+
+The red playhead shows your current position in the song:
+- Moves during playback
+- Can be clicked and dragged for precise positioning
+- Position displayed in steps, beats, and milliseconds
+
+### Audio Waveforms
+
+Visual representation of the song's audio:
+- Instrumental waveform
+- Vocal waveforms (player and opponent)
+- Helps align notes with audio peaks
+
+## Keyboard Shortcuts
+
+### File Operations
+
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| `Ctrl+N` | New Chart | Create a new chart |
+| `Ctrl+O` | Open Chart | Load an existing chart |
+| `Ctrl+S` | Save Chart | Save current chart |
+| `Ctrl+Shift+S` | Save As | Save with a new name |
+| `Ctrl+Q` | Exit | Return to main menu |
+
+### Edit Operations
+
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| `Ctrl+Z` | Undo | Undo last action |
+| `Ctrl+Y` | Redo | Redo last undone action |
+| `Ctrl+X` | Cut | Cut selected items |
+| `Ctrl+C` | Copy | Copy selected items |
+| `Ctrl+V` | Paste | Paste copied items |
+| `Delete` | Remove | Delete selected items |
+
+### Selection
+
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| `Ctrl+A` | Select All Notes | Select all notes in chart |
+| `Ctrl+Alt+A` | Select All Events | Select all events in chart |
+| `Ctrl+I` | Invert Selection | Invert current selection |
+| `Ctrl+D` | Deselect All | Clear selection |
+| `Shift+Home` | Select Before Cursor | Select all items before playhead |
+| `Shift+End` | Select After Cursor | Select all items after playhead |
+
+### Note Manipulation
+
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| `Ctrl+Shift+M` | Mirror X | Mirror notes horizontally (swap lanes) |
+| `Ctrl+Alt+M` | Mirror Y | Mirror notes vertically (flip timing) |
+| `Ctrl+Shift+Alt+M` | Mirror XY | Mirror both axes |
+
+### Difficulty & Navigation
+
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| `Ctrl+←` | Previous Difficulty | Switch to easier difficulty |
+| `Ctrl+→` | Next Difficulty | Switch to harder difficulty |
+| `Enter` | Playtest Full | Test chart with full UI |
+| `Shift+Enter` | Playtest Minimal | Test chart with minimal UI |
+
+### Playback Controls
+
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| `Space` | Play/Pause | Toggle audio playback |
+| `←/→` | Nudge Playhead | Move playhead by 1 snap unit |
+| `↑/↓` | Scroll | Scroll grid up/down |
+| `Page Up/Down` | Jump | Jump by large intervals |
+| `Home` | Go to Start | Jump to beginning of song |
+| `End` | Go to End | Jump to end of song |
+
+## Placing Notes
+
+<Steps>
+  <Step title="Select Note Type">
+    Click on a note color in the note palette above the grid (4 colors for each direction)
+  </Step>
+  <Step title="Click to Place">
+    Click on the grid where you want the note to appear
+    - Left 4 columns: Opponent notes
+    - Right 4 columns: Player notes
+  </Step>
+  <Step title="Create Hold Notes">
+    Click and drag downward to create a hold note
+    - The length determines how long the player must hold
+    - Release to set the hold note length
+  </Step>
+  <Step title="Adjust Snapping">
+    Use the snap selector to change note precision:
+    - 4th notes (quarter notes)
+    - 8th notes (eighth notes)
+    - 16th notes (sixteenth notes, default)
+    - Up to 192nd notes for precision charting
+  </Step>
+</Steps>
+
+## Working with Events
+
+Events trigger special actions during gameplay:
+
+<Accordion title="Camera Events">
+  Focus the camera on different characters:
+  - **Focus Camera Left**: Focus on opponent
+  - **Focus Camera Right**: Focus on player
+  - **Focus Camera Center**: Focus on center/girlfriend
+</Accordion>
+
+<Accordion title="Zoom Events">
+  Control camera zoom:
+  - **Zoom Camera**: Zoom in effect
+  - **Reset Zoom**: Return to default zoom
+</Accordion>
+
+<Accordion title="Playback Events">
+  Control song playback:
+  - **Set Instrumental**: Switch instrumental track
+  - **Set Vocals**: Switch vocal track
+  - **Trigger Script**: Call custom chart script functions
+</Accordion>
+
+## Toolboxes
+
+The Chart Editor provides several toolboxes for different functions:
+
+### Metadata Toolbox
+
+Configure song information:
+- **Song ID**: Internal identifier
+- **Song Name**: Display name
+- **Artist**: Song artist/composer
+- **Charter**: Who created the chart
+- **Stage**: Which stage to use
+- **Characters**: Player, opponent, girlfriend
+- **BPM**: Starting beats per minute
+- **Scroll Speed**: Chart scroll speed multiplier
+
+### Difficulty Toolbox
+
+Manage chart difficulties:
+- Create new difficulties
+- Switch between difficulties
+- Copy charts between difficulties
+- Set difficulty names and colors
+
+### Note Data Toolbox
+
+Edit individual note properties:
+- Note kind (normal, alt animation, mine, etc.)
+- Custom parameters
+- Hit sound override
+- Visual note style
+
+### Event Data Toolbox
+
+Configure event properties:
+- Event type
+- Event parameters
+- Event timing
+- Preview event effect
+
+### Offsets Toolbox
+
+Adjust audio synchronization:
+- **Instrumental Offset**: Offset for the backing track
+- **Vocal Offset**: Offset for character vocals
+- **Audio Sync Test**: Test sync with gameplay
+
+### Freeplay Toolbox
+
+Configure freeplay menu settings:
+- Album art
+- Preview start time
+- Preview duration
+- Difficulty list order
+
+## Workflow Tips
+
+<Info>
+  **Pro Tip**: Use the waveform display to align notes with audio peaks for better chart feel
+</Info>
+
+<Steps>
+  <Step title="Import Audio">
+    Load your instrumental and vocal tracks through the Metadata toolbox
+  </Step>
+  <Step title="Set BPM">
+    Configure the starting BPM and any BPM changes in the song
+  </Step>
+  <Step title="Place Notes">
+    Chart the notes by listening to the song and clicking on the grid
+  </Step>
+  <Step title="Add Events">
+    Place camera and effect events at key moments
+  </Step>
+  <Step title="Playtest">
+    Press `Enter` to test your chart and make adjustments
+  </Step>
+  <Step title="Polish">
+    Fine-tune offsets, adjust difficult sections, and test multiple times
+  </Step>
+  <Step title="Save">
+    Save your chart with `Ctrl+S` when complete
+  </Step>
+</Steps>
+
+## Context Menu
+
+Right-click on notes, holds, or events to access quick actions:
+- Edit properties
+- Delete item
+- Select similar items
+- Flip/mirror
+- Extend/shorten holds
+
+## Advanced Features
+
+### Time Signature Changes
+
+Support for non-4/4 time signatures:
+- Add time change markers
+- Specify numerator and denominator
+- Grid automatically adjusts
+
+### BPM Changes
+
+Handle tempo changes mid-song:
+- Add BPM markers at any point
+- Smooth or instant transitions
+- Grid spacing adjusts automatically
+
+### Multiple Variations
+
+Create alternate versions of charts:
+- Different character combinations
+- Remixes and alternate instrumentals
+- Practice mode variations
+
+### Live Input Preview
+
+Test note patterns while charting:
+- **Number Keys Mode**: 1-8 keys for 8 lanes
+- **WASD Mode**: WASD + Arrow keys
+- Hear hitsounds without full playtest
+
+## Chart Editor Commands
+
+The editor uses a command pattern for undo/redo support:
+- `AddNotesCommand`: Place new notes
+- `RemoveNotesCommand`: Delete notes
+- `MoveNotesCommand`: Reposition notes
+- `ExtendNoteLengthCommand`: Adjust hold lengths
+- `FlipNotesCommand`: Flip note timing
+- `MirrorNotesCommand`: Mirror note positions
+- `AddEventsCommand`: Place events
+- `RemoveEventsCommand`: Delete events
+
+All commands are fully undoable with `Ctrl+Z`.
+
+## Performance Tips
+
+<Warning>
+  **Large Charts**: Charts with 1000+ notes may experience slowdown. Consider optimizing the grid rendering if needed.
+</Warning>
+
+- Use the measure tick display for visual rhythm reference
+- Hide toolboxes you're not using to reduce UI clutter
+- Test on the target difficulty setting (scroll speed matters)
+- Save frequently to avoid losing work
+
+## File Formats
+
+The Chart Editor supports:
+- **FNF Chart Format**: Native `.json` format
+- **Legacy Format**: Import from older FNF versions
+- **Import**: Support for some community formats
+
+Charts are saved in: `data/songs/[song-id]/[song-id]-chart.json`
+
+## Related Tools
+
+- [Stage Editor](/tools/stage-editor) - Design stage layouts
+- [Animation Editor](/tools/animation-editor) - Edit character animations
+- [Debug Hotkeys](/tools/debug-hotkeys) - All debug shortcuts

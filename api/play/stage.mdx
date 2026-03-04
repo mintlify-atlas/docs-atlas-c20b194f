@@ -1,0 +1,450 @@
+---
+title: Stage
+description: Stage system for backgrounds, props, and character positioning
+---
+
+## Overview
+
+The `Stage` class manages the visual environment for gameplay, including background elements (props), character positioning, and camera settings. Stages are composed of one or more props that can be static or animated.
+
+## Class Hierarchy
+
+```
+FlxSpriteGroup
+  └── Stage
+        └── ScriptedStage (user-defined stages)
+```
+
+## Stage
+
+### Properties
+
+<ResponseField name="stageName" type="String" >
+  Human-readable name of the stage
+</ResponseField>
+
+<ResponseField name="camZoom" type="Float" >
+  Default camera zoom level for this stage
+</ResponseField>
+
+<ResponseField name="maskTexture" type="BitmapData" >
+  Optional mask texture for shader effects
+</ResponseField>
+
+### Methods
+
+#### `new(id:String, ?params:Dynamic)`
+
+Creates a new stage instance.
+
+```haxe
+var stage = new Stage('mainStage');
+```
+
+<ParamField path="id" type="String" required>
+  Stage ID matching the stage data JSON file
+</ParamField>
+
+<ParamField path="params" type="Dynamic">
+  Optional parameters for stage initialization
+</ParamField>
+
+---
+
+#### `onCreate(event:ScriptEvent):Void`
+
+Called when entering PlayState. Builds all props and sets up the stage.
+
+```haxe
+public function onCreate(event:ScriptEvent):Void
+{
+  buildStage(); // Creates all props from data
+  this.refresh(); // Sorts by z-index
+}
+```
+
+---
+
+#### `addProp(prop:StageProp, ?name:String = null):Void`
+
+Adds a sprite to the stage.
+
+```haxe
+var cloud = new StageProp();
+cloud.loadTexture('backgrounds/cloud');
+stage.addProp(cloud, 'cloud1');
+```
+
+<ParamField path="prop" type="StageProp" required>
+  The sprite to add to the stage
+</ParamField>
+
+<ParamField path="name" type="String">
+  Optional unique name for later retrieval
+</ParamField>
+
+---
+
+#### `addBopper(bopper:Bopper, ?name:String = null):Void`
+
+Adds an animated sprite that bops to the beat.
+
+```haxe
+var speaker = new Bopper(1.0); // Dance every beat
+speaker.loadSparrow('backgrounds/speaker');
+stage.addBopper(speaker, 'leftSpeaker');
+```
+
+<ParamField path="bopper" type="Bopper" required>
+  The bopper to add to the stage
+</ParamField>
+
+<ParamField path="name" type="String">
+  Optional unique name for later retrieval
+</ParamField>
+
+---
+
+#### `addCharacter(character:BaseCharacter, charType:CharacterType):Void`
+
+Adds a character to the stage with proper positioning and setup.
+
+```haxe
+var boyfriend = new SparrowCharacter('bf');
+stage.addCharacter(boyfriend, BF);
+```
+
+<ParamField path="character" type="BaseCharacter" required>
+  The character to add
+</ParamField>
+
+<ParamField path="charType" type="CharacterType" required>
+  Character type (BF, DAD, GF, or OTHER)
+</ParamField>
+
+---
+
+#### `getNamedProp(name:String):StageProp`
+
+Retrieves a prop by its assigned name.
+
+```haxe
+var cloud = stage.getNamedProp('cloud1');
+cloud.alpha = 0.5;
+```
+
+---
+
+#### `getBoyfriend(pop:Bool = false):BaseCharacter`
+
+Retrieves the Boyfriend character.
+
+```haxe
+var bf = stage.getBoyfriend();
+if (bf != null) {
+  bf.playSingAnimation(NoteDirection.LEFT, false);
+}
+```
+
+<ParamField path="pop" type="Bool" default="false">
+  If true, removes the character from the stage
+</ParamField>
+
+---
+
+#### `getDad(pop:Bool = false):BaseCharacter`
+
+Retrieves the Dad/opponent character.
+
+```haxe
+var dad = stage.getDad();
+```
+
+---
+
+#### `getGirlfriend(pop:Bool = false):BaseCharacter`
+
+Retrieves the Girlfriend character.
+
+```haxe
+var gf = stage.getGirlfriend();
+```
+
+---
+
+#### `getCharacter(id:String):BaseCharacter`
+
+Retrieves a character by ID.
+
+```haxe
+var character = stage.getCharacter('bf');
+```
+
+---
+
+#### `refresh():Void`
+
+Refreshes the stage by sorting all props by z-index.
+
+```haxe
+// After changing z-index values
+prop.zIndex = 100;
+stage.refresh(); // Re-sort rendering order
+```
+
+---
+
+#### `resetStage():Void`
+
+Resets all characters and props to their original positions.
+
+```haxe
+// When restarting a song
+stage.resetStage();
+```
+
+---
+
+#### `pause():Void`
+
+Pauses all animations in the stage.
+
+```haxe
+stage.pause();
+```
+
+---
+
+#### `resume():Void`
+
+Resumes all animations in the stage.
+
+```haxe
+stage.resume();
+```
+
+---
+
+#### `setShader(shader:FlxShader):Void`
+
+Applies a shader to all props in the stage.
+
+```haxe
+var colorShader = new ColorSwapShader();
+stage.setShader(colorShader);
+```
+
+## Character Positioning
+
+### Position Methods
+
+```haxe
+// Get character positions from stage data
+var bfPos = stage.getBoyfriendPosition(); // FlxPoint
+var dadPos = stage.getDadPosition(); // FlxPoint
+var gfPos = stage.getGirlfriendPosition(); // FlxPoint
+```
+
+These return the positions defined in the stage data JSON, useful for custom positioning logic.
+
+## Event Dispatching
+
+### `dispatchToCharacters(event:ScriptEvent):Void`
+
+Dispatches an event to all characters on the stage.
+
+```haxe
+var event = new ScriptEvent(CUSTOM_EVENT);
+stage.dispatchToCharacters(event);
+```
+
+Characters receive events in this order:
+1. Dad (opponent)
+2. Boyfriend (player)
+3. Girlfriend
+4. Any other characters
+
+### `dispatchToCharacter(characterId:String, event:ScriptEvent):Void`
+
+Dispatches an event to a specific character.
+
+```haxe
+var event = new HitNoteScriptEvent(note);
+stage.dispatchToCharacter('bf', event);
+```
+
+## Stage Props
+
+### Prop Types
+
+Stages can contain different types of props:
+
+**Static Props:**
+```haxe
+var bg = new StageProp();
+bg.loadTexture('backgrounds/sky');
+bg.scrollFactor.set(0.1, 0.1); // Parallax
+stage.addProp(bg, 'sky');
+```
+
+**Animated Props (Boppers):**
+```haxe
+var speaker = new Bopper(1.0); // Dance every beat
+speaker.loadSparrow('props/speaker');
+speaker.animation.addByPrefix('idle', 'speaker bop', 24, false);
+stage.addBopper(speaker, 'speaker');
+```
+
+**Solid Color Props:**
+```haxe
+// Created from stage data with assetPath: "#FF0000"
+var redSquare = new StageProp();
+redSquare.makeGraphic(100, 100, 0xFFFF0000);
+```
+
+## Building Stages
+
+The `buildStage()` method automatically constructs the stage from JSON data:
+
+```haxe
+function buildStage():Void
+{
+  for (dataProp in _data.props)
+  {
+    // Creates props based on type
+    // Sets position, scale, animations
+    // Applies visual properties
+    // Adds to stage with z-index sorting
+  }
+}
+```
+
+### Prop Properties from Data
+
+- **Position**: `[x, y]` coordinates
+- **Scale**: Uniform or `[scaleX, scaleY]`
+- **Scroll Factor**: `[x, y]` for parallax
+- **Z-Index**: Rendering order
+- **Animations**: Frame-based or atlas animations
+- **Visual**: alpha, angle, color, blend mode
+
+## Event Handlers
+
+### `onStepHit(event:SongTimeScriptEvent):Void`
+
+Called every step of the song.
+
+```haxe
+public function onStepHit(event:SongTimeScriptEvent):Void
+{
+  if (event.step % 16 == 0) {
+    // Do something every 4 beats
+  }
+}
+```
+
+### `onBeatHit(event:SongTimeScriptEvent):Void`
+
+Called every beat of the song.
+
+```haxe
+public function onBeatHit(event:SongTimeScriptEvent):Void
+{
+  // Boppers automatically dance here
+}
+```
+
+### `onUpdate(event:UpdateScriptEvent)`
+
+Called every frame.
+
+```haxe
+public function onUpdate(event:UpdateScriptEvent)
+{
+  // Custom per-frame logic
+}
+```
+
+### `onDestroy(event:ScriptEvent):Void`
+
+Called when leaving PlayState.
+
+```haxe
+public function onDestroy(event:ScriptEvent):Void
+{
+  // Cleanup resources
+  kill();
+}
+```
+
+## Usage Example
+
+```haxe
+// Create a stage
+var stage = new Stage('mainStage');
+
+// Add custom props
+var cloud = new StageProp();
+cloud.loadTexture('backgrounds/cloud');
+cloud.x = 100;
+cloud.y = 200;
+cloud.scrollFactor.set(0.3, 0.3);
+stage.addProp(cloud, 'cloud1');
+
+// Add animated prop
+var curtain = new Bopper(2.0); // Dance every 2 beats
+curtain.loadSparrow('backgrounds/curtain');
+stage.addBopper(curtain, 'curtain');
+
+// Add characters
+var boyfriend = new SparrowCharacter('bf');
+stage.addCharacter(boyfriend, BF);
+
+var dad = new SparrowCharacter('dad');
+stage.addCharacter(dad, DAD);
+
+// Refresh to sort by z-index
+stage.refresh();
+
+// Access props later
+var myCloud = stage.getNamedProp('cloud1');
+myCloud.alpha = 0.5;
+
+// Access characters
+var bf = stage.getBoyfriend();
+if (bf != null && bf.isSinging()) {
+  trace('BF is performing!');
+}
+```
+
+## Frame Buffers
+
+Stages support frame buffer effects for advanced rendering:
+
+```haxe
+function setupFrameBuffers():Void
+{
+  // Create custom frame buffers
+  // Used for shader effects, masks, etc.
+}
+
+function frameBuffersUpdated():Void
+{
+  // Called when frame buffers are ready
+  // Use grabScreen() here
+}
+```
+
+## Best Practices
+
+<Tip>
+  Always call `refresh()` after modifying z-index values to ensure correct rendering order.
+</Tip>
+
+<Warning>
+  Characters are positioned relative to their feet (bottom-center). Stage data should specify the floor position, not the top-left corner.
+</Warning>
+
+<Info>
+  Use scroll factors for parallax effects. Values less than 1.0 make props scroll slower (appear further away), while values greater than 1.0 make them scroll faster (appear closer).
+</Info>
