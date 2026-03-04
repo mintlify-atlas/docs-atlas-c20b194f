@@ -1,0 +1,139 @@
+{
+  "projectType": "general",
+  "projectName": "Friday Night Funkin'",
+  "projectDescription": "A rhythm game built with HaxeFlixel featuring modding support and community-driven content",
+  "theme": "almond",
+  "primaryColor": "#e6d9a3",
+  "lightColor": "#645c4b",
+  "darkColor": "#0e0c0b",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "playing"
+            ]
+          },
+          {
+            "group": "Development",
+            "pages": [
+              "development/compiling",
+              "development/compiling-mac",
+              "development/compiling-mobile",
+              "development/contributing",
+              "development/troubleshooting",
+              "development/style-guide"
+            ]
+          },
+          {
+            "group": "Modding",
+            "pages": [
+              "modding/overview",
+              "modding/installing-mods",
+              "modding/creating-mods",
+              "modding/scripting",
+              "modding/polymod"
+            ]
+          },
+          {
+            "group": "Game Systems",
+            "pages": [
+              "systems/gameplay",
+              "systems/characters",
+              "systems/stages",
+              "systems/songs",
+              "systems/charting"
+            ]
+          },
+          {
+            "group": "Tools",
+            "pages": [
+              "tools/chart-editor",
+              "tools/stage-editor",
+              "tools/animation-editor",
+              "tools/debug-hotkeys"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Core",
+            "pages": [
+              "api/conductor",
+              "api/playstate",
+              "api/assets",
+              "api/preferences"
+            ]
+          },
+          {
+            "group": "Audio",
+            "pages": [
+              "api/audio/funkin-sound",
+              "api/audio/voices-group",
+              "api/audio/visualize"
+            ]
+          },
+          {
+            "group": "Play",
+            "pages": [
+              "api/play/character",
+              "api/play/stage",
+              "api/play/notes",
+              "api/play/events"
+            ]
+          },
+          {
+            "group": "Data",
+            "pages": [
+              "api/data/song-data",
+              "api/data/character-data",
+              "api/data/stage-data"
+            ]
+          },
+          {
+            "group": "Modding",
+            "pages": [
+              "api/modding/polymod-handler",
+              "api/modding/scripted-class",
+              "api/modding/module"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Rhythm-based gameplay with note charting",
+    "Extensive modding support via Polymod",
+    "Multi-platform support (Windows, Mac, Linux, Web, Mobile)",
+    "Built-in Chart Editor for creating custom songs",
+    "Stage Editor and Animation Editor",
+    "HScript scripting for custom gameplay",
+    "Newgrounds integration for medals and leaderboards",
+    "Discord Rich Presence support",
+    "Video cutscene support",
+    "Asset hot-reloading for development"
+  ],
+  "publicApiSurface": [
+    "funkin.Conductor - Core timing and BPM management",
+    "funkin.play.PlayState - Main gameplay state",
+    "funkin.play.character.BaseCharacter - Character system",
+    "funkin.play.stage.Stage - Stage management",
+    "funkin.play.song.Song - Song data handling",
+    "funkin.audio.FunkinSound - Audio management",
+    "funkin.modding.PolymodHandler - Mod loading system",
+    "funkin.modding.IScriptedClass - Scripting interface",
+    "funkin.data.song.SongData - Song metadata",
+    "funkin.ui.debug.charting.ChartEditorState - Chart editor",
+    "funkin.ui.debug.stage.StageEditorState - Stage editor",
+    "funkin.ui.debug.anim.AnimationEditor - Animation editor"
+  ]
+}
